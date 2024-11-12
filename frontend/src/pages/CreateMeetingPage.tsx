@@ -205,7 +205,7 @@ export function CreateMeetingPage() {
                             ) : (
                                 meeting.studentWorks.map((work, index) => (
                                     <tr key={index}>
-                                        <td>
+                                        <td style={{ minWidth: '95px' }}>
                                             <button type="button" className="btn btn-outline-none btn-sm"
                                                     onClick={() => handleStudentWorkDelete(index)}>
                                                 <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
@@ -217,13 +217,19 @@ export function CreateMeetingPage() {
                                             </button>
                                         </td>
                                         <td>{work.studentName}</td>
-                                        <td>{work.theme}</td>
+                                        <td style={{ maxWidth: '600px'}}>{work.theme}</td>
                                         <td>{work.supervisor}</td>
                                         <td>{work.consultant || "—"}</td>
                                         <td>{work.reviewer}</td>
                                         <td>{work.supervisorMark}</td>
                                         <td>{work.reviewerMark}</td>
-                                        <td>{work.codeLink || "—"}</td>
+                                        <td style={{ minWidth: '85px' }}>{work.codeLink ? (
+                                            <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
+                                                Ссылка
+                                            </a>
+                                        ) : (
+                                            <span>—</span>
+                                        )}</td>
                                     </tr>
                                 ))
                             )}
@@ -236,7 +242,7 @@ export function CreateMeetingPage() {
                     <div>
                         <h4 className="p-2">Список членов комиссии</h4>
                         {meeting.members.map((member, index) => (
-                            <div key={index} className="p-3">
+                            <div key={index} className="pt-3">
                                 <input
                                     type="text"
                                     className="form-control"
