@@ -1,3 +1,4 @@
+// Interface for student work
 export interface StudentWork {
     studentName: string,
     theme: string,

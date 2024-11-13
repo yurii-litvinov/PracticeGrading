@@ -27,7 +27,7 @@ public class JwtService(IOptions<JwtOptions> options)
         var claims = new List<Claim>
         {
             new (ClaimTypes.Name, user.UserName),
-            new (ClaimTypes.Role, user.Role.RoleName),
+            new (ClaimTypes.Role, user.Role != null ? user.Role.RoleName : string.Empty),
         };
 
         var token = new JwtSecurityToken(
@@ -36,7 +36,7 @@ public class JwtService(IOptions<JwtOptions> options)
             expires: DateTime.UtcNow.Add(options.Value.Expires),
             claims: claims,
             signingCredentials: new SigningCredentials(
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Value.SecretKey)),
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(options.Value.SecretKey ?? string.Empty)),
                 SecurityAlgorithms.HmacSha256));
 
         return new JwtSecurityTokenHandler().WriteToken(token);

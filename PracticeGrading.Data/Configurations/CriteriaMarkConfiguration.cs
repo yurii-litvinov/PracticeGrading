@@ -17,11 +17,9 @@ public class CriteriaMarkConfiguration : IEntityTypeConfiguration<CriteriaMark>
     /// <summary>
     /// Configures criteria mark entity.
     /// </summary>
-    public void Configure(EntityTypeBuilder<CriteriaMark> builder)
-    {
+    public void Configure(EntityTypeBuilder<CriteriaMark> builder) =>
         builder.HasOne<MemberMark>(mark => mark.MemberMark)
             .WithMany(mark => mark.CriteriaMarks)
             .HasForeignKey(mark => new { mark.MemberMarkId, mark.StudentWorkId })
             .HasPrincipalKey(mark => new { mark.MemberId, mark.StudentWorkId });
-    }
 }

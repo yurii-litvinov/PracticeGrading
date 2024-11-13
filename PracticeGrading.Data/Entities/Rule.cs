@@ -18,7 +18,7 @@ public class Rule
     /// <summary>
     /// Gets or sets description.
     /// </summary>
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>
     /// Gets or sets value.
@@ -33,5 +33,5 @@ public class Rule
     /// <summary>
     /// Gets or sets criteria.
     /// </summary>
-    public Criteria Criteria { get; set; }
+    public Criteria? Criteria { get; set; }
 }

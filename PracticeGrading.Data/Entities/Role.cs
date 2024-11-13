@@ -18,10 +18,10 @@ public class Role
     /// <summary>
     /// Gets or sets role name.
     /// </summary>
-    public string RoleName { get; set; }
+    required public string RoleName { get; set; }
 
     /// <summary>
     /// Gets or sets users.
     /// </summary>
-    public ICollection<User> Users { get; set; }
+    public ICollection<User>? Users { get; set; }
 }

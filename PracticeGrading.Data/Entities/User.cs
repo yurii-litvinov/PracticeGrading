@@ -18,12 +18,12 @@ public class User
     /// <summary>
     /// Gets or sets username.
     /// </summary>
-    public string UserName { get; set; }
+    required public string UserName { get; set; }
 
     /// <summary>
     /// Gets or sets hashed password.
     /// </summary>
-    public string PasswordHash { get; set; }
+    public string? PasswordHash { get; set; }
 
     /// <summary>
     /// Gets or sets role id.
@@ -33,5 +33,5 @@ public class User
     /// <summary>
     /// Gets or sets role.
     /// </summary>
-    public Role Role { get; set; }
+    public Role? Role { get; set; }
 }

@@ -242,7 +242,7 @@ export function CreateMeetingPage() {
                     <div>
                         <h4 className="p-2">Список членов комиссии</h4>
                         {meeting.members.map((member, index) => (
-                            <div key={index} className="pt-3">
+                            <div key={index} className="pt-3 px-3">
                                 <input
                                     type="text"
                                     className="form-control"

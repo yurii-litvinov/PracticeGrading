@@ -17,10 +17,8 @@ public class MemberConfiguration : IEntityTypeConfiguration<Member>
     /// <summary>
     /// Configures member entity.
     /// </summary>
-    public void Configure(EntityTypeBuilder<Member> builder)
-    {
+    public void Configure(EntityTypeBuilder<Member> builder) =>
         builder.HasMany<MemberMark>(member => member.Marks)
             .WithOne(mark => mark.Member)
             .HasForeignKey(mark => mark.MemberId);
-    }
 }

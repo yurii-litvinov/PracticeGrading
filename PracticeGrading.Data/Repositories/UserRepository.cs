@@ -29,10 +29,9 @@ public class UserRepository(AppDbContext context)
     /// </summary>
     /// <param name="userName">Username.</param>
     /// <returns>User.</returns>
-    public async Task<User?> GetByUserName(string userName)
-    {
-        return await context.Users.Include(user => user.Role).FirstOrDefaultAsync(user => user.UserName == userName);
-    }
+    public async Task<User?> GetByUserName(string userName) =>
+        await context.Users.Include(user => user.Role)
+            .FirstOrDefaultAsync(user => user.UserName == userName);
 
     /// <summary>
     /// Updates user.

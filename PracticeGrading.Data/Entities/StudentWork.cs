@@ -16,29 +16,29 @@ public class StudentWork
     public int Id { get; set; }
 
     /// <summary>
-    /// Gets or student's name.
+    /// Gets or sets or student's name.
     /// </summary>
-    public string StudentName { get; set; }
+    required public string StudentName { get; set; }
 
     /// <summary>
     /// Gets or sets theme.
     /// </summary>
-    public string Theme { get; set; }
+    required public string Theme { get; set; }
 
     /// <summary>
     /// Gets or sets supervisor.
     /// </summary>
-    public string Supervisor { get; set; }
+    required public string Supervisor { get; set; }
 
     /// <summary>
     /// Gets or sets consultant.
     /// </summary>
-    public string Consultant { get; set; }
+    public string? Consultant { get; set; }
 
     /// <summary>
     /// Gets or sets reviewer.
     /// </summary>
-    public string Reviewer { get; set; }
+    required public string Reviewer { get; set; }
 
     /// <summary>
     /// Gets or sets supervisor's mark.
@@ -58,7 +58,7 @@ public class StudentWork
     /// <summary>
     /// Gets or sets code link.
     /// </summary>
-    public string CodeLink { get; set; }
+    public string? CodeLink { get; set; }
 
     /// <summary>
     /// Gets or sets meeting id.
@@ -68,10 +68,10 @@ public class StudentWork
     /// <summary>
     /// Gets or sets meeting.
     /// </summary>
-    public Meeting Meeting { get; set; }
+    public Meeting? Meeting { get; set; }
 
     /// <summary>
     /// Gets or sets members marks.
     /// </summary>
-    public ICollection<MemberMark> MemberMarks { get; set; }
+    public ICollection<MemberMark>? MemberMarks { get; set; }
 }

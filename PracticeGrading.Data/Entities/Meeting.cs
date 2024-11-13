@@ -23,30 +23,30 @@ public class Meeting
     /// <summary>
     /// Gets or sets auditorium.
     /// </summary>
-    public string Auditorium { get; set; }
+    required public string Auditorium { get; set; }
 
     /// <summary>
     /// Gets or sets info.
     /// </summary>
-    public string Info { get; set; }
+    required public string Info { get; set; }
 
     /// <summary>
     /// Gets or sets call link.
     /// </summary>
-    public string CallLink { get; set; }
+    required public string CallLink { get; set; }
 
     /// <summary>
     /// Gets or sets materials link.
     /// </summary>
-    public string MaterialsLink { get; set; }
+    required public string MaterialsLink { get; set; }
 
     /// <summary>
     /// Gets or sets student works.
     /// </summary>
-    public ICollection<StudentWork> StudentWorks { get; set; }
+    public ICollection<StudentWork>? StudentWorks { get; set; }
 
     /// <summary>
     /// Gets or sets members.
     /// </summary>
-    public ICollection<Member> Members { get; set; }
+    public ICollection<Member>? Members { get; set; }
 }

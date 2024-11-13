@@ -1,5 +1,6 @@
 import {StudentWork} from './StudentWork'
 
+// Interface for meeting
 export interface Meeting {
     dateAndTime: Date,
     auditorium: string,

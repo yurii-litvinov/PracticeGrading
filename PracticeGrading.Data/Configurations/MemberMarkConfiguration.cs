@@ -17,8 +17,6 @@ public class MemberMarkConfiguration : IEntityTypeConfiguration<MemberMark>
     /// <summary>
     /// Configures member mark entity.
     /// </summary>
-    public void Configure(EntityTypeBuilder<MemberMark> builder)
-    {
+    public void Configure(EntityTypeBuilder<MemberMark> builder) =>
         builder.HasKey(mark => new { mark.MemberId, mark.StudentWorkId });
-    }
 }

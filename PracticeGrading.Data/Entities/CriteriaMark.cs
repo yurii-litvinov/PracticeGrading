@@ -28,5 +28,5 @@ public class CriteriaMark : Criteria
     /// <summary>
     /// Gets or sets member mark.
     /// </summary>
-    public MemberMark MemberMark { get; set; }
+    public MemberMark? MemberMark { get; set; }
 }

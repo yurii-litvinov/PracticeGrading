@@ -5,89 +5,24 @@
 
 namespace PracticeGrading.API.Models;
 
-/// <summary>
-/// Class for meeting creation request.
-/// </summary>
-public class CreateMeetingRequest
-{
-    /// <summary>
-    /// Gets or sets date and time.
-    /// </summary>
-    public DateTime DateAndTime { get; set; }
+using System.Diagnostics.CodeAnalysis;
 
-    /// <summary>
-    /// Gets or sets auditorium.
-    /// </summary>
-    public string Auditorium { get; set; }
-
-    /// <summary>
-    /// Gets or sets info.
-    /// </summary>
-    public string Info { get; set; }
-
-    /// <summary>
-    /// Gets or sets call link.
-    /// </summary>
-    public string CallLink { get; set; }
-
-    /// <summary>
-    /// Gets or sets materials link.
-    /// </summary>
-    public string MaterialsLink { get; set; }
-
-    /// <summary>
-    /// Gets or sets student works.
-    /// </summary>
-    public List<AddStudentWorksRequest> StudentWorks { get; set; }
-
-    /// <summary>
-    /// Gets or sets members.
-    /// </summary>
-    public List<string> Members { get; set; }
-}
-
-/// <summary>
-/// Class for adding student work request.
-/// </summary>
-public class AddStudentWorksRequest
-{
-    /// <summary>
-    /// Gets or student's name.
-    /// </summary>
-    public string StudentName { get; set; }
-
-    /// <summary>
-    /// Gets or sets theme.
-    /// </summary>
-    public string Theme { get; set; }
-
-    /// <summary>
-    /// Gets or sets supervisor.
-    /// </summary>
-    public string Supervisor { get; set; }
-
-    /// <summary>
-    /// Gets or sets consultant.
-    /// </summary>
-    public string Consultant { get; set; }
-
-    /// <summary>
-    /// Gets or sets reviewer.
-    /// </summary>
-    public string Reviewer { get; set; }
-
-    /// <summary>
-    /// Gets or sets supervisor's mark.
-    /// </summary>
-    public int SupervisorMark { get; set; }
-
-    /// <summary>
-    /// Gets or sets reviewer's mark.
-    /// </summary>
-    public int ReviewerMark { get; set; }
-
-    /// <summary>
-    /// Gets or sets code link.
-    /// </summary>
-    public string CodeLink { get; set; }
-}
+/// <param name="DateAndTime">Gets or sets date and time.</param>
+/// <param name="Auditorium">Gets or sets auditorium.</param>
+/// <param name="Info">Gets or sets info.</param>
+/// <param name="CallLink">Gets or sets call link.</param>
+/// <param name="MaterialsLink">Gets or sets materials link.</param>
+/// <param name="StudentWorks">Gets or sets student works.</param>
+/// <param name="Members">Gets or sets members.</param>
+[SuppressMessage(
+    "StyleCop.CSharp.NamingRules",
+    "SA1313:Parameter names should begin with lower-case letter",
+    Justification = "Causes another problem with names")]
+public record CreateMeetingRequest(
+    DateTime DateAndTime,
+    string Auditorium,
+    string Info,
+    string CallLink,
+    string MaterialsLink,
+    List<AddStudentWorksRequest> StudentWorks,
+    List<string> Members);

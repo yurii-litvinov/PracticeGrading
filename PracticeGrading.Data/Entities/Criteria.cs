@@ -18,20 +18,20 @@ public class Criteria
     /// <summary>
     /// Gets or sets name.
     /// </summary>
-    public int Name { get; set; }
+    required public string Name { get; set; }
 
     /// <summary>
     /// Gets or sets comment.
     /// </summary>
-    public int Comment { get; set; }
+    public string? Comment { get; set; }
 
     /// <summary>
     /// Gets or sets scale.
     /// </summary>
-    public List<int> Scale { get; set; }
+    required public List<int> Scale { get; set; }
 
     /// <summary>
     /// Gets or sets rules.
     /// </summary>
-    public ICollection<Rule> Rules { get; set; }
+    public ICollection<Rule>? Rules { get; set; }
 }

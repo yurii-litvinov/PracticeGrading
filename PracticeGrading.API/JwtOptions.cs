@@ -13,12 +13,12 @@ public class JwtOptions
     /// <summary>
     /// Gets or sets issuer.
     /// </summary>
-    public string Issuer { get; set; }
+    public string? Issuer { get; set; }
 
     /// <summary>
     /// Gets or sets audience.
     /// </summary>
-    public string Audience { get; set; }
+    public string? Audience { get; set; }
 
     /// <summary>
     /// Gets or sets token expiration.
@@ -28,5 +28,5 @@ public class JwtOptions
     /// <summary>
     /// Gets or sets secret key.
     /// </summary>
-    public string SecretKey { get; set; }
+    public string? SecretKey { get; set; }
 }

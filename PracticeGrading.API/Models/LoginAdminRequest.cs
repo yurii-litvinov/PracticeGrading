@@ -5,18 +5,12 @@
 
 namespace PracticeGrading.API.Models;
 
-/// <summary>
-/// Class for admin login request.
-/// </summary>
-public class LoginAdminRequest
-{
-    /// <summary>
-    /// Gets or sets username.
-    /// </summary>
-    public string UserName { get; set; }
+using System.Diagnostics.CodeAnalysis;
 
-    /// <summary>
-    /// Gets or sets password.
-    /// </summary>
-    public string Password { get; set; }
-}
+/// <param name="UserName">Gets or sets username.</param>
+/// <param name="Password">Gets or sets password.</param>
+[SuppressMessage(
+    "StyleCop.CSharp.NamingRules",
+    "SA1313:Parameter names should begin with lower-case letter",
+    Justification = "Causes another problem with names")]
+public record LoginAdminRequest(string UserName, string Password);

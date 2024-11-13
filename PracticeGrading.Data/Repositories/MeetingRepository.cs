@@ -39,19 +39,14 @@ public class MeetingRepository(AppDbContext context)
     /// </summary>
     /// <param name="id">Meeting id.</param>
     /// <returns>Meeting.</returns>
-    public async Task<Meeting?> GetById(int id)
-    {
-        return await context.Meetings.FirstOrDefaultAsync(meeting => meeting.Id == id);
-    }
+    public async Task<Meeting?> GetById(int id) =>
+        await context.Meetings.FirstOrDefaultAsync(meeting => meeting.Id == id);
 
     /// <summary>
     /// Gets all meetings.
     /// </summary>
     /// <returns>List of meetings.</returns>
-    public async Task<List<Meeting>> GetAll()
-    {
-        return await context.Meetings.ToListAsync();
-    }
+    public async Task<List<Meeting>> GetAll() => await context.Meetings.ToListAsync();
 
     /// <summary>
     /// Deletes meeting.
