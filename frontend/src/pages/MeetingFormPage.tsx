@@ -1,32 +1,51 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {getMeetings} from '../services/apiService';
+import {useNavigate, useParams} from 'react-router-dom';
 import DatePicker, {registerLocale} from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import ru from 'date-fns/locale/ru';
 import {Meeting} from '../interfaces/Meeting'
 import {StudentWorkModal} from '../components/StudentWorkModal';
-import {createMeeting} from '../services/apiService';
+import {createMeeting, getCriteria, getMeetings, updateMeeting} from '../services/apiService';
 
 registerLocale('ru', ru);
 
-export function CreateMeetingPage() {
+export function MeetingFormPage() {
+    const {id} = useParams();
     const navigate = useNavigate();
     const [startDate, setStartDate] = useState();
     const [workToEditIndex, setWorkToEditIndex] = useState();
+    const [criteria, setCriteria] = useState([]);
 
     const [meeting, setMeeting] = useState({
+        id: null,
         dateAndTime: new Date(),
         auditorium: '',
         info: '',
         callLink: '',
         materialsLink: '',
         studentWorks: [],
-        members: ['']
+        members: [''],
+        criteriaId: []
     });
 
+
+    useEffect(() => {
+        getCriteria().then(response => setCriteria(response.data));
+
+        if (id) {
+            getMeetings(id).then(response => setMeeting(response.data[0]));
+        }
+    }, [id]);
+
+    console.log(meeting.dateAndTime)
+
+
     const handleBack = () => {
-        navigate("/meetings", {replace: true})
+        if (id) {
+            navigate(`/meetings/${id}`, {replace: true});
+        } else {
+            navigate("/meetings", {replace: true});
+        }
     }
 
     const handleMeetingChange = (e) => {
@@ -58,10 +77,18 @@ export function CreateMeetingPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const responce = await createMeeting(meeting);
+        if (id) {
+            const responce = await updateMeeting(meeting);
 
-        if (responce.status === 200) {
-            navigate("/meetings", {replace: true})
+            if (responce.status === 200) {
+                navigate(`/meetings/${id}`, {replace: true});
+            }
+        } else {
+            const responce = await createMeeting(meeting);
+
+            if (responce.status === 200) {
+                navigate("/meetings", {replace: true});
+            }
         }
     }
 
@@ -95,11 +122,31 @@ export function CreateMeetingPage() {
         }));
     }
 
+    const handleCriteriaChange = (e) => {
+        setMeeting(prevMeeting => {
+            let updatedCriteriaId = [...prevMeeting.criteriaId];
+
+            if (e.target.checked) {
+                if (!updatedCriteriaId.includes(Number(e.target.id))) {
+                    updatedCriteriaId.push(Number(e.target.id));
+                }
+            } else {
+                updatedCriteriaId = updatedCriteriaId.filter(id => id !== Number(e.target.id));
+            }
+
+            return {
+                ...prevMeeting,
+                criteriaId: updatedCriteriaId,
+            }
+        })
+
+    }
+
     return (
         <>
             <form onSubmit={handleSubmit}>
                 <div className="d-flex align-items-center justify-content-end">
-                    <h2 className="me-auto">Новое заседание</h2>
+                    <h2 className="me-auto">{id ? "Редактирование заседания" : "Новое заседание"}</h2>
                     <button type="submit" className="btn btn-primary btn-lg me-2"
                             disabled={meeting.studentWorks.length === 0}>Сохранить
                     </button>
@@ -111,7 +158,7 @@ export function CreateMeetingPage() {
                         <label className="me-3 fw-bold text-end" style={{minWidth: '225px'}}>Дата и время</label>
                         <div className="custom-datepicker">
                             <DatePicker
-                                selected={meeting.dateAndTime}
+                                selected={new Date(meeting.dateAndTime)}
                                 onChange={(date) => setMeeting({...meeting, dateAndTime: new Date(date)})}
                                 dateFormat="d MMMM yyyy, HH:mm"
                                 showTimeSelect
@@ -178,7 +225,7 @@ export function CreateMeetingPage() {
                     <div className="d-flex p-2 align-items-center">
                         <h4>Список защищающихся студентов</h4>
                         <button type="button" className="btn btn-outline-primary ms-auto" data-bs-toggle="modal"
-                                data-bs-target="#staticBackdrop" onClick={() => setWorkToEditIndex(null)}>
+                                data-bs-target="#studentWorkModal" onClick={() => setWorkToEditIndex(null)}>
                             Добавить студента
                         </button>
                     </div>
@@ -205,25 +252,25 @@ export function CreateMeetingPage() {
                             ) : (
                                 meeting.studentWorks.map((work, index) => (
                                     <tr key={index}>
-                                        <td style={{ minWidth: '95px' }}>
-                                            <button type="button" className="btn btn-outline-none btn-sm"
+                                        <td style={{minWidth: '95px'}}>
+                                            <button type="button" className="btn btn-sm"
                                                     onClick={() => handleStudentWorkDelete(index)}>
                                                 <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
                                             </button>
-                                            <button type="button" className="btn btn-outline-none  btn-sm"
-                                                    data-bs-toggle="modal" data-bs-target="#staticBackdrop"
+                                            <button type="button" className="btn btn-sm"
+                                                    data-bs-toggle="modal" data-bs-target="#studentWorkModal"
                                                     onClick={() => setWorkToEditIndex(index)}>
                                                 <i className="bi bi-pencil fs-5" style={{color: '#007bff'}}></i>
                                             </button>
                                         </td>
                                         <td>{work.studentName}</td>
-                                        <td style={{ maxWidth: '600px'}}>{work.theme}</td>
+                                        <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                         <td>{work.supervisor}</td>
                                         <td>{work.consultant || "—"}</td>
                                         <td>{work.reviewer}</td>
                                         <td>{work.supervisorMark}</td>
                                         <td>{work.reviewerMark}</td>
-                                        <td style={{ minWidth: '85px' }}>{work.codeLink ? (
+                                        <td style={{minWidth: '85px'}}>{work.codeLink ? (
                                             <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
                                                 Ссылка
                                             </a>
@@ -239,22 +286,47 @@ export function CreateMeetingPage() {
 
                     <hr className="my-4"/>
 
-                    <div>
-                        <h4 className="p-2">Список членов комиссии</h4>
-                        {meeting.members.map((member, index) => (
-                            <div key={index} className="pt-3 px-3">
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    value={member}
-                                    onChange={(e) => handleMemberChange(index, e.target.value)}
-                                    placeholder="Иванов Иван Иванович"/>
-                            </div>
-                        ))}
+                    <div className="d-flex">
+                        <div className="flex-grow-1 pe-4">
+                            <h4 className="p-2">Список членов комиссии</h4>
+                            {meeting.members.map((member, index) => (
+                                <div key={index} className="pt-3 px-3">
+                                    <input
+                                        type="text"
+                                        style={{minWidth: '400px'}}
+                                        className="form-control"
+                                        value={member}
+                                        onChange={(e) => handleMemberChange(index, e.target.value)}
+                                        placeholder="Иванов Иван Иванович"/>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex-grow-2">
+                            <h4 className="p-2">Критерии</h4>
+                            <ul className="list-group p-2">
+                                {criteria.map((criteria) => (
+                                    <li className="list-group-item d-flex align-items-center" key={criteria.id}>
+                                        <input className="form-check-input me-3" type="checkbox"
+                                               checked={meeting.criteriaId.includes(criteria.id)}
+                                               id={criteria.id} onChange={(e) => handleCriteriaChange(e)}/>
+                                        <label className="form-check-label stretched-link"
+                                               htmlFor={criteria.id}> {criteria.name}{criteria.comment && (
+                                            <>
+                                                <br/>
+                                                <small className=""
+                                                       style={{color: '#9a9d9f'}}>{criteria.comment}</small>
+                                            </>
+                                        )}
+                                        </label>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </form>
-            
+
             <StudentWorkModal
                 studentWorkData={meeting.studentWorks[workToEditIndex]}
                 onSave={addOrUpdateStudentWork}/>

@@ -5,6 +5,8 @@
 
 namespace PracticeGrading.API;
 
+using Data.Repositories;
+using Services;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -45,5 +47,15 @@ public static class Extensions
             .AddPolicy(
                 "RequireAdminRole",
                 policy => policy.RequireClaim(ClaimTypes.Role, "admin"));
+    }
+
+    public static void AddAppServices(this IServiceCollection services)
+    {
+        services.AddScoped<UserService>();
+        services.AddScoped<UserRepository>();
+        services.AddScoped<MeetingService>();
+        services.AddScoped<MeetingRepository>();
+        services.AddScoped<CriteriaService>();
+        services.AddScoped<CriteriaRepository>();
     }
 }

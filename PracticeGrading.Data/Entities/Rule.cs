@@ -18,12 +18,17 @@ public class Rule
     /// <summary>
     /// Gets or sets description.
     /// </summary>
-    public string? Description { get; set; }
+    required public string Description { get; set; }
 
     /// <summary>
     /// Gets or sets value.
     /// </summary>
     public int Value { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether rule is an element of the scale.
+    /// </summary>
+    public bool IsScaleRule { get; set; }
 
     /// <summary>
     /// Gets or sets criteria id.

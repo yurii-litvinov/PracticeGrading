@@ -49,4 +49,9 @@ public class Meeting
     /// Gets or sets members.
     /// </summary>
     public ICollection<Member>? Members { get; set; }
+
+    /// <summary>
+    /// Gets or sets criteria.
+    /// </summary>
+    public ICollection<Criteria>? Criteria { get; set; }
 }

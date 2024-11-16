@@ -7,10 +7,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PracticeGrading.API;
-using PracticeGrading.API.Models;
+using PracticeGrading.API.Endpoints;
+using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data;
-using PracticeGrading.Data.Repositories;
 
 #pragma warning restore SA1200
 
@@ -51,13 +51,7 @@ builder.Services.AddSwaggerGen(
 builder.Services.AddDbContext<AppDbContext>(
     options => options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddScoped<UserService>();
-
-builder.Services.AddScoped<UserRepository>();
-
-builder.Services.AddScoped<MeetingService>();
-
-builder.Services.AddScoped<MeetingRepository>();
+builder.Services.AddAppServices();
 
 builder.Services.AddScoped<JwtService>();
 
@@ -94,34 +88,14 @@ app.UseAuthorization();
 
 app.MapPost("/login", Login);
 
-app.MapPost("/meetings/new", CreateMeeting).RequireAuthorization("RequireAdminRole");
+app.MapMeetingEndpoints();
 
-app.MapGet("/meetings", GetMeeting).RequireAuthorization("RequireAdminRole");
-
-app.MapDelete("/meetings/delete", DeleteMeeting).RequireAuthorization("RequireAdminRole");
+app.MapCriteriaEndpoints();
 
 async Task<IResult> Login(LoginAdminRequest request, UserService userService)
 {
     var k = await userService.LoginAdmin(request);
     return k == string.Empty ? Results.Unauthorized() : Results.Ok(new { Token = k });
-}
-
-async Task<IResult> CreateMeeting(CreateMeetingRequest request, MeetingService meetingService)
-{
-    await meetingService.AddMeeting(request);
-    return Results.Ok();
-}
-
-async Task<IResult> GetMeeting(int? id, MeetingService meetingService)
-{
-    var meetings = await meetingService.GetMeeting(id);
-    return Results.Ok(meetings);
-}
-
-async Task<IResult> DeleteMeeting(int id, MeetingService meetingService)
-{
-    await meetingService.DeleteMeeting(id);
-    return Results.Ok();
 }
 
 app.Run();

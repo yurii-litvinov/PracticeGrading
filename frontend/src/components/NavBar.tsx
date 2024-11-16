@@ -3,9 +3,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 export function NavBar() {
     return (
-        <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+        <nav className="navbar navbar-expand-sm navbar-dark bg-dark">
             <div className="container-fluid">
-                <NavLink className="navbar-brand" to="/meetings" replace>Practice Grading</NavLink>
+                <NavLink className="navbar-brand fs-4" to="/meetings" replace>Practice Grading</NavLink>
                 <button
                     className="navbar-toggler"
                     data-bs-toggle="collapse"
@@ -26,6 +26,15 @@ export function NavBar() {
                                 replace
                             >
                                 Заседания
+                            </NavLink>
+                        </li>
+                        <li className="nav-item">
+                            <NavLink
+                                to="/criteria"
+                                className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}
+                                replace
+                            >
+                                Критерии
                             </NavLink>
                         </li>
                         <li className="nav-item">

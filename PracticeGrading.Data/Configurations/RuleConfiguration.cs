@@ -17,6 +17,5 @@ public class RuleConfiguration : IEntityTypeConfiguration<Rule>
     /// <summary>
     /// Configures rule entity.
     /// </summary>
-    public void Configure(EntityTypeBuilder<Rule> builder) =>
-        builder.HasKey(rule => rule.Id);
+    public void Configure(EntityTypeBuilder<Rule> builder) => builder.HasKey(rule => rule.Id);
 }

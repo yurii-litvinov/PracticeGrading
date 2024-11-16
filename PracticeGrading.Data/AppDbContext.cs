@@ -44,6 +44,11 @@ public class AppDbContext : DbContext
     public DbSet<Meeting> Meetings { get; set; }
 
     /// <summary>
+    /// Gets or sets Criteria table.
+    /// </summary>
+    public DbSet<Criteria> Criteria { get; set; }
+
+    /// <summary>
     /// Sets configurations of database tables.
     /// </summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)

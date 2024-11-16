@@ -54,8 +54,13 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
         }
     }
 
+    const handleClose = () => {
+        setStudentWork(studentWorkData ?? initialStudentWorkState);
+    }
+
     return (
-        <div className="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1"
+        <div className="modal fade" id="studentWorkModal" data-bs-backdrop="static" data-bs-keyboard="false"
+             tabIndex="-1"
              aria-labelledby="staticBackdropLabel" aria-hidden="true">
             <div className="modal-dialog modal-lg">
                 <div className="modal-content">
@@ -63,7 +68,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                         <h1 className="modal-title fs-5 ps-4"
                             id="staticBackdropLabel">{studentWorkData ? "Редактирование студенческой работы" : "Создание студенческой работы"}</h1>
                         <button type="button" className="btn-close" ref={closeButtonRef} data-bs-dismiss="modal"
-                                aria-label="Close"></button>
+                                aria-label="Close" onClick={handleClose}></button>
                     </div>
 
                     <div className="modal-body">
@@ -119,7 +124,9 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                     </div>
 
                     <div className="modal-footer">
-                        <button type="button" className="btn btn-light" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" className="btn btn-light" data-bs-dismiss="modal"
+                                onClick={handleClose}>Отмена
+                        </button>
                         <button type="button" className="btn btn-primary" onClick={handleSave}>Сохранить</button>
                     </div>
                 </div>

@@ -26,12 +26,12 @@ public class Criteria
     public string? Comment { get; set; }
 
     /// <summary>
-    /// Gets or sets scale.
-    /// </summary>
-    required public List<int> Scale { get; set; }
-
-    /// <summary>
     /// Gets or sets rules.
     /// </summary>
     public ICollection<Rule>? Rules { get; set; }
+
+    /// <summary>
+    /// Gets or sets meetings.
+    /// </summary>
+    public ICollection<Meeting>? Meetings { get; set; }
 }
