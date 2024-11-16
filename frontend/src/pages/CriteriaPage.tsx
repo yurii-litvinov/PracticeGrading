@@ -1,13 +1,10 @@
 import React, {useEffect, useState} from 'react';
-import axios from 'axios';
-import {useNavigate} from 'react-router-dom';
 import {getCriteria, deleteCriteria, createCriteria, updateCriteria} from '../services/apiService';
 import {CriteriaModal} from '../components/CriteriaModal'
 
 export function CriteriaPage() {
     const [criteria, setCriteria] = useState([]);
     const [criteriaToEditId, setCriteriaToEditId] = useState();
-    const navigate = useNavigate()
 
     useEffect(() => {
         getCriteria().then(response => setCriteria(response.data));

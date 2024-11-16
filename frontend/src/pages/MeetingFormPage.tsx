@@ -1,9 +1,8 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import DatePicker, {registerLocale} from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import ru from 'date-fns/locale/ru';
-import {Meeting} from '../interfaces/Meeting'
 import {StudentWorkModal} from '../components/StudentWorkModal';
 import {createMeeting, getCriteria, getMeetings, updateMeeting} from '../services/apiService';
 
@@ -12,7 +11,6 @@ registerLocale('ru', ru);
 export function MeetingFormPage() {
     const {id} = useParams();
     const navigate = useNavigate();
-    const [startDate, setStartDate] = useState();
     const [workToEditIndex, setWorkToEditIndex] = useState();
     const [criteria, setCriteria] = useState([]);
 

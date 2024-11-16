@@ -1,5 +1,4 @@
 import {StudentWork} from './StudentWork';
-import {Criteria} from './Criteria';
 
 // Interface for meeting
 export interface Meeting {

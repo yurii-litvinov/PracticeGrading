@@ -1,6 +1,5 @@
-import React, {useRef, useState, useEffect} from 'react';
+import {useRef, useState, useEffect} from 'react';
 import {Criteria} from '../interfaces/Criteria'
-import {Rule} from '../interfaces/Rule'
 
 interface CriteriaModalProps {
     criteriaData: Criteria,

@@ -1,15 +1,8 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getMeetings, getCriteria} from '../services/apiService';
-import DatePicker, {registerLocale} from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import ru from 'date-fns/locale/ru';
-import {Meeting} from '../interfaces/Meeting'
-import {StudentWorkModal} from '../components/StudentWorkModal';
-import {createMeeting} from '../services/apiService';
 import {formatDate} from './MeetingsPage';
-
-registerLocale('ru', ru);
 
 export function ViewMeetingPage() {
     const {id} = useParams();
@@ -39,7 +32,6 @@ export function ViewMeetingPage() {
             getCriteria(criteriaId).then(response => response.data[0])
         );
 
-        // После получения всех критериев обновляем состояние
         Promise.all(criteriaPromises).then(criteriaData => {
             setCriteria(criteriaData);
         });
