@@ -5,7 +5,7 @@ import {Meeting} from '../interfaces/Meeting'
 const token = sessionStorage.getItem('token');
 
 const axiosService = axios.create({
-    baseURL: 'https://localhost:7106/',
+    baseURL: 'http://localhost:5001/',
     headers: {
         Authorization: token ? `Bearer ${token}` : '',
     },

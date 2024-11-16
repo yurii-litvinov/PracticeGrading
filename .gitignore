@@ -399,3 +399,4 @@ FodyWeavers.xsd
 .idea
 
 PracticeGrading.Data/Migrations/
+pg-data
