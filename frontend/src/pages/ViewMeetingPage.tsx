@@ -151,7 +151,7 @@ export function ViewMeetingPage() {
                         ))}
                     </div>
 
-                    <div className="flex-grow-2">
+                    <div className="flex-grow-1">
                         <h4 className="p-2">Критерии</h4>
                         <ul className="list-group p-2">
                             {criteria.map((criteria) => (
