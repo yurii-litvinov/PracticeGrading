@@ -29,11 +29,6 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
 
     /// <summary>
-    /// Gets or sets Roles table.
-    /// </summary>
-    public DbSet<Role> Roles { get; set; }
-
-    /// <summary>
     /// Gets or sets Meetings table.
     /// </summary>
     public DbSet<Meeting> Meetings { get; set; }
