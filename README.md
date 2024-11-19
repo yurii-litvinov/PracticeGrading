@@ -14,18 +14,33 @@
    ```shell
    git clone https://github.com/yurii-litvinov/PracticeGrading.git
    ```
-3. Инициализируйте базу данных:
+   
+3. Подключитесь к PostgreSQL и введите пароль (по умолчанию `postgres`):
    ```shell
-   psql -U postgres -d postgres -f PracticeGrading.Data/init_database.sql
+   psql -U postgres
    ```
-4. Соберите и запустите сервер:
+4. Создайте базу данных `practice_grading`, если она еще не создана:
+   ```shell
+   CREATE DATABASE practice_grading;
+   ```
+5. Подключитесь к новой базе данных:
+   ```shell
+   \c practice_grading
+   ```
+6. Выполните скрипт для инициализации:
+   ```shell
+   \i PracticeGrading.Data/init_database.sql
+   ```
+7. Закройте сессию PostgreSQL:
+   ```shell
+   \q
+   ```
+8. Соберите и запустите сервер:
    ```shell
    cd PracticeGrading.API
-   dotnet restore
-   dotnet build
    dotnet run
    ```
-5. Запустите клиент:
+9. Запустите клиент:
    ```shell
    cd ../frontend
    npm install
