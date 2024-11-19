@@ -48,7 +48,7 @@ public class MeetingService(MeetingRepository meetingRepository, CriteriaReposit
                     CodeLink = worksRequest.CodeLink,
                 }).ToList(),
             Members = request.Members.Select(
-                name => new Member
+                name => new User
                 {
                     UserName = name,
                     PasswordHash = string.Empty,
@@ -151,7 +151,7 @@ public class MeetingService(MeetingRepository meetingRepository, CriteriaReposit
             foreach (var name in request.Members)
             {
                 meeting.Members?.Add(
-                    new Member
+                    new User
                     {
                         UserName = name,
                         PasswordHash = string.Empty,

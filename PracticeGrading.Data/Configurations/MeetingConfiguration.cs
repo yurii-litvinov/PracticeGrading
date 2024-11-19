@@ -25,7 +25,7 @@ public class MeetingConfiguration : IEntityTypeConfiguration<Meeting>
             .WithOne(work => work.Meeting)
             .HasForeignKey(work => work.MeetingId);
 
-        builder.HasMany<Member>(meeting => meeting.Members)
+        builder.HasMany<User>(meeting => meeting.Members)
             .WithOne(member => member.Meeting)
             .HasForeignKey(member => member.MeetingId);
 

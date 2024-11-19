@@ -34,11 +34,6 @@ public class AppDbContext : DbContext
     public DbSet<Role> Roles { get; set; }
 
     /// <summary>
-    /// Gets or sets Members table.
-    /// </summary>
-    public DbSet<Member> Members { get; set; }
-
-    /// <summary>
     /// Gets or sets Meetings table.
     /// </summary>
     public DbSet<Meeting> Meetings { get; set; }
@@ -58,7 +53,6 @@ public class AppDbContext : DbContext
 
         modelBuilder.ApplyConfiguration(new StudentWorkConfiguration());
         modelBuilder.ApplyConfiguration(new MeetingConfiguration());
-        modelBuilder.ApplyConfiguration(new MemberConfiguration());
         modelBuilder.ApplyConfiguration(new MemberMarkConfiguration());
 
         modelBuilder.ApplyConfiguration(new CriteriaConfiguration());

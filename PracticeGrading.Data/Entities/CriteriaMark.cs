@@ -16,9 +16,9 @@ public class CriteriaMark : Criteria
     public int Mark { get; set; }
 
     /// <summary>
-    /// Gets or sets member mark id.
+    /// Gets or sets member id.
     /// </summary>
-    public int MemberMarkId { get; set; }
+    public int MemberId { get; set; }
 
     /// <summary>
     /// Gets or sets student work id.

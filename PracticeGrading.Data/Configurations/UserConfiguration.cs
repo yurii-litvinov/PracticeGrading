@@ -24,6 +24,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasOne<Role>(user => user.Role)
             .WithMany(role => role.Users)
             .HasForeignKey(user => user.RoleId);
+        
+        builder.HasMany<MemberMark>(member => member.Marks)
+            .WithOne(mark => mark.Member)
+            .HasForeignKey(mark => mark.MemberId);
 
         builder.HasData(
             new User
