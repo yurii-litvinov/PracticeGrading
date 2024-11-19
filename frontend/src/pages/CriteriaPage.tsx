@@ -6,15 +6,27 @@ export function CriteriaPage() {
     const [criteria, setCriteria] = useState([]);
     const [criteriaToEditId, setCriteriaToEditId] = useState();
 
+    const fetchCriteria = () => {
+        getCriteria().then(response =>
+            setCriteria(
+                response.data.map(criteria => ({
+                    ...criteria,
+                    scale: filterAndSort(criteria.scale),
+                    rules: filterAndSort(criteria.rules),
+                }))
+            )
+        );
+    }
+
     useEffect(() => {
-        getCriteria().then(response => setCriteria(response.data));
+        fetchCriteria();
     }, []);
 
     const handleDeleteCriteria = async (id) => {
         const isConfirmed = window.confirm('Вы уверены, что хотите удалить этот критерий?');
         if (isConfirmed) {
             await deleteCriteria(id);
-            getCriteria().then(response => setCriteria(response.data));
+            fetchCriteria();
         }
     }
 
@@ -35,7 +47,7 @@ export function CriteriaPage() {
         }
 
         setCriteriaToEditId(null);
-        getCriteria().then(response => setCriteria(response.data));
+        fetchCriteria();
     }
 
     return (<>
