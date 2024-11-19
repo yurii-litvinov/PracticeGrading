@@ -36,13 +36,13 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
             setStudentWork(initialStudentWorkState);
         }
     }, [studentWorkData]);
-
+    
     const handleChange = (e) => {
         const {name, value} = e.target;
 
         setStudentWork((prev) => ({
             ...prev,
-            [name]: value
+            [name]: value === '' ? null : value
         }));
     }
 
@@ -116,14 +116,14 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                                         руководителя</label>
                                     <input type="number" className="form-control w-auto" name="supervisorMark"
                                            min="2" max="5" step="1"
-                                           value={studentWork.supervisorMark} onChange={handleChange}/>
+                                           value={studentWork.supervisorMark ?? ''} onChange={handleChange}/>
                                 </div>
                                 <div className="col-6 d-flex align-items-center">
                                     <label className="form-label me-3">Оценка
                                         рецензента</label>
                                     <input type="number" className="form-control w-auto" name="reviewerMark"
                                            min="2" max="5" step="1"
-                                           value={studentWork.reviewerMark} onChange={handleChange}/>
+                                           value={studentWork.reviewerMark ?? ''} onChange={handleChange}/>
                                 </div>
                             </div>
                         </form>

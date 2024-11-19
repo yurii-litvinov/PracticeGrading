@@ -20,8 +20,8 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
         id: null,
         name: '',
         comment: '',
-        scale: [{description: '', value: ''}],
-        rules: [{description: '', value: ''}]
+        scale: [{description: '', value: undefined}],
+        rules: [{description: '', value: undefined}]
     }
     const [criteria, setCriteria] = useState(initialCriteriaState);
 
@@ -54,7 +54,7 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
             [field]: value
         }
 
-        if (!updatedItems[index].description && updatedItems[index].value === '') {
+        if (!updatedItems[index].description && !updatedItems[index].value) {
             updatedItems.splice(index, 1);
         }
 
@@ -66,8 +66,8 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
 
     useEffect(() => {
         const addEmptyRuleIfNeeded = (array) => {
-            if (array.length === 0 || array[array.length - 1].description !== '' || array[array.length - 1].value !== '') {
-                return [...array, {description: '', value: ''}];
+            if (array.length === 0 || array[array.length - 1].description !== '' || array[array.length - 1].value !== undefined) {
+                return [...array, {description: '', value: undefined}];
             }
             return array;
         }
@@ -133,7 +133,7 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
                                                 type="number"
                                                 className="form-control me-2"
                                                 style={{maxWidth: '65px'}}
-                                                defaultValue={rule.value}
+                                                value={rule.value ?? ''}
                                                 min="0" max="5" step="1"
                                                 onChange={(e) => handleRuleChange(index, 'value', Number(e.target.value), 'scale')}
                                                 placeholder="0"
@@ -161,7 +161,7 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
                                                 type="number"
                                                 className="form-control me-2"
                                                 style={{maxWidth: '65px'}}
-                                                defaultValue={rule.value}
+                                                value={rule.value ?? ''}
                                                 step="1"
                                                 onChange={(e) => handleRuleChange(index, 'value', Number(e.target.value), 'rules')}
                                                 placeholder="0"
