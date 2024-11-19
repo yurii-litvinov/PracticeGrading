@@ -40,7 +40,7 @@ CREATE TABLE "Users" (
                          "RoleId" integer NOT NULL,
                          "MeetingId" integer,
                          CONSTRAINT "PK_Users" PRIMARY KEY ("Id"),
-                         CONSTRAINT "FK_Users_Meetings_MeetingId" FOREIGN KEY ("MeetingId") REFERENCES "Meetings" ("Id"),
+                         CONSTRAINT "FK_Users_Meetings_MeetingId" FOREIGN KEY ("MeetingId") REFERENCES "Meetings" ("Id") ON DELETE CASCADE,
                          CONSTRAINT "FK_Users_Role_RoleId" FOREIGN KEY ("RoleId") REFERENCES "Role" ("Id") ON DELETE CASCADE
 );
 
