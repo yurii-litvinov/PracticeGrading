@@ -5,22 +5,16 @@
 
 namespace PracticeGrading.API.Models.DTOs;
 
-using System.Diagnostics.CodeAnalysis;
-
 /// <summary>
 /// Student work DTO.
 /// </summary>
-[SuppressMessage(
-    "StyleCop.CSharp.NamingRules",
-    "SA1313:Parameter names should begin with lower-case letter",
-    Justification = "Causes another problem with names")]
 public record StudentWorkDto(
     int? Id,
     string StudentName,
     string Theme,
     string Supervisor,
     string? Consultant,
-    string Reviewer,
-    int SupervisorMark,
-    int ReviewerMark,
+    string? Reviewer,
+    int? SupervisorMark,
+    int? ReviewerMark,
     string? CodeLink);

@@ -5,21 +5,16 @@
 
 namespace PracticeGrading.API.Services;
 
-using Models.DTOs;
-using Models.Requests;
-using Models;
-using System.Diagnostics.CodeAnalysis;
-using Data.Entities;
-using Data.Repositories;
+using PracticeGrading.API.Models;
+using PracticeGrading.API.Models.DTOs;
+using PracticeGrading.API.Models.Requests;
+using PracticeGrading.Data.Entities;
+using PracticeGrading.Data.Repositories;
 
 /// <summary>
 /// Service for working with meetings.
 /// </summary>
 /// <param name="meetingRepository">Repository for meetings.</param>
-[SuppressMessage(
-    "StyleCop.CSharp.SpacingRules",
-    "SA1010:Opening square brackets should be spaced correctly",
-    Justification = "Causes another problem with spaces")]
 public class MeetingService(MeetingRepository meetingRepository, CriteriaRepository criteriaRepository)
 {
     /// <summary>
@@ -74,7 +69,11 @@ public class MeetingService(MeetingRepository meetingRepository, CriteriaReposit
         }
         else
         {
-            meetings = [await meetingRepository.GetById(id.Value) ?? throw new Exception()];
+            meetings =
+            [
+                await meetingRepository.GetById(id.Value) ??
+                throw new InvalidOperationException($"Meeting with ID {id.Value} was not found.")
+            ];
         }
 
         return meetings.Select(
@@ -117,11 +116,8 @@ public class MeetingService(MeetingRepository meetingRepository, CriteriaReposit
     {
         if (request.Id != null)
         {
-            var meeting = await meetingRepository.GetById((int)request.Id);
-            if (meeting == null)
-            {
-                throw new Exception();
-            }
+            var meeting = await meetingRepository.GetById((int)request.Id) ??
+                          throw new InvalidOperationException($"Meeting with ID {request.Id} was not found.");
 
             meeting.DateAndTime = request.DateAndTime;
             meeting.Auditorium = request.Auditorium;
@@ -171,11 +167,8 @@ public class MeetingService(MeetingRepository meetingRepository, CriteriaReposit
     /// <param name="id">Meeting id.</param>
     public async Task DeleteMeeting(int id)
     {
-        var meeting = await meetingRepository.GetById(id);
-        if (meeting == null)
-        {
-            throw new Exception();
-        }
+        var meeting = await meetingRepository.GetById(id) ??
+                      throw new InvalidOperationException($"Meeting with ID {id} was not found.");
 
         await meetingRepository.Delete(meeting);
     }
@@ -185,7 +178,9 @@ public class MeetingService(MeetingRepository meetingRepository, CriteriaReposit
         var criteria = new List<Criteria>();
         foreach (var id in idList)
         {
-            criteria.Add(await criteriaRepository.GetById(id) ?? throw new Exception());
+            criteria.Add(
+                await criteriaRepository.GetById(id) ??
+                throw new InvalidOperationException($"Criteria with ID {id} was not found."));
         }
 
         return criteria;

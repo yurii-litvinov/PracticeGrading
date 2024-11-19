@@ -1,6 +1,12 @@
 import React, {useRef, useState, useEffect} from 'react';
 import {StudentWork} from '../interfaces/StudentWork'
 
+/**
+ * Interface for student work modal props.
+ *
+ * @param studentWorkData - Student work to edit
+ * @param onSave - Save student work function
+ */
 interface StudentWorkModalProps {
     studentWorkData: StudentWork,
     onSave: (studentWork: StudentWork) => void,
@@ -16,8 +22,8 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
         supervisor: '',
         consultant: '',
         reviewer: '',
-        supervisorMark: '',
-        reviewerMark: '',
+        supervisorMark: undefined,
+        reviewerMark: undefined,
         codeLink: ''
     }
 
@@ -79,7 +85,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                                        required value={studentWork.studentName} onChange={handleChange}/>
                             </div>
                             <div className="mb-2">
-                                <label className="form-label">Тема ВКР</label>
+                                <label className="form-label">Тема практики/ВКР</label>
                                 <input type="text" className="form-control" name="theme"
                                        required value={studentWork.theme} onChange={handleChange}/>
                             </div>
@@ -96,7 +102,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                             <div className="mb-2">
                                 <label className="form-label">Рецензент</label>
                                 <input type="text" className="form-control" name="reviewer"
-                                       required value={studentWork.reviewer} onChange={handleChange}/>
+                                       value={studentWork.reviewer} onChange={handleChange}/>
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">Ссылка на код</label>
@@ -109,14 +115,14 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                                     <label className="form-label me-3">Оценка научного
                                         руководителя</label>
                                     <input type="number" className="form-control w-auto" name="supervisorMark"
-                                           min="2" max="5" step="1" required
+                                           min="2" max="5" step="1"
                                            value={studentWork.supervisorMark} onChange={handleChange}/>
                                 </div>
                                 <div className="col-6 d-flex align-items-center">
                                     <label className="form-label me-3">Оценка
                                         рецензента</label>
                                     <input type="number" className="form-control w-auto" name="reviewerMark"
-                                           min="2" max="5" step="1" required
+                                           min="2" max="5" step="1"
                                            value={studentWork.reviewerMark} onChange={handleChange}/>
                                 </div>
                             </div>

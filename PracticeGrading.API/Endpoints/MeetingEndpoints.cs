@@ -5,8 +5,8 @@
 
 namespace PracticeGrading.API.Endpoints;
 
-using Models.Requests;
-using Services;
+using PracticeGrading.API.Models.Requests;
+using PracticeGrading.API.Services;
 
 /// <summary>
 /// Class for meeting endpoints.

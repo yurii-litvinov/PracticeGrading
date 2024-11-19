@@ -5,20 +5,15 @@
 
 namespace PracticeGrading.API.Services;
 
-using Models.Requests;
-using Models;
-using System.Diagnostics.CodeAnalysis;
-using Data.Repositories;
+using PracticeGrading.API.Models;
+using PracticeGrading.API.Models.Requests;
+using PracticeGrading.Data.Repositories;
 
 /// <summary>
 /// Service for working with users.
 /// </summary>
 /// <param name="userRepository">Repository for users.</param>
 /// <param name="jwtService">Service for generating JWT tokens.</param>
-[SuppressMessage(
-    "StyleCop.CSharp.SpacingRules",
-    "SA1010:Opening square brackets should be spaced correctly",
-    Justification = "Causes another problem with spaces")]
 public class UserService(UserRepository userRepository, JwtService jwtService)
 {
     /// <summary>
@@ -28,12 +23,8 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
     /// <returns>JWT token.</returns>
     public async Task<string> LoginAdmin(LoginAdminRequest request)
     {
-        var user = await userRepository.GetByUserName(request.UserName);
-
-        if (user == null)
-        {
-            throw new Exception();
-        }
+        var user = await userRepository.GetByUserName(request.UserName) ??
+                   throw new InvalidOperationException($"User with UserName {request.UserName} was not found.");
 
         if (user.RoleId == (int)RolesEnum.Admin && BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {

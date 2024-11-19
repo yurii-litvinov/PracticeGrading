@@ -6,7 +6,7 @@
 namespace PracticeGrading.Data.Repositories;
 
 using Microsoft.EntityFrameworkCore;
-using Entities;
+using PracticeGrading.Data.Entities;
 
 /// <summary>
 /// Сlass for interacting with the critetia entity.

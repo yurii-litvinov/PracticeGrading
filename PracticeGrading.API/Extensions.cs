@@ -5,12 +5,12 @@
 
 namespace PracticeGrading.API;
 
-using Data.Repositories;
-using Services;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using PracticeGrading.API.Services;
+using PracticeGrading.Data.Repositories;
 
 /// <summary>
 /// Class for extensions.
@@ -49,6 +49,9 @@ public static class Extensions
                 policy => policy.RequireClaim(ClaimTypes.Role, "admin"));
     }
 
+    /// <summary>
+    /// Adds app services.
+    /// </summary>
     public static void AddAppServices(this IServiceCollection services)
     {
         services.AddScoped<UserService>();

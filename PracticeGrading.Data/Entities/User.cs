@@ -18,7 +18,7 @@ public class User
     /// <summary>
     /// Gets or sets username.
     /// </summary>
-    required public string UserName { get; set; }
+    public required string UserName { get; set; }
 
     /// <summary>
     /// Gets or sets hashed password.

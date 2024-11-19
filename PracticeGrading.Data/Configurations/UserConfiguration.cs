@@ -5,9 +5,9 @@
 
 namespace PracticeGrading.Data.Configurations;
 
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PracticeGrading.Data.Entities;
 
 /// <summary>
 /// The class for configuration of user entity.
@@ -24,7 +24,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.HasOne<Role>(user => user.Role)
             .WithMany(role => role.Users)
             .HasForeignKey(user => user.RoleId);
-        
+
         builder.HasMany<MemberMark>(member => member.Marks)
             .WithOne(mark => mark.Member)
             .HasForeignKey(mark => mark.MemberId);

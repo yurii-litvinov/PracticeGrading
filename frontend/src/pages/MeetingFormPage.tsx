@@ -34,10 +34,7 @@ export function MeetingFormPage() {
             getMeetings(id).then(response => setMeeting(response.data[0]));
         }
     }, [id]);
-
-    console.log(meeting.dateAndTime)
-
-
+    
     const handleBack = () => {
         if (id) {
             navigate(`/meetings/${id}`, {replace: true});
@@ -175,7 +172,6 @@ export function MeetingFormPage() {
                             name="auditorium"
                             value={meeting.auditorium}
                             onChange={handleMeetingChange}
-                            required
                             placeholder="3381"/>
                     </div>
 
@@ -187,8 +183,8 @@ export function MeetingFormPage() {
                             className="form-control"
                             value={meeting.info}
                             name="info"
-                            onChange={handleMeetingChange}
                             required
+                            onChange={handleMeetingChange}
                             placeholder="СП, бакалавры ПИ, ГЭК 5080-01"/>
                     </div>
 
@@ -200,7 +196,6 @@ export function MeetingFormPage() {
                             value={meeting.callLink}
                             name="callLink"
                             onChange={handleMeetingChange}
-                            required
                             placeholder="https://..."/>
                     </div>
 
@@ -212,7 +207,6 @@ export function MeetingFormPage() {
                             value={meeting.materialsLink}
                             name="materialsLink"
                             onChange={handleMeetingChange}
-                            required
                             placeholder="https://..."/>
                     </div>
                 </div>
@@ -265,9 +259,9 @@ export function MeetingFormPage() {
                                         <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                         <td>{work.supervisor}</td>
                                         <td>{work.consultant || "—"}</td>
-                                        <td>{work.reviewer}</td>
-                                        <td>{work.supervisorMark}</td>
-                                        <td>{work.reviewerMark}</td>
+                                        <td>{work.reviewer || "—"}</td>
+                                        <td>{work.supervisorMark || "—"}</td>
+                                        <td>{work.reviewerMark || "—"}</td>
                                         <td style={{minWidth: '85px'}}>{work.codeLink ? (
                                             <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
                                                 Ссылка

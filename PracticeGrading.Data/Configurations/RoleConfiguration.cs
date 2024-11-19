@@ -5,9 +5,9 @@
 
 namespace PracticeGrading.Data.Configurations;
 
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PracticeGrading.Data.Entities;
 
 /// <summary>
 /// The class for configuration of role entity.

@@ -6,8 +6,8 @@
 namespace PracticeGrading.Data;
 
 using Microsoft.EntityFrameworkCore;
-using Configurations;
-using Entities;
+using PracticeGrading.Data.Configurations;
+using PracticeGrading.Data.Entities;
 
 /// <summary>
 /// The context class for the database.

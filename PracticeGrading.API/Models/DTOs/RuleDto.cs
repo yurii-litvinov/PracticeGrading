@@ -5,13 +5,7 @@
 
 namespace PracticeGrading.API.Models.DTOs;
 
-using System.Diagnostics.CodeAnalysis;
-
 /// <summary>
 /// Rule DTO.
 /// </summary>
-[SuppressMessage(
-    "StyleCop.CSharp.NamingRules",
-    "SA1313:Parameter names should begin with lower-case letter",
-    Justification = "Causes another problem with names")]
 public record RuleDto(int Id, string Description, int Value, bool IsScaleRule);

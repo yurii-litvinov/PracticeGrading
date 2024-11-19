@@ -18,7 +18,7 @@ public class Rule
     /// <summary>
     /// Gets or sets description.
     /// </summary>
-    required public string Description { get; set; }
+    public required string Description { get; set; }
 
     /// <summary>
     /// Gets or sets value.

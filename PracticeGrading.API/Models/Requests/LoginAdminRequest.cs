@@ -5,13 +5,7 @@
 
 namespace PracticeGrading.API.Models.Requests;
 
-using System.Diagnostics.CodeAnalysis;
-
 /// <summary>
 /// Class for admin login request.
 /// </summary>
-[SuppressMessage(
-    "StyleCop.CSharp.NamingRules",
-    "SA1313:Parameter names should begin with lower-case letter",
-    Justification = "Causes another problem with names")]
 public record LoginAdminRequest(string UserName, string Password);

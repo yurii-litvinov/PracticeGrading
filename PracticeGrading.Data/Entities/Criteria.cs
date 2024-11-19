@@ -18,7 +18,7 @@ public class Criteria
     /// <summary>
     /// Gets or sets name.
     /// </summary>
-    required public string Name { get; set; }
+    public required string Name { get; set; }
 
     /// <summary>
     /// Gets or sets comment.

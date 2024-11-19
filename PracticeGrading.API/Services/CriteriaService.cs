@@ -5,20 +5,15 @@
 
 namespace PracticeGrading.API.Services;
 
-using Models.DTOs;
-using Models.Requests;
-using System.Diagnostics.CodeAnalysis;
-using Data.Entities;
-using Data.Repositories;
+using PracticeGrading.API.Models.DTOs;
+using PracticeGrading.API.Models.Requests;
+using PracticeGrading.Data.Entities;
+using PracticeGrading.Data.Repositories;
 
 /// <summary>
 /// Service for working with criteria.
 /// </summary>
 /// <param name="criteriaRepository">Repository for criteia.</param>
-[SuppressMessage(
-    "StyleCop.CSharp.SpacingRules",
-    "SA1010:Opening square brackets should be spaced correctly",
-    Justification = "Causes another problem with spaces")]
 public class CriteriaService(CriteriaRepository criteriaRepository)
 {
     /// <summary>
@@ -68,7 +63,11 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
         }
         else
         {
-            criteriaList = [await criteriaRepository.GetById(id.Value) ?? throw new Exception()];
+            criteriaList =
+            [
+                await criteriaRepository.GetById(id.Value) ??
+                throw new InvalidOperationException($"Criteria with ID {id.Value} was not found.")
+            ];
         }
 
         var dtoList = criteriaList.Select(
@@ -76,14 +75,10 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
                     criteria.Id,
                     criteria.Name,
                     criteria.Comment,
-                    (criteria.Rules ?? [])
-                    .Where(rule => rule.IsScaleRule)
-                    .Select(rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule))
-                    .ToList(),
-                    (criteria.Rules ?? [])
-                    .Where(rule => !rule.IsScaleRule)
-                    .Select(rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule))
-                    .ToList()))
+                    (criteria.Rules ?? []).Where(rule => rule.IsScaleRule).Select(
+                        rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)).ToList(),
+                    (criteria.Rules ?? []).Where(rule => !rule.IsScaleRule).Select(
+                        rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)).ToList()))
             .ToList();
 
         return dtoList;
@@ -97,11 +92,8 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
     {
         if (request.Id != null)
         {
-            var criteria = await criteriaRepository.GetById((int)request.Id);
-            if (criteria == null)
-            {
-                throw new Exception();
-            }
+            var criteria = await criteriaRepository.GetById((int)request.Id) ??
+                           throw new InvalidOperationException($"Criteria with ID {request.Id} was not found.");
 
             criteria.Name = request.Name;
             criteria.Comment = request.Comment;
@@ -139,11 +131,8 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
     /// <param name="id">Criteria id.</param>
     public async Task DeleteCriteria(int id)
     {
-        var criteria = await criteriaRepository.GetById(id);
-        if (criteria == null)
-        {
-            throw new Exception();
-        }
+        var criteria = await criteriaRepository.GetById(id) ??
+                       throw new InvalidOperationException($"Criteria with ID {id} was not found.");
 
         await criteriaRepository.Delete(criteria);
     }

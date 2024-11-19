@@ -6,10 +6,10 @@
 namespace PracticeGrading.Data.Repositories;
 
 using Microsoft.EntityFrameworkCore;
-using Entities;
+using PracticeGrading.Data.Entities;
 
 /// <summary>
-/// Сlass for interacting with the user entity.
+/// Class for interacting with the user entity.
 /// </summary>
 /// <param name="context"> Database context.</param>
 public class UserRepository(AppDbContext context)

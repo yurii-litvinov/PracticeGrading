@@ -18,17 +18,17 @@ public class StudentWork
     /// <summary>
     /// Gets or sets or student's name.
     /// </summary>
-    required public string StudentName { get; set; }
+    public required string StudentName { get; set; }
 
     /// <summary>
     /// Gets or sets theme.
     /// </summary>
-    required public string Theme { get; set; }
+    public required string Theme { get; set; }
 
     /// <summary>
     /// Gets or sets supervisor.
     /// </summary>
-    required public string Supervisor { get; set; }
+    public required string Supervisor { get; set; }
 
     /// <summary>
     /// Gets or sets consultant.
@@ -38,22 +38,22 @@ public class StudentWork
     /// <summary>
     /// Gets or sets reviewer.
     /// </summary>
-    required public string Reviewer { get; set; }
+    public string? Reviewer { get; set; }
 
     /// <summary>
     /// Gets or sets supervisor's mark.
     /// </summary>
-    public int SupervisorMark { get; set; }
+    public int? SupervisorMark { get; set; }
 
     /// <summary>
     /// Gets or sets reviewer's mark.
     /// </summary>
-    public int ReviewerMark { get; set; }
+    public int? ReviewerMark { get; set; }
 
     /// <summary>
     /// Gets or sets final mark.
     /// </summary>
-    public int FinalMark { get; set; }
+    public int? FinalMark { get; set; }
 
     /// <summary>
     /// Gets or sets code link.

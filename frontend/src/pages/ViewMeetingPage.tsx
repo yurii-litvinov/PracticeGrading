@@ -27,7 +27,6 @@ export function ViewMeetingPage() {
         if (meeting.criteriaId.length === 0 || criteria.length === meeting.criteriaId.length) {
             return;
         }
-        console.log(meeting)
         const criteriaPromises = meeting.criteriaId.map(criteriaId =>
             getCriteria(criteriaId).then(response => response.data[0])
         );
@@ -65,7 +64,7 @@ export function ViewMeetingPage() {
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end" style={{minWidth: '225px'}}>Аудитория</label>
                     <input type="text" readOnly className="form-control-plaintext"
-                           value={meeting.auditorium}/>
+                           value={meeting.auditorium || "—"}/>
                 </div>
 
                 <div className="d-flex mb-2 align-items-center">
@@ -74,22 +73,26 @@ export function ViewMeetingPage() {
                     <input type="text" readOnly className="form-control-plaintext"
                            value={meeting.info}/>
                 </div>
+                
+                {meeting.callLink && (
+                    <div className="d-flex mb-2 align-items-center">
+                        <label className="me-3 fw-bold text-end" style={{minWidth: '225px'}}>Ссылка на созвон</label>
+                        <a href={meeting.callLink} className="form-control-plaintext" target="_blank"
+                           rel="noopener noreferrer">
+                            {meeting.callLink}
+                        </a>
+                    </div>
+                )}
 
-                <div className="d-flex mb-2 align-items-center">
-                    <label className="me-3 fw-bold text-end" style={{minWidth: '225px'}}>Ссылка на созвон</label>
-                    <a href={meeting.callLink} className="form-control-plaintext" target="_blank"
-                       rel="noopener noreferrer">
-                        {meeting.callLink}
-                    </a>
-                </div>
-
-                <div className="d-flex mb-2 align-items-center">
-                    <label className="me-3 fw-bold text-end" style={{minWidth: '225px'}}>Ссылка на материалы</label>
-                    <a href={meeting.materialsLink} className="form-control-plaintext" target="_blank"
-                       rel="noopener noreferrer">
-                        {meeting.materialsLink}
-                    </a>
-                </div>
+                {meeting.materialsLink && (
+                    <div className="d-flex mb-2 align-items-center">
+                        <label className="me-3 fw-bold text-end" style={{minWidth: '225px'}}>Ссылка на материалы</label>
+                        <a href={meeting.materialsLink} className="form-control-plaintext" target="_blank"
+                           rel="noopener noreferrer">
+                            {meeting.materialsLink}
+                        </a>
+                    </div>
+                )}
             </div>
 
             <hr className="my-4"/>
@@ -119,9 +122,9 @@ export function ViewMeetingPage() {
                                 <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                 <td>{work.supervisor}</td>
                                 <td>{work.consultant || "—"}</td>
-                                <td>{work.reviewer}</td>
-                                <td>{work.supervisorMark}</td>
-                                <td>{work.reviewerMark}</td>
+                                <td>{work.reviewer || "—"}</td>
+                                <td>{work.supervisorMark || "—"}</td>
+                                <td>{work.reviewerMark || "—"}</td>
                                 <td style={{minWidth: '85px'}}>{work.codeLink ? (
                                     <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
                                         Ссылка
