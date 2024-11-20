@@ -5,9 +5,9 @@
 
 namespace PracticeGrading.Data.Configurations;
 
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PracticeGrading.Data.Entities;
 
 /// <summary>
 /// The class for configuration of criteria mark entity.
@@ -20,6 +20,6 @@ public class CriteriaMarkConfiguration : IEntityTypeConfiguration<CriteriaMark>
     public void Configure(EntityTypeBuilder<CriteriaMark> builder) =>
         builder.HasOne<MemberMark>(mark => mark.MemberMark)
             .WithMany(mark => mark.CriteriaMarks)
-            .HasForeignKey(mark => new { mark.MemberMarkId, mark.StudentWorkId })
+            .HasForeignKey(mark => new { mark.MemberId, mark.StudentWorkId })
             .HasPrincipalKey(mark => new { mark.MemberId, mark.StudentWorkId });
 }

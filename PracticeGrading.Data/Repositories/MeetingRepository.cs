@@ -6,10 +6,10 @@
 namespace PracticeGrading.Data.Repositories;
 
 using Microsoft.EntityFrameworkCore;
-using Entities;
+using PracticeGrading.Data.Entities;
 
 /// <summary>
-/// Сlass for interacting with the meeting entity.
+/// Class for interacting with the meeting entity.
 /// </summary>
 /// <param name="context"> Database context.</param>
 public class MeetingRepository(AppDbContext context)
@@ -40,7 +40,11 @@ public class MeetingRepository(AppDbContext context)
     /// <param name="id">Meeting id.</param>
     /// <returns>Meeting.</returns>
     public async Task<Meeting?> GetById(int id) =>
-        await context.Meetings.FirstOrDefaultAsync(meeting => meeting.Id == id);
+        await context.Meetings
+            .Include(meeting => meeting.Members)
+            .Include(meeting => meeting.StudentWorks)
+            .Include(meeting => meeting.Criteria)
+            .FirstOrDefaultAsync(meeting => meeting.Id == id);
 
     /// <summary>
     /// Gets all meetings.

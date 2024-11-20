@@ -4,12 +4,13 @@
 // </copyright>
 
 namespace PracticeGrading.API.Services;
+
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Data.Entities;
+using PracticeGrading.Data.Entities;
 
 /// <summary>
 /// Service for generating JWT tokens.
@@ -26,8 +27,8 @@ public class JwtService(IOptions<JwtOptions> options)
     {
         var claims = new List<Claim>
         {
-            new (ClaimTypes.Name, user.UserName),
-            new (ClaimTypes.Role, user.Role != null ? user.Role.RoleName : string.Empty),
+            new(ClaimTypes.Name, user.UserName),
+            new(ClaimTypes.Role, user.Role != null ? user.Role.RoleName : string.Empty),
         };
 
         var token = new JwtSecurityToken(

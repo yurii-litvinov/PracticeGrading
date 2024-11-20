@@ -1,10 +1,11 @@
 import axios from 'axios';
+import {Criteria} from '../interfaces/Criteria'
 import {Meeting} from '../interfaces/Meeting'
 
 const token = sessionStorage.getItem('token');
 
 const axiosService = axios.create({
-    baseURL: 'https://localhost:7106/',
+    baseURL: import.meta.env.VITE_API_URL,
     headers: {
         Authorization: token ? `Bearer ${token}` : '',
     },
@@ -37,5 +38,22 @@ export const createMeeting = async (meeting: Meeting) =>
         members: meeting.members.filter(member => member !== '')
     });
 
+export const updateMeeting = async (meeting: Meeting) =>
+    await axiosService.put(`meetings/update`, {
+        ...meeting,
+        members: meeting.members.filter(member => member !== '')
+    });
+
 export const deleteMeeting = async (id: number) =>
     await axiosService.delete(`meetings/delete`, {params: {id}})
+
+export const getCriteria = async (id?: number) =>
+    await axiosService.get(`criteria`, {params: {id}});
+export const createCriteria = async (criteria: Criteria) =>
+    await axiosService.post(`criteria/new`, criteria);
+
+export const updateCriteria = async (criteria: Criteria) =>
+    await axiosService.put(`criteria/update`, criteria);
+
+export const deleteCriteria = async (id: number) =>
+    await axiosService.delete(`criteria/delete`, {params: {id}})

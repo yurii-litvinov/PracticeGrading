@@ -18,7 +18,7 @@ public class MemberMark
     /// <summary>
     /// Gets or sets member.
     /// </summary>
-    public Member? Member { get; set; }
+    public User? Member { get; set; }
 
     /// <summary>
     /// Gets or sets student work id.

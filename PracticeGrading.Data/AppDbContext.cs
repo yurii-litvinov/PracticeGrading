@@ -6,8 +6,8 @@
 namespace PracticeGrading.Data;
 
 using Microsoft.EntityFrameworkCore;
-using Configurations;
-using Entities;
+using PracticeGrading.Data.Configurations;
+using PracticeGrading.Data.Entities;
 
 /// <summary>
 /// The context class for the database.
@@ -29,19 +29,14 @@ public class AppDbContext : DbContext
     public DbSet<User> Users { get; set; }
 
     /// <summary>
-    /// Gets or sets Roles table.
-    /// </summary>
-    public DbSet<Role> Roles { get; set; }
-
-    /// <summary>
-    /// Gets or sets Members table.
-    /// </summary>
-    public DbSet<Member> Members { get; set; }
-
-    /// <summary>
     /// Gets or sets Meetings table.
     /// </summary>
     public DbSet<Meeting> Meetings { get; set; }
+
+    /// <summary>
+    /// Gets or sets Criteria table.
+    /// </summary>
+    public DbSet<Criteria> Criteria { get; set; }
 
     /// <summary>
     /// Sets configurations of database tables.
@@ -53,7 +48,6 @@ public class AppDbContext : DbContext
 
         modelBuilder.ApplyConfiguration(new StudentWorkConfiguration());
         modelBuilder.ApplyConfiguration(new MeetingConfiguration());
-        modelBuilder.ApplyConfiguration(new MemberConfiguration());
         modelBuilder.ApplyConfiguration(new MemberMarkConfiguration());
 
         modelBuilder.ApplyConfiguration(new CriteriaConfiguration());

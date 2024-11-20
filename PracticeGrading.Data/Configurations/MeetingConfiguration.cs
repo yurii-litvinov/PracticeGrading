@@ -5,9 +5,9 @@
 
 namespace PracticeGrading.Data.Configurations;
 
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PracticeGrading.Data.Entities;
 
 /// <summary>
 /// The class for configuration of meeting entity.
@@ -25,8 +25,7 @@ public class MeetingConfiguration : IEntityTypeConfiguration<Meeting>
             .WithOne(work => work.Meeting)
             .HasForeignKey(work => work.MeetingId);
 
-        builder.HasMany<Member>(meeting => meeting.Members)
-            .WithOne(member => member.Meeting)
-            .HasForeignKey(member => member.MeetingId);
+        builder.HasMany<Criteria>(meeting => meeting.Criteria)
+            .WithMany(criteria => criteria.Meetings);
     }
 }

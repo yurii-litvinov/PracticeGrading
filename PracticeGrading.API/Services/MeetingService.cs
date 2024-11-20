@@ -5,26 +5,23 @@
 
 namespace PracticeGrading.API.Services;
 
-using Models;
-using System.Diagnostics.CodeAnalysis;
-using Data.Entities;
-using Data.Repositories;
+using PracticeGrading.API.Models;
+using PracticeGrading.API.Models.DTOs;
+using PracticeGrading.API.Models.Requests;
+using PracticeGrading.Data.Entities;
+using PracticeGrading.Data.Repositories;
 
 /// <summary>
 /// Service for working with meetings.
 /// </summary>
 /// <param name="meetingRepository">Repository for meetings.</param>
-[SuppressMessage(
-    "StyleCop.CSharp.SpacingRules",
-    "SA1010:Opening square brackets should be spaced correctly",
-    Justification = "Causes another problem with spaces")]
-public class MeetingService(MeetingRepository meetingRepository)
+public class MeetingService(MeetingRepository meetingRepository, CriteriaRepository criteriaRepository)
 {
     /// <summary>
     /// Adds new meeting.
     /// </summary>
     /// <param name="request">Meeting creation request.</param>
-    public async Task AddMeeting(CreateMeetingRequest request)
+    public async Task AddMeeting(MeetingRequest request)
     {
         var meeting = new Meeting
         {
@@ -46,12 +43,13 @@ public class MeetingService(MeetingRepository meetingRepository)
                     CodeLink = worksRequest.CodeLink,
                 }).ToList(),
             Members = request.Members.Select(
-                name => new Member
+                name => new User
                 {
                     UserName = name,
                     PasswordHash = string.Empty,
                     RoleId = (int)RolesEnum.Member,
                 }).ToList(),
+            Criteria = await this.GetCriteria(request.CriteriaId),
         };
 
         await meetingRepository.Create(meeting);
@@ -62,14 +60,105 @@ public class MeetingService(MeetingRepository meetingRepository)
     /// </summary>
     /// <param name="id">Meeting id.</param>
     /// <returns>List of meetings.</returns>
-    public async Task<List<Meeting>> GetMeeting(int? id = null)
+    public async Task<List<MeetingDto>> GetMeeting(int? id = null)
     {
+        List<Meeting> meetings;
         if (id == null)
         {
-            return await meetingRepository.GetAll();
+            meetings = await meetingRepository.GetAll();
+        }
+        else
+        {
+            meetings =
+            [
+                await meetingRepository.GetById(id.Value) ??
+                throw new InvalidOperationException($"Meeting with ID {id.Value} was not found.")
+            ];
         }
 
-        return [await meetingRepository.GetById(id.Value) ?? throw new Exception()];
+        return meetings.Select(
+            meeting =>
+            {
+                var studentWorks = (meeting.StudentWorks ?? []).Select(
+                    work => new StudentWorkDto(
+                        work.Id,
+                        work.StudentName,
+                        work.Theme,
+                        work.Supervisor,
+                        work.Consultant,
+                        work.Reviewer,
+                        work.SupervisorMark,
+                        work.ReviewerMark,
+                        work.CodeLink)).ToList();
+
+                var members = (meeting.Members ?? []).Select(member => member.UserName).ToList();
+
+                var criteriaId = (meeting.Criteria ?? []).Select(criteria => criteria.Id).ToList();
+
+                return new MeetingDto(
+                    meeting.Id,
+                    meeting.DateAndTime,
+                    meeting.Auditorium,
+                    meeting.Info,
+                    meeting.CallLink,
+                    meeting.MaterialsLink,
+                    studentWorks,
+                    members,
+                    criteriaId);
+            }).ToList();
+    }
+
+    /// <summary>
+    /// Updates meeting.
+    /// </summary>
+    /// <param name="request">Meeting updating request.</param>
+    public async Task UpdateMeeting(MeetingRequest request)
+    {
+        if (request.Id != null)
+        {
+            var meeting = await meetingRepository.GetById((int)request.Id) ??
+                          throw new InvalidOperationException($"Meeting with ID {request.Id} was not found.");
+
+            meeting.DateAndTime = request.DateAndTime;
+            meeting.Auditorium = request.Auditorium;
+            meeting.Info = request.Info;
+            meeting.CallLink = request.CallLink;
+            meeting.MaterialsLink = request.MaterialsLink;
+            meeting.StudentWorks?.Clear();
+            meeting.Members?.Clear();
+            meeting.Criteria?.Clear();
+
+            foreach (var workRequest in request.StudentWorks)
+            {
+                meeting.StudentWorks?.Add(
+                    new StudentWork
+                    {
+                        StudentName = workRequest.StudentName,
+                        Theme = workRequest.Theme,
+                        Supervisor = workRequest.Supervisor,
+                        Consultant = workRequest.Consultant,
+                        Reviewer = workRequest.Reviewer,
+                        SupervisorMark = workRequest.SupervisorMark,
+                        ReviewerMark = workRequest.ReviewerMark,
+                        CodeLink = workRequest.CodeLink,
+                    });
+            }
+
+            foreach (var name in request.Members)
+            {
+                meeting.Members?.Add(
+                    new User
+                    {
+                        UserName = name,
+                        PasswordHash = string.Empty,
+                        RoleId = (int)RolesEnum.Member,
+                    });
+            }
+
+            meeting.Criteria = await this.GetCriteria(request.CriteriaId);
+
+            await meetingRepository.Update(meeting);
+        }
     }
 
     /// <summary>
@@ -78,12 +167,22 @@ public class MeetingService(MeetingRepository meetingRepository)
     /// <param name="id">Meeting id.</param>
     public async Task DeleteMeeting(int id)
     {
-        var meeting = await meetingRepository.GetById(id);
-        if (meeting == null)
-        {
-            throw new Exception();
-        }
+        var meeting = await meetingRepository.GetById(id) ??
+                      throw new InvalidOperationException($"Meeting with ID {id} was not found.");
 
         await meetingRepository.Delete(meeting);
+    }
+
+    private async Task<List<Criteria>> GetCriteria(List<int> idList)
+    {
+        var criteria = new List<Criteria>();
+        foreach (var id in idList)
+        {
+            criteria.Add(
+                await criteriaRepository.GetById(id) ??
+                throw new InvalidOperationException($"Criteria with ID {id} was not found."));
+        }
+
+        return criteria;
     }
 }

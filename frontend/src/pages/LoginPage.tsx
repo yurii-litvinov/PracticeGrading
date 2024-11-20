@@ -16,7 +16,7 @@ export function LoginPage() {
             sessionStorage.setItem('token', token);
             setAuthHeader(token);
             navigate('/meetings', {replace: true});
-        } catch (error) {
+        } catch {
             alert('Неверный логин или пароль');
         }
     }

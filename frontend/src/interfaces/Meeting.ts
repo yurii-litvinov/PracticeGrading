@@ -1,6 +1,17 @@
-import {StudentWork} from './StudentWork'
+import {StudentWork} from './StudentWork';
 
-// Interface for meeting
+/**
+ * Interface for meeting.
+ *
+ * @param dateAndTime - Meeting date and time
+ * @param auditorium - Meeting auditorium
+ * @param info - Meeting info
+ * @param callLink - Meeting callLink
+ * @param materialsLink - Meeting materialsLink
+ * @param studentWorks - List of meeting student works
+ * @param members - List of meeting memebers
+ * @param criteriaId - List of meeting criteria id
+ */
 export interface Meeting {
     dateAndTime: Date,
     auditorium: string,
@@ -8,5 +19,6 @@ export interface Meeting {
     callLink: string,
     materialsLink: string,
     studentWorks: StudentWork[],
-    members: string[]
+    members: string[],
+    criteriaId: number[]
 }

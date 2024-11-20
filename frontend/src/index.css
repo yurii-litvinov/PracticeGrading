@@ -107,3 +107,9 @@ body {
 .table td {
     vertical-align: middle;
 }
+
+.accordion-button:not(.collapsed) {
+    background-color: transparent;
+    color: inherit;
+    border: none;
+}

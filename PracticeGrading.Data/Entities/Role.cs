@@ -18,7 +18,7 @@ public class Role
     /// <summary>
     /// Gets or sets role name.
     /// </summary>
-    required public string RoleName { get; set; }
+    public required string RoleName { get; set; }
 
     /// <summary>
     /// Gets or sets users.

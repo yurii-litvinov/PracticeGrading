@@ -18,7 +18,7 @@ public class User
     /// <summary>
     /// Gets or sets username.
     /// </summary>
-    required public string UserName { get; set; }
+    public required string UserName { get; set; }
 
     /// <summary>
     /// Gets or sets hashed password.
@@ -34,4 +34,19 @@ public class User
     /// Gets or sets role.
     /// </summary>
     public Role? Role { get; set; }
+
+    /// <summary>
+    /// Gets or sets meeting id.
+    /// </summary>
+    public int? MeetingId { get; set; }
+
+    /// <summary>
+    /// Gets or sets meeting.
+    /// </summary>
+    public Meeting? Meeting { get; set; }
+
+    /// <summary>
+    /// Gets or sets marks.
+    /// </summary>
+    public ICollection<MemberMark>? Marks { get; set; }
 }
