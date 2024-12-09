@@ -94,8 +94,10 @@ app.MapCriteriaEndpoints();
 
 async Task<IResult> Login(LoginAdminRequest request, UserService userService)
 {
-    var k = await userService.LoginAdmin(request);
-    return k == string.Empty ? Results.Unauthorized() : Results.Ok(new { Token = k });
+    var token = await userService.LoginAdmin(request);
+    return token == string.Empty ? Results.Unauthorized() : Results.Ok(new { Token = token });
 }
 
 app.Run();
+
+public partial class Program { }
