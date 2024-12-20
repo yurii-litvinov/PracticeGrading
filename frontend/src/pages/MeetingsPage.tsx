@@ -13,6 +13,12 @@ export function MeetingsPage() {
     const navigate = useNavigate();
 
     useEffect(() => {
+        const token = sessionStorage.getItem('token');
+
+        if (!token) {
+            navigate("/login", {replace: true});
+            return;
+        }
         getMeetings().then(response => setMeetings(response.data));
     }, []);
 
@@ -36,7 +42,7 @@ export function MeetingsPage() {
         <>
             <div className="d-flex align-items-center justify-content-end ps-2 pb-2">
                 <h1 className="me-auto">Заседания</h1>
-                <button type="button" className="btn btn-primary btn-lg" onClick={handleNewMeeting}>
+                <button type="button" className="btn btn-primary btn-lg" id="create-meeting" onClick={handleNewMeeting}>
                     Создать заседание
                 </button>
             </div>
@@ -47,16 +53,16 @@ export function MeetingsPage() {
                     <div key={meeting.id} className="col-md-4 mb-4">
                         <div className="card">
                             <div className="card-body">
-                                <h4 className="card-title pb-2 text-primary">{meeting.info}</h4>
+                                <h4 className="card-title pb-2 text-primary" id="info">{meeting.info}</h4>
                                 <p className="card-text">
                                     <strong>Дата:</strong> {formatDate(meeting.dateAndTime)}<br/>
                                     <strong>Аудитория:</strong> {meeting.auditorium}
                                 </p>
-                                <button className="btn btn-outline-primary me-2"
+                                <button className="btn btn-outline-primary me-2" id="view_meeting"
                                         onClick={() => handleViewMeeting(meeting.id)}>
                                     Перейти
                                 </button>
-                                <button className="btn btn-outline-danger"
+                                <button className="btn btn-outline-danger" id="delete-meeting"
                                         onClick={() => handleDeleteMeeting(meeting.id)}>
                                     Удалить
                                 </button>

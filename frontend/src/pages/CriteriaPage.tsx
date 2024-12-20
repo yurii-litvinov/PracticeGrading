@@ -53,7 +53,7 @@ export function CriteriaPage() {
     return (<>
             <div className="d-flex align-items-center justify-content-end ps-2 pb-2">
                 <h1 className="me-auto">Список критериев</h1>
-                <button type="button" className="btn btn-primary btn-lg" data-bs-toggle="modal"
+                <button type="button" id="add-criteria" className="btn btn-primary btn-lg" data-bs-toggle="modal"
                         data-bs-target="#criteriaModal" onClick={() => setCriteriaToEditId(null)}>
                     Добавить критерий
                 </button>
@@ -72,7 +72,7 @@ export function CriteriaPage() {
                                         data-bs-toggle="collapse"
                                         data-bs-target={`#collapse${criteria.id}`} aria-expanded="false"
                                         aria-controls={`collapse${criteria.id}`}>
-                                    <p className="pe-1">{criteria.name} {criteria.comment && (
+                                    <p className="pe-1" id="criteria">{criteria.name} {criteria.comment && (
                                         <>
                                             <br/>
                                             <small className="fs-6"
@@ -81,7 +81,7 @@ export function CriteriaPage() {
                                     )}
                                     </p>
                                 </button>
-                                <button type="button" className="btn btn-sm" style={{height: '40px'}}
+                                <button type="button" id="delete-criteria" className="btn btn-sm" style={{height: '40px'}}
                                         onClick={() => handleDeleteCriteria(criteria.id)}>
                                     <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
                                 </button>

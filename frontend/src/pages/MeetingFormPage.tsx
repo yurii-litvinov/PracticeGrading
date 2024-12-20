@@ -142,7 +142,7 @@ export function MeetingFormPage() {
             <form onSubmit={handleSubmit}>
                 <div className="d-flex align-items-center justify-content-end">
                     <h2 className="me-auto">{id ? "Редактирование заседания" : "Новое заседание"}</h2>
-                    <button type="submit" className="btn btn-primary btn-lg me-2"
+                    <button type="submit" className="btn btn-primary btn-lg me-2" id="save-meeting"
                             disabled={meeting.studentWorks.length === 0}>Сохранить
                     </button>
                     <button type="button" className="btn btn-light btn-lg me-2" onClick={handleBack}>Назад</button>
@@ -217,7 +217,7 @@ export function MeetingFormPage() {
                     <div className="d-flex p-2 align-items-center">
                         <h4>Список защищающихся студентов</h4>
                         <button type="button" className="btn btn-outline-primary ms-auto" data-bs-toggle="modal"
-                                data-bs-target="#studentWorkModal" onClick={() => setWorkToEditIndex(null)}>
+                                data-bs-target="#studentWorkModal" id="add-student" onClick={() => setWorkToEditIndex(null)}>
                             Добавить студента
                         </button>
                     </div>
@@ -288,6 +288,7 @@ export function MeetingFormPage() {
                                         style={{minWidth: '400px'}}
                                         className="form-control"
                                         value={member}
+                                        id="member"
                                         onChange={(e) => handleMemberChange(index, e.target.value)}
                                         placeholder="Иванов Иван Иванович"/>
                                 </div>

@@ -184,7 +184,7 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
                         <button type="button" className="btn btn-light" data-bs-dismiss="modal"
                                 onClick={handleClose}>Отмена
                         </button>
-                        <button type="button" className="btn btn-primary" onClick={handleSave}>Сохранить</button>
+                        <button type="button" id="save-criteria" className="btn btn-primary" onClick={handleSave}>Сохранить</button>
                     </div>
                 </div>
             </div>
