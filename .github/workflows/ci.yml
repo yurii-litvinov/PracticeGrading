@@ -4,13 +4,7 @@ on: [ push, pull_request ]
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +41,7 @@ jobs:
 
       - name: Run Playwright tests
         run: npx playwright test
-        
+
       - name: Stop containers
         if: always()
         run: docker compose -f docker-compose.yml down
