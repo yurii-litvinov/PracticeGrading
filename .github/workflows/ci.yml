@@ -17,7 +17,7 @@ jobs:
 
       - name: Set up Docker Compose
         run: |
-          docker-compose -f docker-compose.yml up -d postgres
+          docker compose -f docker-compose.yml up -d postgres
           sleep 10
 
       - name: Setup dotnet
@@ -50,4 +50,4 @@ jobs:
         
       - name: Stop containers
         if: always()
-        run: docker-compose -f docker-compose.yml down
+        run: docker compose -f docker-compose.yml down
