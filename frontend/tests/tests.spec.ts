@@ -1,44 +1,13 @@
 import {test, expect} from '@playwright/test';
-import * as http from 'http';
-import * as path from 'path';
-import {spawn} from 'child_process';
-import {fileURLToPath} from 'url';
-import {dirname} from 'path';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-let server: http.Server;
-let client: http.Server;
-
-test.beforeAll(async () => {
-    server = spawn('dotnet', ['run'], {
-        cwd: path.join(__dirname, '..', '..', 'PracticeGrading.API'),
-        stdio: 'inherit',
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    client = spawn('npm', ['run', 'dev'], {
-        cwd: path.join(__dirname, '..'),
-        stdio: 'inherit',
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-});
-
-test.afterAll(async () => {
-    server.kill();
-    client.kill();
-});
 
 const login = async (page) => {
     await page.goto("/");
     await expect(page).toHaveURL("/login")
 
-    await page.fill('#username', 'admin'); 
+    await page.fill('#username', 'admin');
     await page.fill('#password', 'admin');
     await page.click('button[type="submit"]');
-    
+
     await expect(page).toHaveURL('/meetings');
 }
 
@@ -47,7 +16,7 @@ const createCriteria = async (page, name, comment) => {
     await expect(page).toHaveURL('/criteria');
 
     await page.click('#add-criteria');
-    await page.waitForSelector('#criteriaModal', { state: 'visible' });
+    await page.waitForSelector('#criteriaModal', {state: 'visible'});
     await page.fill('input[name="name"]', name);
     await page.fill('textarea[name="comment"]', comment);
     await page.click('#save-criteria');
@@ -62,7 +31,7 @@ const createMeeting = async (page, info) => {
     await page.fill('#member:nth-of-type(1)', 'член комиссии 1');
 
     await page.click('#add-student');
-    await page.waitForSelector('#studentWorkModal', { state: 'visible' });
+    await page.waitForSelector('#studentWorkModal', {state: 'visible'});
     await page.fill('input[name="studentName"]', 'студент');
     await page.fill('input[name="theme"]', 'тема');
     await page.fill('input[name="supervisor"]', 'научник');
@@ -103,9 +72,9 @@ test('create criteria', async ({page}) => {
 
 test('create meeting', async ({page}) => {
     await login(page);
-    
+
     await createMeeting(page, 'заседание');
-    
+
     await expect(page).toHaveURL('/meetings');
     await expect(page.locator('#info')).toHaveText('заседание');
 
