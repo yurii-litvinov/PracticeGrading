@@ -18,12 +18,14 @@ public static class MeetingEndpoints
     /// </summary>
     public static void MapMeetingEndpoints(this IEndpointRouteBuilder app)
     {
-        var meetingGroup = app.MapGroup("/meetings").RequireAuthorization("RequireAdminRole");
+        var meetingGroup = app.MapGroup("/meetings");
 
-        meetingGroup.MapPost("/new", CreateMeeting);
-        meetingGroup.MapGet(string.Empty, GetMeeting);
-        meetingGroup.MapPut("/update", UpdateMeeting);
-        meetingGroup.MapDelete("/delete", DeleteMeeting);
+        meetingGroup.MapPost("/new", CreateMeeting).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapGet(string.Empty, GetMeeting).RequireAuthorization("RequireAdminOrMemberRole");
+        meetingGroup.MapPut("/update", UpdateMeeting).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapDelete("/delete", DeleteMeeting).RequireAuthorization("RequireAdminRole");
+
+        meetingGroup.MapGet("/members", GetMembers).AllowAnonymous();
     }
 
     private static async Task<IResult> CreateMeeting(MeetingRequest request, MeetingService meetingService)
@@ -48,5 +50,11 @@ public static class MeetingEndpoints
     {
         await meetingService.DeleteMeeting(id);
         return Results.Ok();
+    }
+
+    private static async Task<IResult> GetMembers(int id, MeetingService meetingService)
+    {
+        var members = await meetingService.GetMembers(id);
+        return Results.Ok(members);
     }
 }

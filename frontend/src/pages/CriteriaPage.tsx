@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {getCriteria, deleteCriteria, createCriteria, updateCriteria} from '../services/apiService';
+import {getCriteria, deleteCriteria, createCriteria, updateCriteria} from '../services/ApiService';
 import {CriteriaModal} from '../components/CriteriaModal'
 
 export function CriteriaPage() {
@@ -50,13 +50,17 @@ export function CriteriaPage() {
         fetchCriteria();
     }
 
-    return (<>
-            <div className="d-flex align-items-center justify-content-end ps-2 pb-2">
-                <h1 className="me-auto">Список критериев</h1>
-                <button type="button" id="add-criteria" className="btn btn-primary btn-lg" data-bs-toggle="modal"
-                        data-bs-target="#criteriaModal" onClick={() => setCriteriaToEditId(null)}>
-                    Добавить критерий
-                </button>
+    return (
+        <>
+            <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end ps-2 pb-2 w-100">
+                <h1 className="me-auto w-100 mb-3 mb-sm-0 text-center text-sm-start">Список критериев</h1>
+                <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
+                    <button type="button" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#criteriaModal" onClick={() => setCriteriaToEditId(null)}>
+                        Добавить критерий
+                    </button>
+                </div>
             </div>
 
             <div className="accordion p-2" id="criteriaAccordion">
@@ -81,7 +85,8 @@ export function CriteriaPage() {
                                     )}
                                     </p>
                                 </button>
-                                <button type="button" id="delete-criteria" className="btn btn-sm" style={{height: '40px'}}
+                                <button type="button" id="delete-criteria" className="btn btn-sm"
+                                        style={{height: '40px'}}
                                         onClick={() => handleDeleteCriteria(criteria.id)}>
                                     <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
                                 </button>

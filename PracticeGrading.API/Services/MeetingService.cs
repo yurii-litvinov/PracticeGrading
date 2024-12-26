@@ -15,7 +15,10 @@ using PracticeGrading.Data.Repositories;
 /// Service for working with meetings.
 /// </summary>
 /// <param name="meetingRepository">Repository for meetings.</param>
-public class MeetingService(MeetingRepository meetingRepository, CriteriaRepository criteriaRepository)
+public class MeetingService(
+    MeetingRepository meetingRepository,
+    CriteriaRepository criteriaRepository,
+    UserRepository userRepository)
 {
     /// <summary>
     /// Adds new meeting.
@@ -125,6 +128,12 @@ public class MeetingService(MeetingRepository meetingRepository, CriteriaReposit
             meeting.CallLink = request.CallLink;
             meeting.MaterialsLink = request.MaterialsLink;
             meeting.StudentWorks?.Clear();
+
+            foreach (var member in meeting.Members ?? [])
+            {
+                await userRepository.Delete(member);
+            }
+
             meeting.Members?.Clear();
             meeting.Criteria?.Clear();
 
@@ -163,6 +172,18 @@ public class MeetingService(MeetingRepository meetingRepository, CriteriaReposit
 
     /// <summary>
     /// Deletes meeting.
+    /// </summary>
+    /// <param name="id">Meeting id.</param>
+    public async Task<List<string>> GetMembers(int id)
+    {
+        var meeting = await meetingRepository.GetById(id) ??
+                      throw new InvalidOperationException($"Meeting with ID {id} was not found.");
+
+        return (meeting.Members ?? []).Select(member => member.UserName).ToList();
+    }
+
+    /// <summary>
+    /// Gets meeting members.
     /// </summary>
     /// <param name="id">Meeting id.</param>
     public async Task DeleteMeeting(int id)

@@ -6,6 +6,9 @@ import {LoginPage} from './pages/LoginPage';
 import {ProfilePage} from './pages/ProfilePage';
 import {CriteriaPage} from './pages/CriteriaPage';
 import {ViewMeetingPage} from './pages/ViewMeetingPage';
+import {RunningMeetingPage} from './pages/RunningMeetingPage';
+import {MemberLoginPage} from './pages/MemberLoginPage';
+import {MemberPage} from './pages/MemberPage';
 
 export function App() {
     const router = createBrowserRouter([
@@ -41,11 +44,23 @@ export function App() {
                     path: "/meetings/:id",
                     element: <ViewMeetingPage/>,
                 },
+                {
+                    path: "/meetings/running/:id",
+                    element: <RunningMeetingPage/>,
+                },
+                {
+                    path: "/meetings/:id/member",
+                    element: <MemberPage/>,
+                },
             ],
         },
         {
             path: "/login",
             element: <LoginPage/>,
+        },
+        {
+            path: "/meetings/:id/member/login",
+            element: <MemberLoginPage/>,
         },
     ]);
 

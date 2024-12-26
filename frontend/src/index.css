@@ -113,3 +113,25 @@ body {
     color: inherit;
     border: none;
 }
+
+a {
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+.label-custom {
+    width: 15em;
+}
+
+@media (max-width: 768px) {
+    .label-custom {
+        width: 10em;
+    }
+}
+
+@media (max-width: 480px) {
+    .label-custom {
+        width: 9em;
+    }
+}

@@ -1,5 +1,5 @@
 import React, {useRef, useState, useEffect} from 'react';
-import {StudentWork} from '../interfaces/StudentWork'
+import {StudentWork} from '../models/StudentWork'
 
 /**
  * Interface for student work modal props.

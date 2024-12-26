@@ -18,12 +18,12 @@ public static class CriteriaEndpoints
     /// </summary>
     public static void MapCriteriaEndpoints(this IEndpointRouteBuilder app)
     {
-        var meetingGroup = app.MapGroup("/criteria").RequireAuthorization("RequireAdminRole");
+        var criteriaGroup = app.MapGroup("/criteria").RequireAuthorization("RequireAdminRole");
 
-        meetingGroup.MapPost("/new", CreateCriteria);
-        meetingGroup.MapGet(string.Empty, GetCriteria);
-        meetingGroup.MapPut("/update", UpdateCriteria);
-        meetingGroup.MapDelete("/delete", DeleteCriteria);
+        criteriaGroup.MapPost("/new", CreateCriteria);
+        criteriaGroup.MapGet(string.Empty, GetCriteria);
+        criteriaGroup.MapPut("/update", UpdateCriteria);
+        criteriaGroup.MapDelete("/delete", DeleteCriteria);
     }
 
     private static async Task<IResult> CreateCriteria(CriteriaRequest request, CriteriaService criteriaService)

@@ -3,6 +3,9 @@
 // Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
 // </copyright>
 
+using PracticeGrading.API.Endpoints;
+using PracticeGrading.API.Models;
+
 namespace PracticeGrading.API;
 
 using System.Security.Claims;
@@ -46,7 +49,22 @@ public static class Extensions
         services.AddAuthorizationBuilder()
             .AddPolicy(
                 "RequireAdminRole",
-                policy => policy.RequireClaim(ClaimTypes.Role, "admin"));
+                policy => policy.RequireClaim(
+                    ClaimTypes.Role,
+                    RolesEnum.Admin.ToString().ToLower()));
+        services.AddAuthorizationBuilder()
+            .AddPolicy(
+                "RequireMemberRole",
+                policy => policy.RequireClaim(
+                    ClaimTypes.Role,
+                    RolesEnum.Member.ToString().ToLower()));
+        services.AddAuthorizationBuilder()
+            .AddPolicy(
+                "RequireAdminOrMemberRole",
+                policy => policy.RequireClaim(
+                    ClaimTypes.Role,
+                    RolesEnum.Admin.ToString().ToLower(),
+                    RolesEnum.Member.ToString().ToLower()));
     }
 
     /// <summary>

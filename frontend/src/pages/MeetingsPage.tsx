@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {getMeetings, deleteMeeting} from '../services/apiService';
+import {getMeetings, deleteMeeting} from '../services/ApiService';
 import {format} from 'date-fns';
 import {ru} from 'date-fns/locale';
 
@@ -13,12 +13,6 @@ export function MeetingsPage() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const token = sessionStorage.getItem('token');
-
-        if (!token) {
-            navigate("/login", {replace: true});
-            return;
-        }
         getMeetings().then(response => setMeetings(response.data));
     }, []);
 
@@ -40,14 +34,15 @@ export function MeetingsPage() {
 
     return (
         <>
-            <div className="d-flex align-items-center justify-content-end ps-2 pb-2">
-                <h1 className="me-auto">Заседания</h1>
-                <button type="button" className="btn btn-primary btn-lg" id="create-meeting" onClick={handleNewMeeting}>
-                    Создать заседание
-                </button>
+            <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end ps-2 pb-2 w-100">
+                <h1 className="me-auto w-100 mb-3 mb-sm-0 text-center text-sm-start">Заседания</h1>
+                <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
+                    <button type="button" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2"
+                            id="create-meeting" onClick={handleNewMeeting}>Создать заседание
+                    </button>
+                </div>
             </div>
-
-
+            
             <div className="row">
                 {meetings.map((meeting) => (
                     <div key={meeting.id} className="col-md-4 mb-4">

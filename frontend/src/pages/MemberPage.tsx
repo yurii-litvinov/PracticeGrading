@@ -1,12 +1,15 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getMeetings, getCriteria} from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
 import {formatDate} from './MeetingsPage';
+import {SignalRService} from '../services/SignalRService';
+import {Actions} from '../models/Actions';
 
-export function ViewMeetingPage() {
+export function MemberPage() {
     const {id} = useParams();
     const navigate = useNavigate();
+    const [selectedStudentIndex, setSelectedStudentIndex] = useState(null);
     const [criteria, setCriteria] = useState([]);
     const [meeting, setMeeting] = useState({
         dateAndTime: new Date(),
@@ -19,29 +22,34 @@ export function ViewMeetingPage() {
         criteriaId: []
     });
 
-    useEffect(() => {
-        getMeetings(id).then(response => setMeeting(response.data[0]));
-    }, [id]);
+    const signalRService = useRef<SignalRService | null>(null);
 
-    useEffect(() => {
-        if (meeting.criteriaId.length === 0 || criteria.length === meeting.criteriaId.length) {
-            return;
+    const handleNotification = (action: string) => {
+        if (action.includes(Actions.Highlight)) {
+            setSelectedStudentIndex(+action.split(':')[1])
         }
-        const criteriaPromises = meeting.criteriaId.map(criteriaId =>
-            getCriteria(criteriaId).then(response => response.data[0])
-        );
+    }
 
-        Promise.all(criteriaPromises).then(criteriaData => {
-            setCriteria(criteriaData);
-        });
-    }, [meeting.criteriaId]);
+    useEffect(() => {
+        if (id) {
+            getMeetings(id).then(response => setMeeting(response.data[0]));
+
+            signalRService.current = new SignalRService(id, handleNotification);
+            signalRService.current.startConnection();
+        }
+
+        return () => {
+            if (signalRService.current) signalRService.current.stopConnection();
+            signalRService.current = null;
+        }
+    }, [id]);
 
     const handleBack = () => {
         navigate("/meetings", {replace: true})
     }
 
     const handleEditMeeting = () => {
-        navigate(`/meetings/edit/${id}`, {replace: true, state: {redirectTo: 'view'}});
+        navigate(`/meetings/edit/${id}`, {replace: true, state: {redirectTo: 'running'}});
     }
 
     const handleStartMeeting = () => {
@@ -50,22 +58,6 @@ export function ViewMeetingPage() {
 
     return (
         <>
-            <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
-                <h2 className="me-auto w-100 mb-3 mb-sm-0 text-center text-sm-start">Просмотр заседания</h2>
-                <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
-                    <button type="button" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2"
-                        onClick={handleStartMeeting}>Начать заседание
-                    </button>
-                    <button type="button" className="btn btn-outline-primary btn-lg mb-2 mb-sm-0 me-sm-2"
-                        onClick={handleEditMeeting}>Редактировать
-                    </button>
-                    <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
-                        onClick={handleBack}>Назад
-                    </button>
-                </div>
-            </div>
-
-
             <div className="d-flex flex-column p-2">
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Дата и время</label>
@@ -130,7 +122,9 @@ export function ViewMeetingPage() {
                         </thead>
                         <tbody>
                         {meeting.studentWorks.map((work, index) => (
-                            <tr key={index}>
+                            <tr key={index} onClick={() => handleRowClick(index)}
+                                className={selectedStudentIndex === index ? "table-info" : ""}
+                                style={{cursor: "pointer"}}>
                                 <td>{work.studentName}</td>
                                 <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                 <td>{work.supervisor}</td>
@@ -149,38 +143,6 @@ export function ViewMeetingPage() {
                         ))}
                         </tbody>
                     </table>
-                </div>
-
-                <hr className="my-4"/>
-
-                <div className="d-flex flex-wrap">
-                    <div className="flex-grow-1 pe-4 mb-2" style={{minWidth: '15em'}}>
-                        <h4 className="p-2">Список членов комиссии</h4>
-                        {meeting.members.map((member, index) => (
-                            <div key={index} className=" px-3">
-                                <input type="text" readOnly className="form-control-plaintext"
-                                       value={member}/>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className="flex-grow-1">
-                        <h4 className="p-2">Критерии</h4>
-                        <ul className="list-group p-2">
-                            {criteria.map((criteria) => (
-                                <li className="list-group-item d-flex align-items-center" key={criteria.id}>
-                                    <label> {criteria.name}{criteria.comment && (
-                                        <>
-                                            <br/>
-                                            <small className=""
-                                                   style={{color: '#9a9d9f'}}>{criteria.comment}</small>
-                                        </>
-                                    )}
-                                    </label>
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
                 </div>
             </div>
         </>

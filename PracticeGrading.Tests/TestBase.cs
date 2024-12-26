@@ -70,7 +70,7 @@ public class TestBase
 
         JwtService = new JwtService(JwtOptions);
         UserService = new UserService(UserRepository, JwtService);
-        MeetingService = new MeetingService(MeetingRepository, CriteriaRepository);
+        MeetingService = new MeetingService(MeetingRepository, CriteriaRepository, UserRepository);
         CriteriaService = new CriteriaService(CriteriaRepository);
     }
 

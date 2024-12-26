@@ -1,5 +1,5 @@
 import {useRef, useState, useEffect} from 'react';
-import {Criteria} from '../interfaces/Criteria'
+import {Criteria} from '../models/Criteria'
 
 /**
  * Interface for criteria modal props.
