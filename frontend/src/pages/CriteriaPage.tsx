@@ -56,7 +56,7 @@ export function CriteriaPage() {
                 <h1 className="me-auto w-100 mb-3 mb-sm-0 text-center text-sm-start">Список критериев</h1>
                 <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
                     <button type="button" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2"
-                            data-bs-toggle="modal"
+                            data-bs-toggle="modal" id="add-criteria"
                             data-bs-target="#criteriaModal" onClick={() => setCriteriaToEditId(null)}>
                         Добавить критерий
                     </button>
