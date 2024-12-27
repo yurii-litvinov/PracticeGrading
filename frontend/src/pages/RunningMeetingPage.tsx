@@ -9,8 +9,7 @@ import {Actions} from '../models/Actions';
 export function RunningMeetingPage() {
     const {id} = useParams();
     const navigate = useNavigate();
-    const [criteria, setCriteria] = useState([]);
-    const [selectedStudentIndex, setSelectedStudentIndex] = useState(null);
+    const [selectedStudentId, setSelectedStudentId] = useState(null);
     const [meeting, setMeeting] = useState({
         dateAndTime: new Date(),
         auditorium: '',
@@ -18,14 +17,17 @@ export function RunningMeetingPage() {
         callLink: '',
         materialsLink: '',
         studentWorks: [],
-        members: [''],
-        criteriaId: []
+        members: [],
+        criteria: []
     });
 
     const signalRService = useRef<SignalRService | null>(null);
 
-    const handleNotification = (message: string) => {
-        console.log(message);
+    const handleNotification = (action: string) => {
+        switch (true) {
+            case action.includes(Actions.Join):
+                getMeetings(id).then(response => setMeeting(response.data[0]));
+        }
     }
 
     useEffect(() => {
@@ -34,8 +36,6 @@ export function RunningMeetingPage() {
 
             signalRService.current = new SignalRService(id, handleNotification);
             signalRService.current.startConnection();
-
-            getCriteria().then(response => setCriteria(response.data));
         }
 
         return () => {
@@ -43,19 +43,6 @@ export function RunningMeetingPage() {
             signalRService.current = null;
         }
     }, [id]);
-
-    useEffect(() => {
-        if (meeting.criteriaId.length === 0 || criteria.length === meeting.criteriaId.length) {
-            return;
-        }
-        const criteriaPromises = meeting.criteriaId.map(criteriaId =>
-            getCriteria(criteriaId).then(response => response.data[0])
-        );
-
-        Promise.all(criteriaPromises).then(criteriaData => {
-            setCriteria(criteriaData);
-        });
-    }, [meeting.criteriaId]);
 
     const handleBack = () => {
         navigate("/meetings", {replace: true})
@@ -65,15 +52,9 @@ export function RunningMeetingPage() {
         navigate(`/meetings/edit/${id}`, {replace: true, state: {redirectTo: 'running'}});
     }
 
-    const handleStartMeeting = () => {
-        navigate(`/meetings/running/${id}`, {replace: true})
-    }
-
-    const handleRowClick = (index: number) => {
-        setSelectedStudentIndex(index === selectedStudentIndex ? null : index);
-        signalRService.current.sendNotification(`${Actions.Highlight}:${index === selectedStudentIndex ? null : index}`);
-
-        console.log(index)
+    const handleRowClick = (id: number) => {
+        setSelectedStudentId(id === selectedStudentId ? null : id);
+        signalRService.current.sendNotification(`${Actions.Highlight}:${id === selectedStudentId ? null : id}`);
     };
 
     return (
@@ -81,18 +62,18 @@ export function RunningMeetingPage() {
             <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
                 <h2 className="me-auto w-100 mb-3 mb-sm-0 text-center text-sm-start">Текущее заседание</h2>
                 <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
-                    <button type="button" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2"
-                            onClick={handleStartMeeting}>Перейти к голосованию
-                    </button>
                     <button type="button" className="btn btn-outline-primary btn-lg mb-2 mb-sm-0 me-sm-2"
                             onClick={handleEditMeeting}>Редактировать
+                    </button>
+                    <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
+                            onClick={handleBack}>Назад
                     </button>
                 </div>
             </div>
 
             <div className="d-flex flex-column p-2">
                 <div className="d-flex mb-2 align-items-center">
-                    <label className="me-3 fw-bold text-end label-custom">Ссылка для членов
+                <label className="me-3 fw-bold text-end label-custom">Ссылка для членов
                         комиссии</label>
                     <a href="#"
                        className="icon-link icon-link-hover form-control-plaintext text-primary text-decoration-underline w-auto"
@@ -171,9 +152,9 @@ export function RunningMeetingPage() {
                         </tr>
                         </thead>
                         <tbody>
-                        {meeting.studentWorks.map((work, index) => (
-                            <tr key={index} onClick={() => handleRowClick(index)}
-                                className={selectedStudentIndex === index ? "table-info" : ""}
+                        {meeting.studentWorks.map((work) => (
+                            <tr key={work.id} onClick={() => handleRowClick(work.id)}
+                                className={selectedStudentId === work.id ? "table-info" : ""}
                                 style={{cursor: "pointer"}}>
                                 <td>{work.studentName}</td>
                                 <td style={{maxWidth: '600px'}}>{work.theme}</td>
@@ -203,7 +184,7 @@ export function RunningMeetingPage() {
                         {meeting.members.map((member, index) => (
                             <div key={index} className=" px-3">
                                 <input type="text" readOnly className="form-control-plaintext"
-                                       value={member}/>
+                                       value={member.name}/>
                             </div>
                         ))}
                     </div>
@@ -211,7 +192,7 @@ export function RunningMeetingPage() {
                     <div className="flex-grow-1">
                         <h4 className="p-2">Критерии</h4>
                         <ul className="list-group p-2">
-                            {criteria.map((criteria) => (
+                            {meeting.criteria.map((criteria) => (
                                 <li className="list-group-item d-flex align-items-center" key={criteria.id}>
                                     <label> {criteria.name}{criteria.comment && (
                                         <>

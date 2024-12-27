@@ -15,6 +15,6 @@ public record MeetingRequest(
     string? Info,
     string? CallLink,
     string? MaterialsLink,
-    List<AddStudentWorkRequest> StudentWorks,
-    List<string> Members,
+    List<StudentWorkRequest> StudentWorks,
+    List<MemberRequest> Members,
     List<int> CriteriaId);

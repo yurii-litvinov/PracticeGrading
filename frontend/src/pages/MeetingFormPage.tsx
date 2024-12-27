@@ -28,8 +28,8 @@ export function MeetingFormPage() {
         callLink: '',
         materialsLink: '',
         studentWorks: [],
-        members: [''],
-        criteriaId: []
+        members: [{id: null, name: ''}],
+        criteria: []
     });
 
     const handleNotification = (message: string) => {
@@ -39,12 +39,14 @@ export function MeetingFormPage() {
     useEffect(() => {
         if (id) {
             getMeetings(id).then(response => setMeeting(response.data[0]));
+            console.log(meeting.criteria)
 
             signalRService.current = new SignalRService(id, handleNotification);
             signalRService.current.startConnection();
-
-            getCriteria().then(response => setCriteria(response.data));
         }
+
+        getCriteria().then(response => setCriteria(response.data));
+        console.log(criteria)
 
         return () => {
             if (signalRService.current) signalRService.current.stopConnection();
@@ -110,17 +112,17 @@ export function MeetingFormPage() {
     }
 
     useEffect(() => {
-        if (meeting.members[meeting.members.length - 1] !== '') {
+        if (meeting.members.length > 0 && meeting.members[meeting.members.length - 1].name !== '') {
             setMeeting((prevMeeting) => ({
                 ...prevMeeting,
-                members: [...prevMeeting.members, '']
+                members: [...prevMeeting.members, {id: null, name: ''}]
             }))
         }
     }, [meeting.members]);
 
     const handleMemberChange = (index: number, value: string) => {
         const updatedMembers = [...meeting.members];
-        updatedMembers[index] = value;
+        updatedMembers[index].name = value;
 
         if (value === '') {
             updatedMembers.splice(index, 1);
@@ -141,22 +143,26 @@ export function MeetingFormPage() {
 
     const handleCriteriaChange = (e) => {
         setMeeting(prevMeeting => {
-            let updatedCriteriaId = [...prevMeeting.criteriaId];
+            let updatedCriteria = [...prevMeeting.criteria];
+
+            const selectedCriteria = prevMeeting.criteria.find(criteria => criteria.id === Number(e.target.id));
 
             if (e.target.checked) {
-                if (!updatedCriteriaId.includes(Number(e.target.id))) {
-                    updatedCriteriaId.push(Number(e.target.id));
+                if (!selectedCriteria) {
+                    const newCriteria = {
+                        id: Number(e.target.id),
+                    };
+                    updatedCriteria.push(newCriteria);
                 }
             } else {
-                updatedCriteriaId = updatedCriteriaId.filter(id => id !== Number(e.target.id));
+                updatedCriteria = updatedCriteria.filter(criteria => criteria.id !== Number(e.target.id));
             }
 
             return {
                 ...prevMeeting,
-                criteriaId: updatedCriteriaId,
-            }
-        })
-
+                criteria: updatedCriteria,
+            };
+        });
     }
 
     return (
@@ -319,7 +325,7 @@ export function MeetingFormPage() {
                                         type="text"
                                         style={{minWidth: '15em'}}
                                         className="form-control"
-                                        value={member}
+                                        value={member.name}
                                         id="member"
                                         onChange={(e) => handleMemberChange(index, e.target.value)}
                                         placeholder="Иванов Иван Иванович"/>
@@ -333,7 +339,7 @@ export function MeetingFormPage() {
                                 {criteria.map((criteria) => (
                                     <li className="list-group-item d-flex align-items-center" key={criteria.id}>
                                         <input className="form-check-input me-3" type="checkbox"
-                                               checked={meeting.criteriaId.includes(criteria.id)}
+                                               checked={meeting.criteria.some(c => c.id === criteria.id)}
                                                id={criteria.id} onChange={(e) => handleCriteriaChange(e)}/>
                                         <label className="form-check-label stretched-link"
                                                htmlFor={criteria.id}> {criteria.name}{criteria.comment && (

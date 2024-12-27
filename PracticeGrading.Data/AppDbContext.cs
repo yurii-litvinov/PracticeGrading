@@ -49,6 +49,7 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new StudentWorkConfiguration());
         modelBuilder.ApplyConfiguration(new MeetingConfiguration());
         modelBuilder.ApplyConfiguration(new MemberMarkConfiguration());
+        modelBuilder.ApplyConfiguration(new AverageCriteriaMarkConfiguration());
 
         modelBuilder.ApplyConfiguration(new CriteriaConfiguration());
         modelBuilder.ApplyConfiguration(new RuleConfiguration());

@@ -46,9 +46,9 @@ public class MeetingService(
                     CodeLink = worksRequest.CodeLink,
                 }).ToList(),
             Members = request.Members.Select(
-                name => new User
+                memberRequest => new User
                 {
-                    UserName = name,
+                    UserName = memberRequest.Name,
                     PasswordHash = string.Empty,
                     RoleId = (int)RolesEnum.Member,
                 }).ToList(),
@@ -79,26 +79,41 @@ public class MeetingService(
             ];
         }
 
-        return meetings.Select(
-            meeting =>
-            {
-                var studentWorks = (meeting.StudentWorks ?? []).Select(
-                    work => new StudentWorkDto(
-                        work.Id,
-                        work.StudentName,
-                        work.Theme,
-                        work.Supervisor,
-                        work.Consultant,
-                        work.Reviewer,
-                        work.SupervisorMark,
-                        work.ReviewerMark,
-                        work.CodeLink)).ToList();
+        var meetingsDto = new List<MeetingDto>();
 
-                var members = (meeting.Members ?? []).Select(member => member.UserName).ToList();
+        foreach (var meeting in meetings)
+        {
+            var studentWorks = (meeting.StudentWorks ?? []).Select(
+                work => new StudentWorkDto(
+                    work.Id,
+                    work.StudentName,
+                    work.Theme,
+                    work.Supervisor,
+                    work.Consultant,
+                    work.Reviewer,
+                    work.SupervisorMark,
+                    work.ReviewerMark,
+                    work.CodeLink)).ToList();
 
-                var criteriaId = (meeting.Criteria ?? []).Select(criteria => criteria.Id).ToList();
+            var members = (meeting.Members ?? []).Select(
+                member =>
+                    new MemberDto(member.Id, member.UserName)).ToList();
 
-                return new MeetingDto(
+            var criteriaList = await this.GetCriteria((meeting.Criteria ?? []).Select(element => element.Id).ToList());
+
+            var criteriaDto = criteriaList.Select(
+                    criteria => new CriteriaDto(
+                        criteria.Id,
+                        criteria.Name,
+                        criteria.Comment,
+                        (criteria.Rules ?? []).Where(rule => rule.IsScaleRule).Select(
+                            rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)).ToList(),
+                        (criteria.Rules ?? []).Where(rule => !rule.IsScaleRule).Select(
+                            rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)).ToList()))
+                .ToList();
+
+            meetingsDto.Add(
+                new MeetingDto(
                     meeting.Id,
                     meeting.DateAndTime,
                     meeting.Auditorium,
@@ -107,8 +122,10 @@ public class MeetingService(
                     meeting.MaterialsLink,
                     studentWorks,
                     members,
-                    criteriaId);
-            }).ToList();
+                    criteriaDto));
+        }
+
+        return meetingsDto;
     }
 
     /// <summary>
@@ -117,6 +134,7 @@ public class MeetingService(
     /// <param name="request">Meeting updating request.</param>
     public async Task UpdateMeeting(MeetingRequest request)
     {
+        Console.WriteLine("!!!!!" + request.CriteriaId);
         if (request.Id != null)
         {
             var meeting = await meetingRepository.GetById((int)request.Id) ??
@@ -127,41 +145,79 @@ public class MeetingService(
             meeting.Info = request.Info;
             meeting.CallLink = request.CallLink;
             meeting.MaterialsLink = request.MaterialsLink;
-            meeting.StudentWorks?.Clear();
 
-            foreach (var member in meeting.Members ?? [])
+            foreach (var work in request.StudentWorks)
+            {
+                var existingWork = (meeting.StudentWorks ?? [])
+                    .FirstOrDefault(studentWork => studentWork.Id == work.Id);
+
+                if (existingWork != null)
+                {
+                    existingWork.StudentName = work.StudentName;
+                    existingWork.Theme = work.Theme;
+                    existingWork.Supervisor = work.Supervisor;
+                    existingWork.Consultant = work.Consultant;
+                    existingWork.Reviewer = work.Reviewer;
+                    existingWork.SupervisorMark = work.SupervisorMark;
+                    existingWork.ReviewerMark = work.ReviewerMark;
+                    existingWork.CodeLink = work.CodeLink;
+                }
+                else
+                {
+                    meeting.StudentWorks?.Add(
+                        new StudentWork
+                        {
+                            StudentName = work.StudentName,
+                            Theme = work.Theme,
+                            Supervisor = work.Supervisor,
+                            Consultant = work.Consultant,
+                            Reviewer = work.Reviewer,
+                            SupervisorMark = work.SupervisorMark,
+                            ReviewerMark = work.ReviewerMark,
+                            CodeLink = work.CodeLink,
+                        });
+                }
+            }
+
+            var worksToRemove = (meeting.StudentWorks ?? [])
+                .Where(
+                    work => request.StudentWorks.All(
+                        workRequest => workRequest.Id != null && workRequest.Id != work.Id)).ToList();
+
+            foreach (var work in worksToRemove)
+            {
+                meeting.StudentWorks?.Remove(work);
+            }
+
+            foreach (var memberRequest in request.Members)
+            {
+                var existingMember = (meeting.Members ?? [])
+                    .FirstOrDefault(member => member.Id == memberRequest.Id);
+
+                if (existingMember != null)
+                {
+                    existingMember.UserName = memberRequest.Name;
+                }
+                else
+                {
+                    meeting.Members?.Add(
+                        new User
+                        {
+                            UserName = memberRequest.Name,
+                            PasswordHash = string.Empty,
+                            RoleId = (int)RolesEnum.Member,
+                        });
+                }
+            }
+
+            var membersToRemove = (meeting.Members ?? [])
+                .Where(
+                    member => request.Members.All(
+                        memberRequest => memberRequest.Id != null && memberRequest.Id != member.Id)).ToList();
+
+            foreach (var member in membersToRemove)
             {
                 await userRepository.Delete(member);
-            }
-
-            meeting.Members?.Clear();
-            meeting.Criteria?.Clear();
-
-            foreach (var workRequest in request.StudentWorks)
-            {
-                meeting.StudentWorks?.Add(
-                    new StudentWork
-                    {
-                        StudentName = workRequest.StudentName,
-                        Theme = workRequest.Theme,
-                        Supervisor = workRequest.Supervisor,
-                        Consultant = workRequest.Consultant,
-                        Reviewer = workRequest.Reviewer,
-                        SupervisorMark = workRequest.SupervisorMark,
-                        ReviewerMark = workRequest.ReviewerMark,
-                        CodeLink = workRequest.CodeLink,
-                    });
-            }
-
-            foreach (var name in request.Members)
-            {
-                meeting.Members?.Add(
-                    new User
-                    {
-                        UserName = name,
-                        PasswordHash = string.Empty,
-                        RoleId = (int)RolesEnum.Member,
-                    });
             }
 
             meeting.Criteria = await this.GetCriteria(request.CriteriaId);
@@ -171,7 +227,7 @@ public class MeetingService(
     }
 
     /// <summary>
-    /// Deletes meeting.
+    /// Gets meeting members.
     /// </summary>
     /// <param name="id">Meeting id.</param>
     public async Task<List<string>> GetMembers(int id)
@@ -183,7 +239,7 @@ public class MeetingService(
     }
 
     /// <summary>
-    /// Gets meeting members.
+    /// Deletes meeting.
     /// </summary>
     /// <param name="id">Meeting id.</param>
     public async Task DeleteMeeting(int id)
@@ -194,9 +250,43 @@ public class MeetingService(
         await meetingRepository.Delete(meeting);
     }
 
+    /// <summary>
+    /// Gets student work by Id.
+    /// </summary>
+    /// <param name="meetingId">Meeting id.</param>
+    /// <param name="workId">Student work id.</param>
+    public async Task<StudentWorkDto> GetStudentWork(int meetingId, int workId)
+    {
+        var meeting = await meetingRepository.GetById(meetingId) ??
+                      throw new InvalidOperationException($"Meeting with ID {meetingId} was not found.");
+        var studentWork = (meeting.StudentWorks ?? []).FirstOrDefault(work => work.Id == workId) ??
+                          throw new InvalidOperationException($"Student work with ID {workId} was not found.");
+
+        return new StudentWorkDto(
+            studentWork.Id,
+            studentWork.StudentName,
+            studentWork.Theme,
+            studentWork.Supervisor,
+            studentWork.Consultant,
+            studentWork.Reviewer,
+            studentWork.SupervisorMark,
+            studentWork.ReviewerMark,
+            studentWork.CodeLink);
+    }
+
+    /// <summary>
+    /// Saves member mark.
+    /// </summary>
+    /// <param name="memberId">Member id.</param>
+    /// <param name="workId">Student work id.</param>
+    public async Task SaveMemberMark(int memberId, int workId)
+    {
+    }
+
     private async Task<List<Criteria>> GetCriteria(List<int> idList)
     {
         var criteria = new List<Criteria>();
+
         foreach (var id in idList)
         {
             criteria.Add(

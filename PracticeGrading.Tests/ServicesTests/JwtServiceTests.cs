@@ -17,7 +17,7 @@ public class JwtServiceTests : TestBase
             UserName = "username",
             Role = new Role { RoleName = "role" }
         };
-        
+
         var token = JwtService.GenerateToken(user);
 
         token.Should().NotBeNullOrEmpty();
@@ -42,6 +42,7 @@ public class JwtServiceTests : TestBase
 
         var jwtToken = (JwtSecurityToken)validatedToken;
         jwtToken.Claims.First(c => c.Type == ClaimTypes.Name).Value.Should().Be(user.UserName);
+        jwtToken.Claims.First(c => c.Type == ClaimTypes.NameIdentifier).Value.Should().Be(user.Id.ToString());
         jwtToken.Claims.First(c => c.Type == ClaimTypes.Role).Value.Should().Be(user.Role.RoleName);
     }
 }

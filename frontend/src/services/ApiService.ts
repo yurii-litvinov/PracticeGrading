@@ -46,13 +46,14 @@ export const getMeetings = async (id?: number) =>
 export const createMeeting = async (meeting: Meeting) =>
     await axiosService.post(`meetings/new`, {
         ...meeting,
-        members: meeting.members.filter(member => member !== '')
+        members: meeting.members.filter(member => member.name !== '')
     });
 
 export const updateMeeting = async (meeting: Meeting) =>
     await axiosService.put(`meetings/update`, {
         ...meeting,
-        members: meeting.members.filter(member => member !== '')
+        members: meeting.members.filter(member => member.name !== ''),
+        criteriaId: meeting.criteria.map(criteria => criteria.id)
     });
 
 export const deleteMeeting = async (id: number) =>
@@ -75,3 +76,6 @@ export const getMembers = async (id: number) =>
 
 export const loginMember = async (userName: string, meetingId: int) =>
     await axiosService.post(`member/login`, {userName, meetingId});
+
+export const getStudentWork = async (meetingId: number, workId: number) =>
+    await axiosService.get(`meetings/${meetingId}/studentwork/${workId}`);

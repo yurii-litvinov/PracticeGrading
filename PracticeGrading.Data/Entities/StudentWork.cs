@@ -74,4 +74,9 @@ public class StudentWork
     /// Gets or sets members marks.
     /// </summary>
     public ICollection<MemberMark>? MemberMarks { get; set; }
+
+    /// <summary>
+    /// Gets or sets average criteria marks.
+    /// </summary>
+    public ICollection<AverageCriteriaMark>? AverageCriteriaMarks { get; set; }
 }

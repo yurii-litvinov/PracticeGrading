@@ -1,8 +1,10 @@
 import {NavLink} from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import {jwtDecode} from "jwt-decode";
+import {useLocation} from 'react-router-dom';
 
 export function NavBar() {
+    const location = useLocation();
     const token = sessionStorage.getItem('token');
     let role = '';
     if (token) {
@@ -70,7 +72,10 @@ export function NavBar() {
             <nav className="navbar navbar-expand-sm navbar-dark bg-dark">
                 <div className="container-fluid">
                     <div className="d-flex justify-content-center w-100">
-                        <span className="navbar-brand fs-4">Заседание</span>
+                        <span
+                            className="navbar-brand fs-4">{location.pathname.includes('studentwork')
+                            ? 'Работа студента' : 'Заседание'}
+                        </span>
                     </div>
                 </div>
             </nav>

@@ -24,5 +24,9 @@ public class StudentWorkConfiguration : IEntityTypeConfiguration<StudentWork>
         builder.HasMany<MemberMark>(work => work.MemberMarks)
             .WithOne(mark => mark.StudentWork)
             .HasForeignKey(mark => mark.StudentWorkId);
+
+        builder.HasMany<AverageCriteriaMark>(work => work.AverageCriteriaMarks)
+            .WithOne(mark => mark.StudentWork)
+            .HasForeignKey(mark => mark.StudentWorkId);
     }
 }

@@ -15,9 +15,10 @@ public class MeetingServiceTests : TestBase
             new() { Id = 2, Name = "criteria2" }
         };
 
-        var works = new List<AddStudentWorkRequest>
+        var works = new List<StudentWorkRequest>
         {
-            new("student",
+            new(null,
+                "student",
                 "theme",
                 "supervisor",
                 null,
@@ -40,7 +41,11 @@ public class MeetingServiceTests : TestBase
             null,
             null,
             works,
-            ["member1, member2, member3"],
+            [
+                new MemberRequest(null, "member1"),
+                new MemberRequest(null, "member2"),
+                new MemberRequest(null, "member3")
+            ],
             [1, 2]);
 
         await MeetingService.AddMeeting(request);
@@ -101,13 +106,13 @@ public class MeetingServiceTests : TestBase
             [],
             []);
         await MeetingService.UpdateMeeting(request);
-        
+
         var meetings = await MeetingService.GetMeeting(request.Id);
 
         meetings.First().Auditorium.Should().BeEquivalentTo(request.Auditorium);
         meetings.First().Info.Should().BeEquivalentTo(request.Info);
     }
-    
+
     [Test]
     public async Task TestUpdateNonexistentMeeting()
     {
@@ -126,7 +131,7 @@ public class MeetingServiceTests : TestBase
         await action.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage($"Meeting with ID {request.Id} was not found.");
     }
-    
+
     [Test]
     public async Task TestDeleteMeeting()
     {

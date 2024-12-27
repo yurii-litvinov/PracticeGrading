@@ -9,7 +9,7 @@ import {Actions} from '../models/Actions';
 export function MemberPage() {
     const {id} = useParams();
     const navigate = useNavigate();
-    const [selectedStudentIndex, setSelectedStudentIndex] = useState(null);
+    const [selectedStudentId, setSelectedStudentId] = useState(null);
     const [criteria, setCriteria] = useState([]);
     const [meeting, setMeeting] = useState({
         dateAndTime: new Date(),
@@ -25,8 +25,11 @@ export function MemberPage() {
     const signalRService = useRef<SignalRService | null>(null);
 
     const handleNotification = (action: string) => {
-        if (action.includes(Actions.Highlight)) {
-            setSelectedStudentIndex(+action.split(':')[1])
+        switch (true) {
+            case action.includes(Actions.Highlight):
+                setSelectedStudentId(+action.split(':')[1]);
+            case action.includes(Actions.Update):
+                getMeetings(id).then(response => setMeeting(response.data[0]));
         }
     }
 
@@ -36,6 +39,7 @@ export function MemberPage() {
 
             signalRService.current = new SignalRService(id, handleNotification);
             signalRService.current.startConnection();
+            signalRService.current.sendNotification(Actions.Join);
         }
 
         return () => {
@@ -44,17 +48,9 @@ export function MemberPage() {
         }
     }, [id]);
 
-    const handleBack = () => {
-        navigate("/meetings", {replace: true})
-    }
-
-    const handleEditMeeting = () => {
-        navigate(`/meetings/edit/${id}`, {replace: true, state: {redirectTo: 'running'}});
-    }
-
-    const handleStartMeeting = () => {
-        navigate(`/meetings/running/${id}`, {replace: true})
-    }
+    const handleRowClick = (workId: number) => {
+        navigate(`/meetings/${id}/member/studentwork/${workId}`, {replace: true});
+    };
 
     return (
         <>
@@ -121,9 +117,9 @@ export function MemberPage() {
                         </tr>
                         </thead>
                         <tbody>
-                        {meeting.studentWorks.map((work, index) => (
-                            <tr key={index} onClick={() => handleRowClick(index)}
-                                className={selectedStudentIndex === index ? "table-info" : ""}
+                        {meeting.studentWorks.map((work) => (
+                            <tr key={work.id} onClick={() => handleRowClick(work.id)}
+                                className={selectedStudentId === work.id ? "table-info" : ""}
                                 style={{cursor: "pointer"}}>
                                 <td>{work.studentName}</td>
                                 <td style={{maxWidth: '600px'}}>{work.theme}</td>

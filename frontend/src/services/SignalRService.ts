@@ -44,6 +44,7 @@ export class SignalRService {
             }
         } else {
             console.error("Connection is not established.");
+            setTimeout(() => this.sendNotification(action), 5000);
         }
     };
 

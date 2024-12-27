@@ -29,7 +29,7 @@ export function MemberLoginPage() {
 
     return (
         <div className="d-flex justify-content-center align-items-center" style={{height: '100vh'}}>
-            <div className="card" style={{maxWidth: '400px', width: '100%'}}>
+            <div className="card w-auto">
                 <div className="card-body">
                     <h4 className="card-title text-center mb-4">Вход</h4>
                     <h6 className="mb-3">Выберите себя из списка</h6>

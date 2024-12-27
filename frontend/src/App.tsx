@@ -9,6 +9,7 @@ import {ViewMeetingPage} from './pages/ViewMeetingPage';
 import {RunningMeetingPage} from './pages/RunningMeetingPage';
 import {MemberLoginPage} from './pages/MemberLoginPage';
 import {MemberPage} from './pages/MemberPage';
+import {MemberStudentWorkPage} from './pages/MemberStudentWorkPage';
 
 export function App() {
     const router = createBrowserRouter([
@@ -51,6 +52,10 @@ export function App() {
                 {
                     path: "/meetings/:id/member",
                     element: <MemberPage/>,
+                },
+                {
+                    path: "/meetings/:meetingId/member/studentwork/:workId",
+                    element: <MemberStudentWorkPage/>,
                 },
             ],
         },

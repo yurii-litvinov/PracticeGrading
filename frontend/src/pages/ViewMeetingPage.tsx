@@ -7,7 +7,6 @@ import {formatDate} from './MeetingsPage';
 export function ViewMeetingPage() {
     const {id} = useParams();
     const navigate = useNavigate();
-    const [criteria, setCriteria] = useState([]);
     const [meeting, setMeeting] = useState({
         dateAndTime: new Date(),
         auditorium: '',
@@ -15,26 +14,13 @@ export function ViewMeetingPage() {
         callLink: '',
         materialsLink: '',
         studentWorks: [],
-        members: [''],
-        criteriaId: []
+        members: [],
+        criteria: []
     });
 
     useEffect(() => {
         getMeetings(id).then(response => setMeeting(response.data[0]));
     }, [id]);
-
-    useEffect(() => {
-        if (meeting.criteriaId.length === 0 || criteria.length === meeting.criteriaId.length) {
-            return;
-        }
-        const criteriaPromises = meeting.criteriaId.map(criteriaId =>
-            getCriteria(criteriaId).then(response => response.data[0])
-        );
-
-        Promise.all(criteriaPromises).then(criteriaData => {
-            setCriteria(criteriaData);
-        });
-    }, [meeting.criteriaId]);
 
     const handleBack = () => {
         navigate("/meetings", {replace: true})
@@ -159,7 +145,7 @@ export function ViewMeetingPage() {
                         {meeting.members.map((member, index) => (
                             <div key={index} className=" px-3">
                                 <input type="text" readOnly className="form-control-plaintext"
-                                       value={member}/>
+                                       value={member.name}/>
                             </div>
                         ))}
                     </div>
@@ -167,7 +153,7 @@ export function ViewMeetingPage() {
                     <div className="flex-grow-1">
                         <h4 className="p-2">Критерии</h4>
                         <ul className="list-group p-2">
-                            {criteria.map((criteria) => (
+                            {meeting.criteria.map((criteria) => (
                                 <li className="list-group-item d-flex align-items-center" key={criteria.id}>
                                     <label> {criteria.name}{criteria.comment && (
                                         <>

@@ -11,6 +11,7 @@
  * @param codeLink - Student work code link
  */
 export interface StudentWork {
+    id?: number,
     studentName: string,
     theme: string,
     supervisor: string,
