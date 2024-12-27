@@ -21,9 +21,9 @@ public class AverageCriteriaMarkConfiguration : IEntityTypeConfiguration<Average
     {
         builder.HasKey(mark => new { mark.StudentWorkId, mark.CriteriaId });
 
-        builder.HasMany<CriteriaMark>(mark => mark.CriteriaMarks)
-            .WithOne(criteriaMark => criteriaMark.AverageCriteriaMark)
-            .HasForeignKey(criteriaMark => new { criteriaMark.StudentWorkId, criteriaMark.CriteriaId })
-            .HasPrincipalKey(mark => new { mark.StudentWorkId, mark.CriteriaId });
+        builder.HasMany<MemberMark>(mark => mark.MemberMarks)
+            .WithOne(memberMark => memberMark.AverageCriteriaMark)
+            .HasForeignKey(memberMark => memberMark.StudentWorkId)
+            .HasPrincipalKey(mark => mark.StudentWorkId);
     }
 }

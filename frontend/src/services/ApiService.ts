@@ -46,7 +46,8 @@ export const getMeetings = async (id?: number) =>
 export const createMeeting = async (meeting: Meeting) =>
     await axiosService.post(`meetings/new`, {
         ...meeting,
-        members: meeting.members.filter(member => member.name !== '')
+        members: meeting.members.filter(member => member.name !== ''),
+        criteriaId: meeting.criteria.map(criteria => criteria.id)
     });
 
 export const updateMeeting = async (meeting: Meeting) =>

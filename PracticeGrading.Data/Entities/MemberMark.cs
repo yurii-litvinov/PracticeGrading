@@ -36,6 +36,11 @@ public class MemberMark
     public ICollection<CriteriaMark>? CriteriaMarks { get; set; }
 
     /// <summary>
+    /// Gets or sets average criteria mark.
+    /// </summary>
+    public AverageCriteriaMark? AverageCriteriaMark { get; set; }
+
+    /// <summary>
     /// Gets or sets mark.
     /// </summary>
     public int Mark { get; set; }
