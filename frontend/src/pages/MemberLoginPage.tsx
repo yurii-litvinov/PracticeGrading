@@ -11,10 +11,11 @@ export function MemberLoginPage() {
     useEffect(() => {
         getMembers(id).then(response => {
             const membersList = response.data;
-            setMembers(membersList);
+            const namesList = membersList.map(member => member.name);
+            setMembers(namesList);
 
-            if (membersList.length > 0) {
-                setSelectedMember(membersList[0]);
+            if (namesList.length > 0) {
+                setSelectedMember(namesList[0]);
             }
         });
     }, [id]);

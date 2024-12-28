@@ -48,9 +48,32 @@ public class MarkRepository(AppDbContext context)
     /// <summary>
     /// Gets all member marks.
     /// </summary>
+    /// <param name="workId">Student work id.</param>
     /// <returns>List of member marks.</returns>
-    public async Task<List<MemberMark>> GetAll() =>
-        await context.MemberMarks.Include(mark => mark.CriteriaMarks).ToListAsync();
+    public async Task<List<MemberMark>> GetAll(int workId)
+    {
+        var memberMarks = await context.MemberMarks
+            .Include(mark => mark.CriteriaMarks)
+            .Where(mark => mark.StudentWorkId == workId)
+            .ToListAsync();
+
+        foreach (var memberMark in memberMarks)
+        {
+            if (memberMark.CriteriaMarks == null)
+            {
+                continue;
+            }
+
+            foreach (var criteriaMark in memberMark.CriteriaMarks)
+            {
+                await context.Entry(criteriaMark)
+                    .Collection(mark => mark.SelectedRules)
+                    .LoadAsync();
+            }
+        }
+
+        return memberMarks;
+    }
 
     /// <summary>
     /// Deletes member mark.

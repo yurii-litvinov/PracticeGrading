@@ -26,8 +26,6 @@ public static class MeetingEndpoints
         meetingGroup.MapDelete("/delete", DeleteMeeting).RequireAuthorization("RequireAdminRole");
 
         meetingGroup.MapGet("/members", GetMembers).AllowAnonymous();
-        meetingGroup.MapGet("/{meetingId:int}/studentwork/{workId:int}", GetStudentWork)
-            .RequireAuthorization("RequireAdminOrMemberRole");
     }
 
     private static async Task<IResult> CreateMeeting(MeetingRequest request, MeetingService meetingService)
@@ -58,11 +56,5 @@ public static class MeetingEndpoints
     {
         var members = await meetingService.GetMembers(id);
         return Results.Ok(members);
-    }
-
-    private static async Task<IResult> GetStudentWork(int meetingId, int workId, MeetingService meetingService)
-    {
-        var studentWork = await meetingService.GetStudentWork(meetingId, workId);
-        return Results.Ok(studentWork);
     }
 }

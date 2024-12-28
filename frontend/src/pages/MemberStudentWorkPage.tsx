@@ -1,6 +1,12 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {getStudentWork, getMeetings, getMemberMarks, createMemberMark, updateMemberMark} from '../services/ApiService';
+import {
+    getMeetings,
+    getMemberMarks,
+    createMemberMark,
+    updateMemberMark,
+    getMembers
+} from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
 import {formatDate} from './MeetingsPage';
 import {SignalRService} from '../services/SignalRService';
@@ -14,6 +20,8 @@ export function MemberStudentWorkPage() {
     const [criteria, setCriteria] = useState<Criteria[]>([]);
     const [studentWork, setStudentWork] = useState({});
     const [isEditing, setIsEditing] = useState(true);
+    const [anotherMarks, setAnotherMarks] = useState([]);
+    const [anotherMembers, setAnotherMembers] = useState([]);
 
     const token = sessionStorage.getItem('token');
     let name = '';
@@ -35,10 +43,12 @@ export function MemberStudentWorkPage() {
     const signalRService = useRef<SignalRService | null>(null);
 
     const fetchData = () => {
-        getStudentWork(meetingId, workId).then(response => setStudentWork(response.data));
-
         getMeetings(meetingId).then(response => {
-            const criteriaList = response.data[0].criteria;
+            const meeting = response.data[0]
+            const criteriaList = meeting.criteria;
+
+            setStudentWork(meeting.studentWorks.find(student => student.id == workId));
+            setAnotherMembers(meeting.members.filter(member => member.id != id));
 
             setCriteria(
                 criteriaList.map((criteria) => ({
@@ -47,36 +57,43 @@ export function MemberStudentWorkPage() {
                     rules: criteria.rules.sort((a, b) => b.value - a.value)
                 }))
             );
-
-            setMark((prevMark) => ({
-                ...prevMark,
-                criteriaMarks: criteriaList.map((criteria) => ({
-                    id: null,
-                    criteriaId: criteria.id,
-                    memberMarkId: id,
-                    selectedRules: [],
-                    mark: null,
-                }))
-            }));
         });
 
-        getMemberMarks(id, workId).then(response => setMark(response.data[0]));
+        getMemberMarks(workId).then(response => {
+            const marks = response.data;
+            const targetMark = marks.find(mark => mark.memberId == id);
+            const otherMarks = marks.filter(mark => mark.memberId != id);
+
+            if (targetMark) {
+                setMark(targetMark)
+                setIsEditing(false);
+            }
+
+            setAnotherMarks(otherMarks);
+        })
     }
 
     const handleNotification = (action: string) => {
-        switch (true) {
-            case action.includes(Actions.Update || Actions.SendMark):
-                fetchData();
+        if (action.includes(Actions.Update) || action.includes(Actions.SendMark)) {
+            fetchData();
         }
     }
 
     useEffect(() => {
-        if (mark?.id == null || mark.id === 0) {
-            setIsEditing(true);
-        } else {
-            setIsEditing(false);
+        if (mark.id == null) {
+            setMark((prevMark) => ({
+                ...prevMark,
+                criteriaMarks: criteria.map((element) => ({
+                    id: null,
+                    criteriaId: element.id,
+                    studentWorkId: workId,
+                    selectedRules: [],
+                    mark: null,
+                }))
+            }));
         }
-    }, [mark.id]);
+        selectRules();
+    }, [criteria, mark.id, isEditing]);
 
     useEffect(() => {
         if (workId) {
@@ -92,10 +109,10 @@ export function MemberStudentWorkPage() {
         }
     }, [workId]);
 
-    useEffect(() => {
+    const selectRules = () => {
         setMark((prevMark) => {
             const updatedCriteriaMarks = prevMark.criteriaMarks.map((criteriaMark) => {
-                if (criteriaMark.selectedRules.length === 0) {
+                if (criteriaMark.selectedRules.filter((rule) => rule.isScaleRule).length == 0) {
                     const firstRule = criteria.find(criteria => criteria.id === criteriaMark.criteriaId)?.scale[0];
                     if (firstRule) {
                         return {
@@ -115,7 +132,8 @@ export function MemberStudentWorkPage() {
         });
 
         calculateMark();
-    }, [criteria]);
+    }
+
 
     const handleBack = () => {
         navigate(`/meetings/${meetingId}/member`, {replace: true});
@@ -130,8 +148,6 @@ export function MemberStudentWorkPage() {
                     finalMark = Math.min(finalMark, criteriaMark.mark);
                 }
             });
-            
-            if (finalMark < 2) finalMark = 2;
 
             return {
                 ...prevMark,
@@ -191,13 +207,34 @@ export function MemberStudentWorkPage() {
                 criteriaMarks: updatedCriteriaMarks,
             }
         });
-        
+
         calculateMark();
+    }
+
+    const handleCommentChange = (e, criteriaId) => {
+        const newComment = e.target.value;
+
+        setMark(prevMark => {
+            const updatedCriteriaMarks = prevMark.criteriaMarks.map(criteriaMark => {
+                if (criteriaMark.criteriaId === criteriaId) {
+                    return {
+                        ...criteriaMark,
+                        comment: newComment
+                    };
+                }
+                return criteriaMark;
+            });
+
+            return {
+                ...prevMark,
+                criteriaMarks: updatedCriteriaMarks
+            };
+        });
     }
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
-        
+
         if (mark?.id == null || mark.id === 0) {
             createMemberMark(mark).then(response => signalRService.current.sendNotification(Actions.SendMark));
         } else {
@@ -205,12 +242,20 @@ export function MemberStudentWorkPage() {
         }
 
         setIsEditing(false);
-    };
+    }
 
     const handleEdit = (event: React.FormEvent) => {
         event.preventDefault();
         setIsEditing(true);
-    };
+        console.log(anotherMarks)
+    }
+
+    const isRuleSelected = (criteriaId, ruleId) => {
+        return mark.criteriaMarks.some((criteriaMark) =>
+            criteriaMark.criteriaId === criteriaId &&
+            criteriaMark.selectedRules.some((selectedRule) => selectedRule.id === ruleId)
+        );
+    }
 
     return (
         <>
@@ -276,12 +321,14 @@ export function MemberStudentWorkPage() {
                 </div>
             </div>
 
-            <div className="card w-auto">
+            <div className="card w-auto mb-4">
                 <div className="card-body p-4">
                     <h4 className="card-title text-center mb-2">Моя оценка</h4>
 
+                    <hr className="my-4"/>
+
                     <div className="d-flex mb-2 align-items-center">
-                        <label className="me-1 fs-5 fw-bold w-auto">Член комиссии:</label>
+                        <label className="me-1 fs-5 fw-semibold w-auto">Член комиссии:</label>
                         <span className="form-control-plaintext fs-5 w-auto text-wrap">{name}</span>
                     </div>
 
@@ -289,7 +336,7 @@ export function MemberStudentWorkPage() {
                         {criteria.map((criteria, index) => (
                             <div key={criteria.id} className="mb-4">
                                 <label
-                                    className="mb-2 fw-bold w-auto">{index + 1}. {criteria.name} {criteria.comment && (
+                                    className="mb-2 fw-semibold w-auto">{index + 1}. {criteria.name} {criteria.comment && (
                                     <>
                                         <br/>
                                         <small className="fs-6 fw-normal"
@@ -303,40 +350,50 @@ export function MemberStudentWorkPage() {
                                         <div key={rule.id} className="form-check">
                                             <input className="form-check-input" type="radio" name={criteria.id}
                                                    disabled={!isEditing}
-                                                   checked={mark.criteriaMarks.some((criteriaMark) =>
-                                                       criteriaMark.criteriaId === criteria.id && criteriaMark.selectedRules.includes(rule))}
+                                                   checked={isRuleSelected(criteria.id, rule.id)}
                                                    onChange={() => handleRadioChange(criteria.id, rule)}></input>
-                                            <label className="form-check-label">
-                                                        <span
-                                                            className="fw-semibold">{rule.value}</span> — {rule.description}
+                                            <label>
+                                                <span className="fw-semibold">{rule.value}</span> — {rule.description}
                                             </label>
                                         </div>
                                     ))}
                                 </div>
 
-                                <h6 className="w-auto">Дополнительные правила:</h6>
-                                <div>
-                                    {criteria.rules.map((rule) => (
-                                        <div key={rule.id} className="form-check">
-                                            <input className="form-check-input" type="checkbox"
-                                                   disabled={!isEditing}
-                                                   checked={mark.criteriaMarks.some((criteriaMark) =>
-                                                       criteriaMark.criteriaId === criteria.id && criteriaMark.selectedRules.includes(rule))}
-                                                   onChange={(e) => handleCheckboxChange(e, criteria.id, rule)}></input>
-                                            <label className="form-check-label">
+                                {criteria.rules.length > 0 ? (
+                                    <>
+                                        <h6 className="w-auto">Дополнительные правила:</h6>
+                                        <div>
+                                            {criteria.rules.map((rule) => (
+                                                <div key={rule.id} className="form-check">
+                                                    <input className="form-check-input" type="checkbox"
+                                                           disabled={!isEditing}
+                                                           checked={isRuleSelected(criteria.id, rule.id)}
+                                                           onChange={(e) => handleCheckboxChange(e, criteria.id, rule)}/>
+                                                    <label>
                                                         <span
                                                             className="fw-semibold">{rule.value}</span> {rule.description}
-                                            </label>
+                                                    </label>
+                                                </div>
+                                            ))}
                                         </div>
-                                    ))}
+                                    </>
+                                ) : null}
+
+                                <div className="mb-2">
+                                    <label className="form-label">Комментарий</label>
+                                    <textarea type="text" className="form-control" name="comment"
+                                              disabled={!isEditing}
+                                              value={mark.criteriaMarks.find(criteriaMark => criteriaMark.criteriaId === criteria.id)?.comment || ''}
+                                              onChange={(e) => handleCommentChange(e, criteria.id)}/>
                                 </div>
+
                             </div>
                         ))}
 
                         <div className="d-flex mb-2 align-items-center">
-                            <label className="me-2 fw-bold fs-5 w-auto">Итоговая оценка:</label>
+                            <label className="me-2 fw-semibold fs-5 w-auto">Итоговая оценка:</label>
                             <span
-                                className="form-control-plaintext fs-5 w-auto text-wrap">{mark.mark}</span>
+                                className="form-control-plaintext fs-5 w-auto text-wrap">{mark?.mark}</span>
                         </div>
 
                         {isEditing ? (
@@ -354,6 +411,58 @@ export function MemberStudentWorkPage() {
                         )}
                     </form>
                 </div>
+            </div>
+
+            <h4 className="mb-4">Оценки других членов комиссии</h4>
+
+            <div className="accordion" id="marksAccordion">
+                {anotherMarks.map((memberMark, index) =>
+                    <div className="accordion-item" key={memberMark.memberId}>
+                        <h2 className="accordion-header">
+                            <button className="accordion-button collapsed"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target={`#collapse${memberMark.memberId}`}
+                                    aria-expanded="false"
+                                    aria-controls={`collapse${memberMark.memberId}`}>
+                                <span
+                                    className="fw-semibold me-1">{anotherMembers?.find(member => member.id === memberMark.memberId)?.name}</span>
+                                — оценка: {memberMark.mark}
+                            </button>
+                        </h2>
+                        <div id={`collapse${memberMark.memberId}`}
+                             className="accordion-collapse collapse"
+                             data-bs-parent="#marksAccordion">
+                            <div className="accordion-body">
+                                {criteria.map((criteria, index) => (
+                                    <div key={criteria.id} className="mb-2">
+                                        <label
+                                            className="mb-2 w-auto"><span
+                                            className="fw-semibold me-1">{index + 1}. {criteria.name}:</span>
+                                            {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).mark}
+                                        </label>
+
+                                        <ul className="list-unstyled ps-3 mb-1">
+                                            {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)
+                                                .selectedRules.sort((a, b) => b.value - a.value).map((rule, index) => (
+                                                    <li key={index}>
+                                                        {rule.isScaleRule ? (<>{rule.value} — {rule.description}</>)
+                                                            : (<>{rule.value} {rule.description}</>)}
+                                                    </li>
+                                                ))}
+                                        </ul>
+
+                                        {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment ?
+                                            (<p
+                                                className="w-auto fst-italic ms-3">Комментарий: {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment}</p>)
+                                            : null}
+
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );

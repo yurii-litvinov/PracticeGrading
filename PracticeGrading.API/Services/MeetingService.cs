@@ -229,12 +229,12 @@ public class MeetingService(
     /// Gets meeting members.
     /// </summary>
     /// <param name="id">Meeting id.</param>
-    public async Task<List<string>> GetMembers(int id)
+    public async Task<List<MemberDto>> GetMembers(int id)
     {
         var meeting = await meetingRepository.GetById(id) ??
                       throw new InvalidOperationException($"Meeting with ID {id} was not found.");
 
-        return (meeting.Members ?? []).Select(member => member.UserName).ToList();
+        return (meeting.Members ?? []).Select(member => new MemberDto(member.Id, member.UserName)).ToList();
     }
 
     /// <summary>
@@ -247,30 +247,6 @@ public class MeetingService(
                       throw new InvalidOperationException($"Meeting with ID {id} was not found.");
 
         await meetingRepository.Delete(meeting);
-    }
-
-    /// <summary>
-    /// Gets student work by Id.
-    /// </summary>
-    /// <param name="meetingId">Meeting id.</param>
-    /// <param name="workId">Student work id.</param>
-    public async Task<StudentWorkDto> GetStudentWork(int meetingId, int workId)
-    {
-        var meeting = await meetingRepository.GetById(meetingId) ??
-                      throw new InvalidOperationException($"Meeting with ID {meetingId} was not found.");
-        var studentWork = (meeting.StudentWorks ?? []).FirstOrDefault(work => work.Id == workId) ??
-                          throw new InvalidOperationException($"Student work with ID {workId} was not found.");
-
-        return new StudentWorkDto(
-            studentWork.Id,
-            studentWork.StudentName,
-            studentWork.Theme,
-            studentWork.Supervisor,
-            studentWork.Consultant,
-            studentWork.Reviewer,
-            studentWork.SupervisorMark,
-            studentWork.ReviewerMark,
-            studentWork.CodeLink);
     }
 
     private async Task<List<Criteria>> GetCriteria(List<int> idList)

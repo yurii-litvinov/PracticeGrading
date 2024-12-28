@@ -35,6 +35,7 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                 {
                     CriteriaId = markRequest.CriteriaId,
                     Mark = markRequest.Mark,
+                    Comment = markRequest.Comment,
                     SelectedRules = (criteria?.Rules ?? []).Where(rule => rulesId.Contains(rule.Id)).ToList(),
                 });
         }
@@ -65,6 +66,7 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                 {
                     CriteriaId = markRequest.CriteriaId,
                     Mark = markRequest.Mark,
+                    Comment = markRequest.Comment,
                     SelectedRules = (criteria?.Rules ?? []).Where(rule => rulesId.Contains(rule.Id)).ToList(),
                 });
         }
@@ -75,19 +77,19 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
     /// <summary>
     /// Gets member mark by id or all marks.
     /// </summary>
-    /// <param name="memberId">Member id.</param>
     /// <param name="workId">Student work id.</param>
+    /// <param name="memberId">Member id.</param>
     /// <returns>List of member marks.</returns>
-    public async Task<List<MemberMarkDto>> GetMemberMarks(int? memberId = null, int? workId = null)
+    public async Task<List<MemberMarkDto>> GetMemberMarks(int workId, int? memberId = null)
     {
         List<MemberMark> memberMarks;
-        if (memberId == null || workId == null)
+        if (memberId == null)
         {
-            memberMarks = await markRepository.GetAll();
+            memberMarks = await markRepository.GetAll(workId);
         }
         else
         {
-            var memberMark = await markRepository.GetById((int)memberId, (int)workId);
+            var memberMark = await markRepository.GetById((int)memberId, workId);
 
             if (memberMark == null)
             {
@@ -115,6 +117,7 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                             mark.Id,
                             mark.CriteriaId,
                             mark.MemberMarkId,
+                            mark.Comment ?? string.Empty,
                             new List<RuleDto>(
                                     (mark.SelectedRules ?? []).Select(
                                         rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)))

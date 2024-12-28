@@ -46,10 +46,6 @@ export function App() {
                     element: <ViewMeetingPage/>,
                 },
                 {
-                    path: "/meetings/running/:id",
-                    element: <RunningMeetingPage/>,
-                },
-                {
                     path: "/meetings/:id/member",
                     element: <MemberPage/>,
                 },

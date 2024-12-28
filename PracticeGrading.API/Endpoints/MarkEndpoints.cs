@@ -31,9 +31,9 @@ public static class MarkEndpoints
         return Results.Ok();
     }
 
-    private static async Task<IResult> GetMemberMark(int? memberId, int? workId, MarkService markService)
+    private static async Task<IResult> GetMemberMark(int workId, int? memberId, MarkService markService)
     {
-        var marks = await markService.GetMemberMarks(memberId, workId);
+        var marks = await markService.GetMemberMarks(workId, memberId);
         return Results.Ok(marks);
     }
 

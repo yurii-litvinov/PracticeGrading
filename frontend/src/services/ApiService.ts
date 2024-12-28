@@ -78,10 +78,7 @@ export const getMembers = async (id: number) =>
 export const loginMember = async (userName: string, meetingId: int) =>
     await axiosService.post(`member/login`, {userName, meetingId});
 
-export const getStudentWork = async (meetingId: number, workId: number) =>
-    await axiosService.get(`meetings/${meetingId}/studentwork/${workId}`);
-
-export const getMemberMarks = async (memberId?: number, workId?: number) =>
+export const getMemberMarks = async (workId: number, memberId?: number) =>
     await axiosService.get(`marks/`, {params: {memberId, workId}});
 
 export const createMemberMark = async (memberMark) =>

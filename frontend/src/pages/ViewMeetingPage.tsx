@@ -1,12 +1,15 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import {getMeetings, getCriteria} from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
 import {formatDate} from './MeetingsPage';
+import {SignalRService} from '../services/SignalRService';
+import {Actions} from '../models/Actions';
 
 export function ViewMeetingPage() {
     const {id} = useParams();
     const navigate = useNavigate();
+    const [selectedStudentId, setSelectedStudentId] = useState(null);
     const [meeting, setMeeting] = useState({
         dateAndTime: new Date(),
         auditorium: '',
@@ -18,8 +21,27 @@ export function ViewMeetingPage() {
         criteria: []
     });
 
+    const signalRService = useRef<SignalRService | null>(null);
+
+    const handleNotification = (action: string) => {
+        switch (true) {
+            case action.includes(Actions.Join):
+                getMeetings(id).then(response => setMeeting(response.data[0]));
+        }
+    }
+
     useEffect(() => {
-        getMeetings(id).then(response => setMeeting(response.data[0]));
+        if (id) {
+            getMeetings(id).then(response => setMeeting(response.data[0]));
+
+            signalRService.current = new SignalRService(id, handleNotification);
+            signalRService.current.startConnection();
+        }
+
+        return () => {
+            if (signalRService.current) signalRService.current.stopConnection();
+            signalRService.current = null;
+        }
     }, [id]);
 
     const handleBack = () => {
@@ -27,32 +49,47 @@ export function ViewMeetingPage() {
     }
 
     const handleEditMeeting = () => {
-        navigate(`/meetings/edit/${id}`, {replace: true, state: {redirectTo: 'view'}});
+        navigate(`/meetings/edit/${id}`, {replace: true});
     }
 
-    const handleStartMeeting = () => {
-        navigate(`/meetings/running/${id}`, {replace: true})
-    }
+    const handleRowClick = (id: number) => {
+        setSelectedStudentId(id === selectedStudentId ? null : id);
+        signalRService.current.sendNotification(`${Actions.Highlight}:${id === selectedStudentId ? null : id}`);
+    };
 
     return (
         <>
             <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
                 <h2 className="me-auto w-100 mb-3 mb-sm-0 text-center text-sm-start">Просмотр заседания</h2>
                 <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
-                    <button type="button" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2"
-                        onClick={handleStartMeeting}>Начать заседание
-                    </button>
                     <button type="button" className="btn btn-outline-primary btn-lg mb-2 mb-sm-0 me-sm-2"
-                        onClick={handleEditMeeting}>Редактировать
+                            onClick={handleEditMeeting}>Редактировать
                     </button>
                     <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
-                        onClick={handleBack}>Назад
+                            onClick={handleBack}>Назад
                     </button>
                 </div>
             </div>
 
-
             <div className="d-flex flex-column p-2">
+                <div className="d-flex mb-2 align-items-center">
+                    <label className="me-3 fw-bold text-end label-custom">Ссылка для членов
+                        комиссии</label>
+                    <a href="#"
+                       className="icon-link icon-link-hover form-control-plaintext text-primary text-decoration-underline w-auto"
+                       style={{'--bs-icon-link-transform': 'translate3d(0, -.125rem, 0)'}}
+                       onClick={(e) => {
+                           e.preventDefault();
+                           navigator.clipboard.writeText(`${window.location.origin}/meetings/${id}/member`)
+                               .then(() => {
+                                   alert("Ссылка скопирована в буфер обмена");
+                               });
+                       }}>
+                        {`${window.location.origin}/meetings/${id}/member`}
+                        <i className="bi bi-clipboard mb-2"/>
+                    </a>
+                </div>
+
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Дата и время</label>
                     <span className="form-control-plaintext w-auto text-wrap">{formatDate(meeting.dateAndTime)}</span>
@@ -115,8 +152,10 @@ export function ViewMeetingPage() {
                         </tr>
                         </thead>
                         <tbody>
-                        {meeting.studentWorks.map((work, index) => (
-                            <tr key={index}>
+                        {meeting.studentWorks.map((work) => (
+                            <tr key={work.id} onClick={() => handleRowClick(work.id)}
+                                className={selectedStudentId === work.id ? "table-info" : ""}
+                                style={{cursor: "pointer"}}>
                                 <td>{work.studentName}</td>
                                 <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                 <td>{work.supervisor}</td>
@@ -140,7 +179,7 @@ export function ViewMeetingPage() {
                 <hr className="my-4"/>
 
                 <div className="d-flex flex-wrap">
-                    <div className="flex-grow-1 pe-4 mb-2" style={{minWidth: '15em'}}>
+                    <div className="flex-grow-1 pe-4 mb-2" style={{minWidth: '20em'}}>
                         <h4 className="p-2">Список членов комиссии</h4>
                         {meeting.members.map((member, index) => (
                             <div key={index} className=" px-3">

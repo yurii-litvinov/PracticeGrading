@@ -16,7 +16,6 @@ export function MeetingFormPage() {
     const location = useLocation();
     const [workToEditIndex, setWorkToEditIndex] = useState();
     const [criteria, setCriteria] = useState([]);
-    const redirectTo = location.state?.redirectTo || "default";
 
     const signalRService = useRef<SignalRService | null>(null);
 
@@ -55,10 +54,8 @@ export function MeetingFormPage() {
     }, [id]);
 
     const handleBack = () => {
-        if (redirectTo === 'view') {
+        if (id) {
             navigate(`/meetings/${id}`, {replace: true});
-        } else if (redirectTo === 'running') {
-            navigate(`/meetings/running/${id}`, {replace: true});
         } else {
             navigate("/meetings", {replace: true});
         }
@@ -94,13 +91,12 @@ export function MeetingFormPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (redirectTo === 'view' || redirectTo === 'running') {
+        if (id) {
             const response = await updateMeeting(meeting);
 
             if (response.status === 200) {
                 await signalRService.current.sendNotification(Actions.Update);
-                redirectTo === 'view' ? navigate(`/meetings/${id}`, {replace: true})
-                    : navigate(`/meetings/running/${id}`, {replace: true});
+                navigate(`/meetings/${id}`, {replace: true});
             }
         } else {
             const response = await createMeeting(meeting);

@@ -31,6 +31,11 @@ public class CriteriaMark
     public int MemberMarkId { get; set; }
 
     /// <summary>
+    /// Gets or sets member comment.
+    /// </summary>
+    public string? Comment { get; set; }
+
+    /// <summary>
     /// Gets or sets member mark.
     /// </summary>
     public MemberMark? MemberMark { get; set; }
@@ -38,7 +43,7 @@ public class CriteriaMark
     /// <summary>
     /// Gets or sets selected rules.
     /// </summary>
-    public ICollection<Rule>? SelectedRules { get; set; }
+    public required ICollection<Rule> SelectedRules { get; set; }
 
     /// <summary>
     /// Gets or sets average criteria mark id.
