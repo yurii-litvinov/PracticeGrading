@@ -19,9 +19,14 @@ public class CriteriaMarkConfiguration : IEntityTypeConfiguration<CriteriaMark>
     /// </summary>
     public void Configure(EntityTypeBuilder<CriteriaMark> builder)
     {
-        builder.HasKey(mark => mark.MemberMarkId);
+        builder.HasKey(mark => mark.Id);
 
         builder.HasOne<MemberMark>(mark => mark.MemberMark)
             .WithMany(memberMark => memberMark.CriteriaMarks);
+
+        builder.HasMany<Rule>(mark => mark.SelectedRules)
+            .WithOne(rule => rule.CriteriaMark)
+            .HasForeignKey(rule => rule.CriteriaMarkId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

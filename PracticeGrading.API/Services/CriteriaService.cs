@@ -13,7 +13,7 @@ using PracticeGrading.Data.Repositories;
 /// <summary>
 /// Service for working with criteria.
 /// </summary>
-/// <param name="criteriaRepository">Repository for criteia.</param>
+/// <param name="criteriaRepository">Repository for criteria.</param>
 public class CriteriaService(CriteriaRepository criteriaRepository)
 {
     /// <summary>
@@ -97,28 +97,71 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
 
             criteria.Name = request.Name;
             criteria.Comment = request.Comment;
-            criteria.Rules?.Clear();
+
+            foreach (var scaleRequest in request.Scale)
+            {
+                var existingScaleRule =
+                    (criteria.Rules ?? []).FirstOrDefault(rule => rule.Id == scaleRequest.Id && rule.IsScaleRule);
+
+                if (existingScaleRule != null)
+                {
+                    existingScaleRule.Description = scaleRequest.Description;
+                    existingScaleRule.Value = scaleRequest.Value;
+                }
+                else
+                {
+                    criteria.Rules?.Add(
+                        new Rule
+                        {
+                            Description = scaleRequest.Description,
+                            Value = scaleRequest.Value,
+                            IsScaleRule = true,
+                        });
+                }
+            }
+
+            var scaleRulesToRemove = (criteria.Rules ?? [])
+                .Where(
+                    scale => scale.IsScaleRule && request.Scale.All(
+                        scaleRequest => scaleRequest.Id != null && scaleRequest.Id != scale.Id))
+                .ToList();
+
+            foreach (var rule in scaleRulesToRemove)
+            {
+                criteria.Rules?.Remove(rule);
+            }
 
             foreach (var ruleRequest in request.Rules)
             {
-                criteria.Rules?.Add(
-                    new Rule
-                    {
-                        Description = ruleRequest.Description,
-                        Value = ruleRequest.Value,
-                        IsScaleRule = false,
-                    });
+                var existingRule = (criteria.Rules ?? [])
+                    .FirstOrDefault(rule => rule.Id == ruleRequest.Id && !rule.IsScaleRule);
+
+                if (existingRule != null)
+                {
+                    existingRule.Description = ruleRequest.Description;
+                    existingRule.Value = ruleRequest.Value;
+                }
+                else
+                {
+                    criteria.Rules?.Add(
+                        new Rule
+                        {
+                            Description = ruleRequest.Description,
+                            Value = ruleRequest.Value,
+                            IsScaleRule = false,
+                        });
+                }
             }
 
-            foreach (var ruleRequest in request.Scale)
+            var rulesToRemove = (criteria.Rules ?? [])
+                .Where(
+                    rule => !rule.IsScaleRule && request.Rules.All(
+                        ruleRequest => ruleRequest.Id != null && ruleRequest.Id != rule.Id))
+                .ToList();
+
+            foreach (var rule in rulesToRemove)
             {
-                criteria.Rules?.Add(
-                    new Rule
-                    {
-                        Description = ruleRequest.Description,
-                        Value = ruleRequest.Value,
-                        IsScaleRule = true,
-                    });
+                criteria.Rules?.Remove(rule);
             }
 
             await criteriaRepository.Update(criteria);

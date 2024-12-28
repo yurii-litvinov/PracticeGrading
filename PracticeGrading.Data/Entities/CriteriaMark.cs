@@ -11,6 +11,21 @@ namespace PracticeGrading.Data.Entities;
 public class CriteriaMark
 {
     /// <summary>
+    /// Gets or sets criteria mark id.
+    /// </summary>
+    public int Id { get; set; }
+
+    /// <summary>
+    /// Gets or sets criteria id.
+    /// </summary>
+    public int CriteriaId { get; set; }
+
+    /// <summary>
+    /// Gets or sets criteria.
+    /// </summary>
+    public Criteria? Criteria { get; set; }
+
+    /// <summary>
     /// Gets or sets member mark id.
     /// </summary>
     public int MemberMarkId { get; set; }
@@ -24,6 +39,16 @@ public class CriteriaMark
     /// Gets or sets selected rules.
     /// </summary>
     public ICollection<Rule>? SelectedRules { get; set; }
+
+    /// <summary>
+    /// Gets or sets average criteria mark id.
+    /// </summary>
+    public int? AverageCriteriaMarkId { get; set; }
+
+    /// <summary>
+    /// Gets or sets average criteria mark.
+    /// </summary>
+    public AverageCriteriaMark? AverageCriteriaMark { get; set; }
 
     /// <summary>
     /// Gets or sets mark.

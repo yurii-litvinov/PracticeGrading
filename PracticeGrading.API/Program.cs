@@ -95,6 +95,8 @@ app.MapCriteriaEndpoints();
 
 app.MapUserEndpoints();
 
+app.MapMarkEndpoints();
+
 app.Run();
 
 public partial class Program;

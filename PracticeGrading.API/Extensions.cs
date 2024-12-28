@@ -78,5 +78,7 @@ public static class Extensions
         services.AddScoped<MeetingRepository>();
         services.AddScoped<CriteriaService>();
         services.AddScoped<CriteriaRepository>();
+        services.AddScoped<MarkService>();
+        services.AddScoped<MarkRepository>();
     }
 }

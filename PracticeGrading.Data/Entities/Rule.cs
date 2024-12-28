@@ -39,4 +39,14 @@ public class Rule
     /// Gets or sets criteria.
     /// </summary>
     public Criteria? Criteria { get; set; }
+
+    /// <summary>
+    /// Gets or sets criteria mark id.
+    /// </summary>
+    public int? CriteriaMarkId { get; set; }
+
+    /// <summary>
+    /// Gets or sets criteria mark.
+    /// </summary>
+    public CriteriaMark? CriteriaMark { get; set; }
 }

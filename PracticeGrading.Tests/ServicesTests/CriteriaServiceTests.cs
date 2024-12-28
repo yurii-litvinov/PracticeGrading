@@ -11,9 +11,9 @@ public class CriteriaServiceTests : TestBase
     {
         var rules = new List<AddRuleRequest>
         {
-            new("desc1", 1),
-            new("desc2", 2),
-            new("desc3", 3),
+            new(1,"desc1", 1),
+            new(2, "desc2", 2),
+            new(3, "desc3", 3),
         };
 
         var request = new CriteriaRequest(null, "name", null, rules, rules);

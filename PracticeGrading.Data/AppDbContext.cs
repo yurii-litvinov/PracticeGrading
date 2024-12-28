@@ -39,6 +39,11 @@ public class AppDbContext : DbContext
     public DbSet<Criteria> Criteria { get; set; }
 
     /// <summary>
+    /// Gets or sets MemberMarks table.
+    /// </summary>
+    public DbSet<MemberMark> MemberMarks { get; set; }
+
+    /// <summary>
     /// Sets configurations of database tables.
     /// </summary>
     protected override void OnModelCreating(ModelBuilder modelBuilder)

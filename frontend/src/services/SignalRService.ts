@@ -43,7 +43,6 @@ export class SignalRService {
                 console.error("Error while sending notification: ", err);
             }
         } else {
-            console.error("Connection is not established.");
             setTimeout(() => this.sendNotification(action), 5000);
         }
     };

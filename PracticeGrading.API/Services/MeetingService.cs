@@ -134,7 +134,6 @@ public class MeetingService(
     /// <param name="request">Meeting updating request.</param>
     public async Task UpdateMeeting(MeetingRequest request)
     {
-        Console.WriteLine("!!!!!" + request.CriteriaId);
         if (request.Id != null)
         {
             var meeting = await meetingRepository.GetById((int)request.Id) ??
@@ -272,15 +271,6 @@ public class MeetingService(
             studentWork.SupervisorMark,
             studentWork.ReviewerMark,
             studentWork.CodeLink);
-    }
-
-    /// <summary>
-    /// Saves member mark.
-    /// </summary>
-    /// <param name="memberId">Member id.</param>
-    /// <param name="workId">Student work id.</param>
-    public async Task SaveMemberMark(int memberId, int workId)
-    {
     }
 
     private async Task<List<Criteria>> GetCriteria(List<int> idList)

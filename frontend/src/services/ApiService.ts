@@ -80,3 +80,12 @@ export const loginMember = async (userName: string, meetingId: int) =>
 
 export const getStudentWork = async (meetingId: number, workId: number) =>
     await axiosService.get(`meetings/${meetingId}/studentwork/${workId}`);
+
+export const getMemberMarks = async (memberId?: number, workId?: number) =>
+    await axiosService.get(`marks/`, {params: {memberId, workId}});
+
+export const createMemberMark = async (memberMark) =>
+    await axiosService.post(`marks/new`, memberMark);
+
+export const updateMemberMark = async (memberMark) =>
+    await axiosService.put(`marks/update`, memberMark);
