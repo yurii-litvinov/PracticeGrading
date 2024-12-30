@@ -3,15 +3,13 @@
 // Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
 // </copyright>
 
-using PracticeGrading.API.Endpoints;
-using PracticeGrading.API.Models;
-
 namespace PracticeGrading.API;
 
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using PracticeGrading.API.Models;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data.Repositories;
 
