@@ -6,10 +6,9 @@ import {LoginPage} from './pages/LoginPage';
 import {ProfilePage} from './pages/ProfilePage';
 import {CriteriaPage} from './pages/CriteriaPage';
 import {ViewMeetingPage} from './pages/ViewMeetingPage';
-import {RunningMeetingPage} from './pages/RunningMeetingPage';
 import {MemberLoginPage} from './pages/MemberLoginPage';
 import {MemberPage} from './pages/MemberPage';
-import {MemberStudentWorkPage} from './pages/MemberStudentWorkPage';
+import {StudentWorkPage} from './pages/StudentWorkPage';
 
 export function App() {
     const router = createBrowserRouter([
@@ -50,8 +49,8 @@ export function App() {
                     element: <MemberPage/>,
                 },
                 {
-                    path: "/meetings/:meetingId/member/studentwork/:workId",
-                    element: <MemberStudentWorkPage/>,
+                    path: "/meetings/:meetingId/studentwork/:workId",
+                    element: <StudentWorkPage/>,
                 },
             ],
         },

@@ -129,4 +129,18 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
 
         return dtoList;
     }
+
+    /// <summary>
+    /// Deletes member mark.
+    /// </summary>
+    /// <param name="workId">Student work id.</param>
+    /// <param name="memberId">Member id.</param>
+    public async Task DeleteMemberMark(int workId, int memberId)
+    {
+        var memberMark = await markRepository.GetById(memberId, workId) ??
+                         throw new InvalidOperationException(
+                             $"Member mark with member ID {memberId} and student work ID {workId}  was not found.");
+
+        await markRepository.Delete(memberMark);
+    }
 }

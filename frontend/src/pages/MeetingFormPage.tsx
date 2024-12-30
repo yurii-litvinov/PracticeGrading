@@ -279,11 +279,11 @@ export function MeetingFormPage() {
                                 meeting.studentWorks.map((work, index) => (
                                     <tr key={index}>
                                         <td style={{minWidth: '95px'}}>
-                                            <button type="button" className="btn btn-sm"
+                                            <button type="button" className="btn btn-sm btn-link"
                                                     onClick={() => handleStudentWorkDelete(index)}>
                                                 <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
                                             </button>
-                                            <button type="button" className="btn btn-sm"
+                                            <button type="button" className="btn btn-sm btn-link"
                                                     data-bs-toggle="modal" data-bs-target="#studentWorkModal"
                                                     onClick={() => setWorkToEditIndex(index)}>
                                                 <i className="bi bi-pencil fs-5" style={{color: '#007bff'}}></i>

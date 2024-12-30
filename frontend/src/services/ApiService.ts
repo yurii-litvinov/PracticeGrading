@@ -86,3 +86,6 @@ export const createMemberMark = async (memberMark) =>
 
 export const updateMemberMark = async (memberMark) =>
     await axiosService.put(`marks/update`, memberMark);
+
+export const deleteMemberMark = async (workId: number, memberId: number) =>
+    await axiosService.delete(`marks/delete`, {params: {memberId, workId}})

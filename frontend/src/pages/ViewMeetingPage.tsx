@@ -5,6 +5,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import {formatDate} from './MeetingsPage';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
+import Tooltip from 'bootstrap/js/dist/tooltip.js';
 
 export function ViewMeetingPage() {
     const {id} = useParams();
@@ -22,15 +23,21 @@ export function ViewMeetingPage() {
     });
 
     const signalRService = useRef<SignalRService | null>(null);
+    const tooltipRef = useRef(null);
 
     const handleNotification = (action: string) => {
+        console.log(action)
         switch (true) {
             case action.includes(Actions.Join):
                 getMeetings(id).then(response => setMeeting(response.data[0]));
+                signalRService.current.sendNotification(`${Actions.Highlight}:${selectedStudentId}`);
         }
     }
-
+    
     useEffect(() => {
+        const tooltipElement = document.getElementById('copy');
+        tooltipRef.current = new Tooltip(tooltipElement);
+
         if (id) {
             getMeetings(id).then(response => setMeeting(response.data[0]));
 
@@ -41,6 +48,9 @@ export function ViewMeetingPage() {
         return () => {
             if (signalRService.current) signalRService.current.stopConnection();
             signalRService.current = null;
+            if (tooltipRef.current) {
+                tooltipRef.current.dispose();  
+            }
         }
     }, [id]);
 
@@ -55,6 +65,10 @@ export function ViewMeetingPage() {
     const handleRowClick = (id: number) => {
         setSelectedStudentId(id === selectedStudentId ? null : id);
         signalRService.current.sendNotification(`${Actions.Highlight}:${id === selectedStudentId ? null : id}`);
+    };
+
+    const handleIconClick = (workId: number) => {
+        navigate(`/meetings/${id}/studentwork/${workId}`, {replace: true});
     };
 
     return (
@@ -75,14 +89,27 @@ export function ViewMeetingPage() {
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Ссылка для членов
                         комиссии</label>
-                    <a href="#"
+                    <a href="#" id="copy" data-bs-custom-class="tooltip-light" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="top" title="Копировать ссылку"
                        className="icon-link icon-link-hover form-control-plaintext text-primary text-decoration-underline w-auto"
                        style={{'--bs-icon-link-transform': 'translate3d(0, -.125rem, 0)'}}
                        onClick={(e) => {
                            e.preventDefault();
                            navigator.clipboard.writeText(`${window.location.origin}/meetings/${id}/member`)
                                .then(() => {
-                                   alert("Ссылка скопирована в буфер обмена");
+                                   tooltipRef.current.dispose();
+                                   
+                                   const tooltipElement = document.getElementById('copy');
+                                   tooltipElement.setAttribute('title', 'Скопировано!');
+                                   tooltipRef.current = new Tooltip(tooltipElement);
+                                   tooltipRef.current.show();
+
+                                   setTimeout(() => {
+                                       tooltipRef.current.dispose();
+                                       const tooltipElement = document.getElementById('copy');
+                                       tooltipElement.setAttribute('title', 'Копировать ссылку');
+                                       tooltipRef.current = new Tooltip(tooltipElement);
+                                   }, 700);
+
                                });
                        }}>
                         {`${window.location.origin}/meetings/${id}/member`}
@@ -141,6 +168,7 @@ export function ViewMeetingPage() {
                     <table className="table table-striped">
                         <thead>
                         <tr>
+                            <th></th>
                             <th>ФИО</th>
                             <th>Тема</th>
                             <th>Научник</th>
@@ -156,6 +184,14 @@ export function ViewMeetingPage() {
                             <tr key={work.id} onClick={() => handleRowClick(work.id)}
                                 className={selectedStudentId === work.id ? "table-info" : ""}
                                 style={{cursor: "pointer"}}>
+                                <td style={{width: '30px'}}>
+                                    <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleIconClick(work.id);
+                                    }}>
+                                        <i className="bi bi-arrows-angle-expand fs-5" style={{color: '#007bff'}}></i>
+                                    </button>
+                                </td>
                                 <td>{work.studentName}</td>
                                 <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                 <td>{work.supervisor}</td>

@@ -132,6 +132,7 @@ a {
     .label-custom {
         width: 10em;
     }
+
     .span-custom {
         width: 14em;
     }
@@ -141,7 +142,13 @@ a {
     .label-custom {
         width: 9em;
     }
+
     .span-custom {
         width: 10em;
     }
+}
+
+.tooltip-light .tooltip-inner {
+    background-color: #f8f9fa;
+    color: #22252a;
 }

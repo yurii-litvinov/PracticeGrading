@@ -85,12 +85,12 @@ export function CriteriaPage() {
                                     )}
                                     </p>
                                 </button>
-                                <button type="button" id="delete-criteria" className="btn btn-sm"
+                                <button type="button" id="delete-criteria" className="btn btn-sm btn-link"
                                         style={{height: '40px'}}
                                         onClick={() => handleDeleteCriteria(criteria.id)}>
                                     <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
                                 </button>
-                                <button type="button" className="btn btn-sm me-3"
+                                <button type="button" className="btn btn-sm me-3 btn-link"
                                         data-bs-toggle="modal" data-bs-target="#criteriaModal"
                                         onClick={() => setCriteriaToEditId(criteria.id)}>
                                     <i className="bi bi-pencil fs-5" style={{color: '#007bff'}}></i>

@@ -18,11 +18,12 @@ public static class MarkEndpoints
     /// </summary>
     public static void MapMarkEndpoints(this IEndpointRouteBuilder app)
     {
-        var criteriaGroup = app.MapGroup("/marks").RequireAuthorization("RequireAdminOrMemberRole");
+        var markGroup = app.MapGroup("/marks").RequireAuthorization("RequireAdminOrMemberRole");
 
-        criteriaGroup.MapPost("/new", CreateMemberMark);
-        criteriaGroup.MapGet(string.Empty, GetMemberMark);
-        criteriaGroup.MapPut("/update", UpdateMemberMark);
+        markGroup.MapPost("/new", CreateMemberMark);
+        markGroup.MapGet(string.Empty, GetMemberMark);
+        markGroup.MapPut("/update", UpdateMemberMark);
+        markGroup.MapDelete("/delete", DeleteMemberMark).RequireAuthorization("RequireAdminRole");
     }
 
     private static async Task<IResult> CreateMemberMark(MemberMarkRequest request, MarkService markService)
@@ -40,6 +41,12 @@ public static class MarkEndpoints
     private static async Task<IResult> UpdateMemberMark(MemberMarkRequest request, MarkService markService)
     {
         await markService.UpdateMemberMark(request);
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> DeleteMemberMark(int workId, int memberId, MarkService markService)
+    {
+        await markService.DeleteMemberMark(workId, memberId);
         return Results.Ok();
     }
 }

@@ -49,7 +49,7 @@ export function MemberPage() {
     }, [id]);
 
     const handleRowClick = (workId: number) => {
-        navigate(`/meetings/${id}/member/studentwork/${workId}`, {replace: true});
+        navigate(`/meetings/${id}/studentwork/${workId}`, {replace: true});
     };
 
     return (
