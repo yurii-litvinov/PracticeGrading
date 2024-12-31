@@ -92,7 +92,7 @@ public class MeetingServiceTests : TestBase
     [Test]
     public async Task TestUpdateMeeting()
     {
-        var meeting = new Meeting { Id = 10, Info = "info", Criteria = [TestCriteria], StudentWorks = [TestWork] };
+        var meeting = new Meeting { Id = 100, Info = "info", Criteria = [TestCriteria], StudentWorks = [TestWork] };
         await MeetingRepository.Create(meeting);
 
         var workRequest = new StudentWorkRequest(1,
