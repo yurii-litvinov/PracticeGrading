@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using PracticeGrading.API;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data;
+using PracticeGrading.Data.Entities;
 using PracticeGrading.Data.Repositories;
 
 namespace PracticeGrading.Tests;
@@ -15,17 +16,21 @@ public class TestBase
     private AppDbContext _dbContext;
 
     protected HttpClient Client;
-    
+
     protected UserRepository UserRepository;
     protected MeetingRepository MeetingRepository;
     protected CriteriaRepository CriteriaRepository;
 
     protected IOptions<JwtOptions> JwtOptions;
-    
+
     protected JwtService JwtService;
     protected UserService UserService;
     protected MeetingService MeetingService;
     protected CriteriaService CriteriaService;
+
+    protected StudentWork TestWork = new()
+        { StudentName = string.Empty, Theme = string.Empty, Supervisor = string.Empty, AverageCriteriaMarks = [] };
+    protected Criteria TestCriteria = new() { Name = string.Empty };
 
     [SetUp]
     public void SetUp()
@@ -37,20 +42,19 @@ public class TestBase
                 {
                     var descriptor = services.SingleOrDefault(
                         d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-            
+
                     if (descriptor != null)
                     {
                         services.Remove(descriptor);
                     }
-            
+
                     services.AddDbContext<AppDbContext>(options =>
                         options.UseInMemoryDatabase("test_db"));
-            
                 });
             });
 
         Client = _factory.CreateClient();
-        
+
         var scope = _factory.Services.CreateScope();
         _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
@@ -59,7 +63,7 @@ public class TestBase
         UserRepository = new UserRepository(_dbContext);
         MeetingRepository = new MeetingRepository(_dbContext);
         CriteriaRepository = new CriteriaRepository(_dbContext);
-        
+
         JwtOptions = Options.Create(new JwtOptions
         {
             SecretKey = "TestSecretKeyTestSecretKeyTestSecretKey",
@@ -83,4 +87,3 @@ public class TestBase
         Client.Dispose();
     }
 }
-

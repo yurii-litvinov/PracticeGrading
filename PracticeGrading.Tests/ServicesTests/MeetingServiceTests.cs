@@ -62,8 +62,8 @@ public class MeetingServiceTests : TestBase
     [Test]
     public async Task TestGetAllMeetings()
     {
-        await MeetingRepository.Create(new Meeting());
-        await MeetingRepository.Create(new Meeting());
+        await MeetingRepository.Create(new Meeting { Criteria = [TestCriteria], StudentWorks = [TestWork] });
+        await MeetingRepository.Create(new Meeting { Criteria = [TestCriteria], StudentWorks = [TestWork] });
 
         MeetingService.GetMeeting().Result.Should().HaveCount(2);
     }
@@ -71,7 +71,7 @@ public class MeetingServiceTests : TestBase
     [Test]
     public async Task TestGetMeetingById()
     {
-        var meeting = new Meeting { Id = 10, Info = "info" };
+        var meeting = new Meeting { Id = 10, Info = "info", Criteria = [TestCriteria], StudentWorks = [TestWork] };
         await MeetingRepository.Create(meeting);
 
         var meetings = await MeetingService.GetMeeting(meeting.Id);
@@ -92,8 +92,18 @@ public class MeetingServiceTests : TestBase
     [Test]
     public async Task TestUpdateMeeting()
     {
-        var meeting = new Meeting { Id = 10, Info = "info" };
+        var meeting = new Meeting { Id = 10, Info = "info", Criteria = [TestCriteria], StudentWorks = [TestWork] };
         await MeetingRepository.Create(meeting);
+
+        var workRequest = new StudentWorkRequest(1,
+            string.Empty,
+            string.Empty,
+            string.Empty,
+            null,
+            null,
+            null,
+            null,
+            null);
 
         var request = new MeetingRequest(
             meeting.Id,
@@ -102,7 +112,7 @@ public class MeetingServiceTests : TestBase
             null,
             null,
             null,
-            [],
+            [workRequest],
             [],
             []);
         await MeetingService.UpdateMeeting(request);
@@ -135,7 +145,7 @@ public class MeetingServiceTests : TestBase
     [Test]
     public async Task TestDeleteMeeting()
     {
-        var meeting = new Meeting { Id = 10 };
+        var meeting = new Meeting { Id = 10, Criteria = [TestCriteria], StudentWorks = [TestWork] };
         await MeetingRepository.Create(meeting);
 
         await MeetingService.DeleteMeeting(meeting.Id);

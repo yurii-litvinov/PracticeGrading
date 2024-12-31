@@ -13,7 +13,9 @@ public class MeetingRepositoryTests : TestBase
             Id = 1,
             Auditorium = "3389",
             DateAndTime = DateTime.Now,
-            Info = "some_info"
+            Info = "some_info",
+            Criteria = [TestCriteria],
+            StudentWorks = [TestWork]
         };
 
         await MeetingRepository.Create(meeting);
@@ -41,9 +43,9 @@ public class MeetingRepositoryTests : TestBase
 
         var works = new List<StudentWork>
         {
-            new() { StudentName = "student1", Supervisor = "supervisor1", Theme = "theme1" },
-            new() { StudentName = "student2", Supervisor = "supervisor2", Theme = "theme2" },
-            new() { StudentName = "student3", Supervisor = "supervisor3", Theme = "theme3" }
+            new() { StudentName = "student1", Supervisor = "supervisor1", Theme = "theme1", AverageCriteriaMarks = []},
+            new() { StudentName = "student2", Supervisor = "supervisor2", Theme = "theme2", AverageCriteriaMarks = [] },
+            new() { StudentName = "student3", Supervisor = "supervisor3", Theme = "theme3", AverageCriteriaMarks = []}
         };
 
         foreach (var criteria in criteriaList)
@@ -79,7 +81,9 @@ public class MeetingRepositoryTests : TestBase
         var meeting = new Meeting
         {
             Id = 3,
-            Info = "some_info"
+            Info = "some_info",
+            Criteria = [TestCriteria],
+            StudentWorks = [TestWork]
         };
 
         await MeetingRepository.Create(meeting);
@@ -99,7 +103,9 @@ public class MeetingRepositoryTests : TestBase
         var meeting = new Meeting
         {
             Id = 2,
-            Info = "delete_this"
+            Info = "delete_this",
+            Criteria = [TestCriteria],
+            StudentWorks = [TestWork]
         };
 
         await MeetingRepository.Create(meeting);
