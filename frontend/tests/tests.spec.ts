@@ -37,6 +37,8 @@ const createMeeting = async (page, info) => {
     await page.fill('input[name="supervisor"]', 'научник');
     await page.click('#save-student');
 
+    await page.click('input[name="criteria-0"] + label');
+
     await page.click('#save-meeting');
 }
 
@@ -73,6 +75,11 @@ test('create criteria', async ({page}) => {
 test('create meeting', async ({page}) => {
     await login(page);
 
+    await createCriteria(page, 'критерий', 'комментарий');
+
+    await page.click('#meetings-link');
+    await expect(page).toHaveURL('/meetings');
+    
     await createMeeting(page, 'заседание');
 
     await expect(page).toHaveURL('/meetings');
@@ -80,4 +87,9 @@ test('create meeting', async ({page}) => {
 
     page.on('dialog', dialog => dialog.accept());
     await page.click('#delete-meeting');
+
+    await page.click('#criteria-link');
+    await expect(page).toHaveURL('/criteria');
+
+    await page.click('#delete-criteria');
 });

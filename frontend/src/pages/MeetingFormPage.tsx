@@ -331,9 +331,10 @@ export function MeetingFormPage() {
                         <div className="flex-grow-1">
                             <h4 className="p-2">Критерии</h4>
                             <ul className="list-group p-2">
-                                {criteria.map((criteria) => (
+                                {criteria.map((criteria, index) => (
                                     <li className="list-group-item d-flex align-items-center" key={criteria.id}>
                                         <input className="form-check-input me-3" type="checkbox"
+                                               name={`criteria-${index}`}
                                                checked={meeting.criteria.some(c => c.id === criteria.id)}
                                                id={criteria.id} onChange={(e) => handleCriteriaChange(e)}/>
                                         <label className="form-check-label stretched-link"
