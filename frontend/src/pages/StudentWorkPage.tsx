@@ -144,8 +144,7 @@ export function StudentWorkPage() {
     const handleBack = () => {
         if (role === 'member') {
             navigate(`/meetings/${meetingId}/member`, {replace: true});
-        }
-        else {
+        } else {
             navigate(`/meetings/${meetingId}`, {replace: true});
         }
     }
@@ -284,6 +283,7 @@ export function StudentWorkPage() {
 
     const handleClose = () => {
         setMark(initialMarkState);
+        signalRService.current.sendNotification(Actions.Update);
     }
 
     return (
@@ -470,12 +470,12 @@ export function StudentWorkPage() {
                                                 <label
                                                     className="w-auto"><span
                                                     className="fw-semibold me-1">{index + 1}. {criteria.name}:</span>
-                                                    {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).mark}
+                                                    {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)?.mark}
                                                 </label>
 
                                                 <ul className="list-unstyled ps-3 mb-1">
                                                     {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)
-                                                        .selectedRules.sort((a, b) => b.value - a.value).map((rule, index) => (
+                                                        ?.selectedRules.sort((a, b) => b.value - a.value).map((rule, index) => (
                                                             <li key={index}>
                                                                 {rule.isScaleRule ? (<>{rule.value} — {rule.description}</>)
                                                                     : (<>{rule.value} {rule.description}</>)}
@@ -483,7 +483,7 @@ export function StudentWorkPage() {
                                                         ))}
                                                 </ul>
 
-                                                {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment ?
+                                                {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)?.comment ?
                                                     (<p
                                                         className="w-auto fst-italic ms-3">Комментарий: {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment}</p>)
                                                     : null}
@@ -502,65 +502,71 @@ export function StudentWorkPage() {
 
                         <h4 className="mb-4">Оценки членов комиссии</h4>
 
-                        <div className="accordion" id="marksAccordion">
-                            {otherMarks.map((memberMark, index) =>
-                                <div className="accordion-item" key={memberMark.memberId}>
-                                    <h2 className="accordion-header d-flex justify-content-between align-items-center">
-                                        <button className="accordion-button collapsed"
-                                                type="button"
-                                                data-bs-toggle="collapse"
-                                                data-bs-target={`#collapse${memberMark.memberId}`}
-                                                aria-expanded="false"
-                                                aria-controls={`collapse${memberMark.memberId}`}>
+                        {otherMarks.length === 0 ? (
+                            <div className="alert alert-primary" role="alert">
+                                Нет оценок для отображения.
+                            </div>
+                        ) : (<>
+                            <div className="accordion" id="marksAccordion">
+                                {otherMarks.map((memberMark, index) =>
+                                        <div className="accordion-item" key={memberMark.memberId}>
+                                            <h2 className="accordion-header d-flex justify-content-between align-items-center">
+                                                <button className="accordion-button collapsed"
+                                                        type="button"
+                                                        data-bs-toggle="collapse"
+                                                        data-bs-target={`#collapse${memberMark.memberId}`}
+                                                        aria-expanded="false"
+                                                        aria-controls={`collapse${memberMark.memberId}`}>
                                 <span
                                     className="fw-semibold me-1">{otherMembers?.find(member => member.id === memberMark.memberId)?.name}</span>
-                                            оценка: {memberMark.mark}
-                                        </button>
-                                        <button type="button" id="delete-criteria" className="btn btn-sm btn-link"
-                                                style={{height: '40px'}}
-                                                onClick={() => handleDeleteMark(memberMark.memberId)}>
-                                            <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
-                                        </button>
-                                        <button type="button" className="btn btn-sm me-3 btn-link"
-                                                data-bs-toggle="modal" data-bs-target="#markModal"
-                                                onClick={() => setMark(memberMark)}>
-                                            <i className="bi bi-pencil fs-5" style={{color: '#007bff'}}></i>
-                                        </button>
-                                    </h2>
-                                    <div id={`collapse${memberMark.memberId}`}
-                                         className="accordion-collapse collapse"
-                                         data-bs-parent="#marksAccordion">
-                                        <div className="accordion-body">
-                                            {criteria.map((criteria, index) => (
-                                                <div key={criteria.id} className="mb-2">
-                                                    <label
-                                                        className="w-auto"><span
-                                                        className="fw-semibold me-1">{index + 1}. {criteria.name}:</span>
-                                                        {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).mark}
-                                                    </label>
+                                                    оценка: {memberMark.mark}
+                                                </button>
+                                                <button type="button" id="delete-criteria" className="btn btn-sm btn-link"
+                                                        style={{height: '40px'}}
+                                                        onClick={() => handleDeleteMark(memberMark.memberId)}>
+                                                    <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
+                                                </button>
+                                                <button type="button" className="btn btn-sm me-3 btn-link"
+                                                        data-bs-toggle="modal" data-bs-target="#markModal"
+                                                        onClick={() => setMark(memberMark)}>
+                                                    <i className="bi bi-pencil fs-5" style={{color: '#007bff'}}></i>
+                                                </button>
+                                            </h2>
+                                            <div id={`collapse${memberMark.memberId}`}
+                                                 className="accordion-collapse collapse"
+                                                 data-bs-parent="#marksAccordion">
+                                                <div className="accordion-body">
+                                                    {criteria.map((criteria, index) => (
+                                                        <div key={criteria.id} className="mb-2">
+                                                            <label
+                                                                className="w-auto"><span
+                                                                className="fw-semibold me-1">{index + 1}. {criteria.name}:</span>
+                                                                {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)?.mark}
+                                                            </label>
 
-                                                    <ul className="list-unstyled ps-3 mb-1">
-                                                        {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)
-                                                            .selectedRules.sort((a, b) => b.value - a.value).map((rule, index) => (
-                                                                <li key={index}>
-                                                                    {rule.isScaleRule ? (<>{rule.value} — {rule.description}</>)
-                                                                        : (<>{rule.value} {rule.description}</>)}
-                                                                </li>
-                                                            ))}
-                                                    </ul>
+                                                            <ul className="list-unstyled ps-3 mb-1">
+                                                                {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)
+                                                                    ?.selectedRules.sort((a, b) => b.value - a.value).map((rule, index) => (
+                                                                        <li key={index}>
+                                                                            {rule.isScaleRule ? (<>{rule.value} — {rule.description}</>)
+                                                                                : (<>{rule.value} {rule.description}</>)}
+                                                                        </li>
+                                                                    ))}
+                                                            </ul>
 
-                                                    {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment ?
-                                                        (<p
-                                                            className="w-auto fst-italic ms-3">Комментарий: {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment}</p>)
-                                                        : null}
+                                                            {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)?.comment ?
+                                                                (<p
+                                                                    className="w-auto fst-italic ms-3">Комментарий: {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment}</p>)
+                                                                : null}
 
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
+                        </>)}
 
                         <div className="modal fade" id="markModal" data-bs-backdrop="static"
                              data-bs-keyboard="false"

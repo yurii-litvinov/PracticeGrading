@@ -31,29 +31,19 @@ public class CriteriaMark
     public int MemberMarkId { get; set; }
 
     /// <summary>
-    /// Gets or sets member comment.
-    /// </summary>
-    public string? Comment { get; set; }
-
-    /// <summary>
     /// Gets or sets member mark.
     /// </summary>
     public MemberMark? MemberMark { get; set; }
 
     /// <summary>
+    /// Gets or sets member comment.
+    /// </summary>
+    public string? Comment { get; set; }
+
+    /// <summary>
     /// Gets or sets selected rules.
     /// </summary>
     public required ICollection<Rule> SelectedRules { get; set; }
-
-    /// <summary>
-    /// Gets or sets average criteria mark id.
-    /// </summary>
-    public int? AverageCriteriaMarkId { get; set; }
-
-    /// <summary>
-    /// Gets or sets average criteria mark.
-    /// </summary>
-    public AverageCriteriaMark? AverageCriteriaMark { get; set; }
 
     /// <summary>
     /// Gets or sets mark.

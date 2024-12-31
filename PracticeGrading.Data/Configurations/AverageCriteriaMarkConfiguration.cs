@@ -17,12 +17,6 @@ public class AverageCriteriaMarkConfiguration : IEntityTypeConfiguration<Average
     /// <summary>
     /// Configures average criteria mark entity.
     /// </summary>
-    public void Configure(EntityTypeBuilder<AverageCriteriaMark> builder)
-    {
-        builder.HasKey(mark => mark.Id);
-
-        builder.HasMany<CriteriaMark>(mark => mark.CriteriaMarks)
-            .WithOne(criteriaMark => criteriaMark.AverageCriteriaMark)
-            .HasForeignKey(criteriaMark => criteriaMark.AverageCriteriaMarkId);
-    }
+    public void Configure(EntityTypeBuilder<AverageCriteriaMark> builder) =>
+        builder.HasKey(mark => new { mark.CriteriaId, mark.StudentWorkId });
 }

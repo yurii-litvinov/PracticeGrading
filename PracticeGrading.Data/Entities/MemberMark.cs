@@ -38,7 +38,7 @@ public class MemberMark
     /// <summary>
     /// Gets or sets criteria marks.
     /// </summary>
-    public ICollection<CriteriaMark>? CriteriaMarks { get; set; }
+    public required ICollection<CriteriaMark> CriteriaMarks { get; set; }
 
     /// <summary>
     /// Gets or sets mark.

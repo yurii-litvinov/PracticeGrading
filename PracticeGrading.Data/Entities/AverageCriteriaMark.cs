@@ -11,9 +11,9 @@ namespace PracticeGrading.Data.Entities;
 public class AverageCriteriaMark
 {
     /// <summary>
-    /// Gets or sets average criteria mark id.
+    /// Gets or sets criteria id.
     /// </summary>
-    public int Id { get; set; }
+    public int CriteriaId { get; set; }
 
     /// <summary>
     /// Gets or sets student work id.
@@ -26,22 +26,7 @@ public class AverageCriteriaMark
     public StudentWork? StudentWork { get; set; }
 
     /// <summary>
-    /// Gets or sets criteria id.
-    /// </summary>
-    public int CriteriaId { get; set; }
-
-    /// <summary>
-    /// Gets or sets criteria.
-    /// </summary>
-    public Criteria? Criteria { get; set; }
-
-    /// <summary>
-    /// Gets or sets criteria marks.
-    /// </summary>
-    public ICollection<CriteriaMark>? CriteriaMarks { get; set; }
-
-    /// <summary>
     /// Gets or sets average mark.
     /// </summary>
-    public int AverageMark { get; set; }
+    public double? AverageMark { get; set; }
 }

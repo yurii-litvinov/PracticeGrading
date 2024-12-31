@@ -117,18 +117,22 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                     memberMark.Id,
                     memberMark.MemberId,
                     memberMark.StudentWorkId,
-                    (memberMark.CriteriaMarks ?? []).Select(
-                        mark => new CriteriaMarkDto(
-                            mark.Id,
-                            mark.CriteriaId,
-                            mark.MemberMarkId,
-                            mark.Comment ?? string.Empty,
-                            new List<RuleDto>(
-                                    (mark.SelectedRules ?? []).Select(
-                                        rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)))
-                                .ToList(),
-                            mark.Mark))
-                    .ToList(),
+                    memberMark.CriteriaMarks.Select(
+                            mark => new CriteriaMarkDto(
+                                mark.Id,
+                                mark.CriteriaId,
+                                mark.MemberMarkId,
+                                mark.Comment ?? string.Empty,
+                                new List<RuleDto>(
+                                        mark.SelectedRules.Select(
+                                            rule => new RuleDto(
+                                                rule.Id,
+                                                rule.Description,
+                                                rule.Value,
+                                                rule.IsScaleRule)))
+                                    .ToList(),
+                                mark.Mark))
+                        .ToList(),
                     memberMark.Mark))
             .ToList();
 

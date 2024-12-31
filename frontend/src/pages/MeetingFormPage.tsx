@@ -45,7 +45,6 @@ export function MeetingFormPage() {
         }
 
         getCriteria().then(response => setCriteria(response.data));
-        console.log(criteria)
 
         return () => {
             if (signalRService.current) signalRService.current.stopConnection();
@@ -156,7 +155,7 @@ export function MeetingFormPage() {
 
             return {
                 ...prevMeeting,
-                criteria: updatedCriteria,
+                criteria: updatedCriteria.sort((a, b) => a.id - b.id),
             };
         });
     }
@@ -169,7 +168,7 @@ export function MeetingFormPage() {
                         {id ? "Редактирование заседания" : "Новое заседание"}</h2>
                     <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
                         <button type="submit" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2" id="save-meeting"
-                                disabled={meeting.studentWorks.length === 0}>Сохранить
+                                disabled={meeting.studentWorks.length === 0 || meeting.criteria.length === 0}>Сохранить
                         </button>
                         <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
                                 onClick={handleBack}>Назад

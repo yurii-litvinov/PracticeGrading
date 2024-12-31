@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {getMeetings, getCriteria} from '../services/ApiService';
+import {getMeetings, getCriteria, setFinalMark} from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
 import {formatDate} from './MeetingsPage';
 import {SignalRService} from '../services/SignalRService';
@@ -10,6 +10,7 @@ import Tooltip from 'bootstrap/js/dist/tooltip.js';
 export function ViewMeetingPage() {
     const {id} = useParams();
     const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState("works");
     const [selectedStudentId, setSelectedStudentId] = useState(null);
     const [meeting, setMeeting] = useState({
         dateAndTime: new Date(),
@@ -21,25 +22,46 @@ export function ViewMeetingPage() {
         members: [],
         criteria: []
     });
+    const [marks, setMarks] = useState([]);
 
     const signalRService = useRef<SignalRService | null>(null);
     const tooltipRef = useRef(null);
 
+    const fetchData = () => {
+        getMeetings(id).then(response => {
+            const meeting = response.data[0]
+            setMeeting(meeting);
+
+            setMarks(
+                meeting.studentWorks.map(work => {
+                    const mark = Math.round(work.averageCriteriaMarks.reduce((sum, mark) =>
+                        sum + mark.averageMark, 0) / work.averageCriteriaMarks.length * 10) / 10;
+
+                    return {
+                        id: work.id,
+                        averageMark: mark,
+                        finalMark: work.finalMark === null ? Math.round(mark) : work.finalMark
+                    };
+                })
+            );
+        });
+    }
+
     const handleNotification = (action: string) => {
         console.log(action)
-        switch (true) {
-            case action.includes(Actions.Join):
-                getMeetings(id).then(response => setMeeting(response.data[0]));
-                signalRService.current.sendNotification(`${Actions.Highlight}:${selectedStudentId}`);
+        if (action.includes(Actions.Join) || action.includes(Actions.SendMark)) {
+            fetchData()
+            signalRService.current.sendNotification(`${Actions.Highlight}:${selectedStudentId}`);
         }
     }
-    
+
+
     useEffect(() => {
         const tooltipElement = document.getElementById('copy');
         tooltipRef.current = new Tooltip(tooltipElement);
 
         if (id) {
-            getMeetings(id).then(response => setMeeting(response.data[0]));
+            fetchData();
 
             signalRService.current = new SignalRService(id, handleNotification);
             signalRService.current.startConnection();
@@ -49,7 +71,7 @@ export function ViewMeetingPage() {
             if (signalRService.current) signalRService.current.stopConnection();
             signalRService.current = null;
             if (tooltipRef.current) {
-                tooltipRef.current.dispose();  
+                tooltipRef.current.dispose();
             }
         }
     }, [id]);
@@ -71,6 +93,17 @@ export function ViewMeetingPage() {
         navigate(`/meetings/${id}/studentwork/${workId}`, {replace: true});
     };
 
+    const handleMarkEdit = (e, id) => {
+        const value = e.target.value;
+
+        setMarks(marks.map(mark => mark.id === id ? {
+            ...mark,
+            finalMark: value
+        } : mark));
+
+        if (value) setFinalMark(meeting.id, id, +value);
+    }
+
     return (
         <>
             <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
@@ -89,7 +122,8 @@ export function ViewMeetingPage() {
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Ссылка для членов
                         комиссии</label>
-                    <a href="#" id="copy" data-bs-custom-class="tooltip-light" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="top" title="Копировать ссылку"
+                    <a href="#" id="copy" data-bs-custom-class="tooltip-light" data-bs-toggle="tooltip"
+                       data-bs-trigger="hover" data-bs-placement="top" title="Копировать ссылку"
                        className="icon-link icon-link-hover form-control-plaintext text-primary text-decoration-underline w-auto"
                        style={{'--bs-icon-link-transform': 'translate3d(0, -.125rem, 0)'}}
                        onClick={(e) => {
@@ -97,7 +131,7 @@ export function ViewMeetingPage() {
                            navigator.clipboard.writeText(`${window.location.origin}/meetings/${id}/member`)
                                .then(() => {
                                    tooltipRef.current.dispose();
-                                   
+
                                    const tooltipElement = document.getElementById('copy');
                                    tooltipElement.setAttribute('title', 'Скопировано!');
                                    tooltipRef.current = new Tooltip(tooltipElement);
@@ -164,52 +198,128 @@ export function ViewMeetingPage() {
                 <div className="d-flex p-2 align-items-center">
                     <h4>Список защищающихся студентов</h4>
                 </div>
-                <div className="table-responsive">
-                    <table className="table table-striped">
-                        <thead>
-                        <tr>
-                            <th></th>
-                            <th>ФИО</th>
-                            <th>Тема</th>
-                            <th>Научник</th>
-                            <th>Консультант</th>
-                            <th>Рецензент</th>
-                            <th>Оценка научника</th>
-                            <th>Оценка рецезента</th>
-                            <th>Код</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {meeting.studentWorks.map((work) => (
-                            <tr key={work.id} onClick={() => handleRowClick(work.id)}
-                                className={selectedStudentId === work.id ? "table-info" : ""}
-                                style={{cursor: "pointer"}}>
-                                <td style={{width: '30px'}}>
-                                    <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleIconClick(work.id);
-                                    }}>
-                                        <i className="bi bi-arrows-angle-expand fs-5" style={{color: '#007bff'}}></i>
-                                    </button>
-                                </td>
-                                <td>{work.studentName}</td>
-                                <td style={{maxWidth: '600px'}}>{work.theme}</td>
-                                <td>{work.supervisor}</td>
-                                <td>{work.consultant || "—"}</td>
-                                <td>{work.reviewer || "—"}</td>
-                                <td>{work.supervisorMark || "—"}</td>
-                                <td>{work.reviewerMark || "—"}</td>
-                                <td style={{minWidth: '85px'}}>{work.codeLink ? (
-                                    <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
-                                        Ссылка
-                                    </a>
-                                ) : (
-                                    <span>—</span>
-                                )}</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
+
+                <ul className="nav nav-tabs" role="tablist">
+                    <li className="nav-item" role="presentation">
+                        <button
+                            className={`nav-link ${activeTab === "works" ? "active" : ""}`}
+                            onClick={() => setActiveTab("works")}
+                            type="button"
+                            role="tab">Работы студентов
+                        </button>
+                    </li>
+                    <li className="nav-item" role="presentation">
+                        <button
+                            className={`nav-link ${activeTab === "marks" ? "active" : ""}`}
+                            onClick={() => setActiveTab("marks")}
+                            type="button"
+                            role="tab">Средние оценки
+                        </button>
+                    </li>
+                </ul>
+
+                <div className="tab-content">
+                    {activeTab === "works" && (
+                        <div className="tab-pane fade show active">
+
+                            <div className="table-responsive">
+                                <table className="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>ФИО</th>
+                                        <th>Тема</th>
+                                        <th>Научник</th>
+                                        <th>Консультант</th>
+                                        <th>Рецензент</th>
+                                        <th>Оценка научника</th>
+                                        <th>Оценка рецезента</th>
+                                        <th>Код</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {meeting.studentWorks.map((work) => (
+                                        <tr key={work.id} onClick={() => handleRowClick(work.id)}
+                                            className={selectedStudentId === work.id ? "table-info" : ""}
+                                            style={{cursor: "pointer"}}>
+                                            <td style={{width: '30px'}}>
+                                                <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleIconClick(work.id);
+                                                }}>
+                                                    <i className="bi bi-arrows-angle-expand fs-5"
+                                                       style={{color: '#007bff'}}></i>
+                                                </button>
+                                            </td>
+                                            <td>{work.studentName}</td>
+                                            <td style={{maxWidth: '600px'}}>{work.theme}</td>
+                                            <td>{work.supervisor}</td>
+                                            <td>{work.consultant || "—"}</td>
+                                            <td>{work.reviewer || "—"}</td>
+                                            <td className="text-center">{work.supervisorMark || "—"}</td>
+                                            <td className="text-center">{work.reviewerMark || "—"}</td>
+                                            <td style={{minWidth: '85px'}}>{work.codeLink ? (
+                                                <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
+                                                    Ссылка
+                                                </a>
+                                            ) : (
+                                                <span>—</span>
+                                            )}</td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>)}
+                    {activeTab === "marks" && (
+                        <div className="tab-pane fade show active">
+                            <div className="table-responsive">
+                                <table className="table table-striped">
+                                    <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th>ФИО</th>
+                                        {meeting.criteria.map((criteria) => (
+                                            <th key={criteria.id}>{criteria.name}</th>
+                                        ))}
+                                        <th>Средняя оценка</th>
+                                        <th>Итоговая оценка</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {meeting.studentWorks.map((work) => (
+                                        <tr key={work.id}
+                                            className={selectedStudentId === work.id ? "table-info" : ""}>
+                                            <td style={{width: '30px'}}>
+                                                <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleIconClick(work.id);
+                                                }}>
+                                                    <i className="bi bi-arrows-angle-expand fs-5"
+                                                       style={{color: '#007bff'}}></i>
+                                                </button>
+                                            </td>
+                                            <td>{work.studentName}</td>
+                                            {work.averageCriteriaMarks.map((mark) => (
+                                                <td key={mark.criteriaId}
+                                                    className="text-center">{mark.averageMark || "—"}</td>
+                                            ))}
+                                            <td className="text-center">{marks.find(mark => mark.id === work.id).averageMark || "—"}</td>
+                                            <td>
+                                                <input
+                                                    type="number"
+                                                    className="form-control"
+                                                    value={marks.find(mark => mark.id === work.id).finalMark || ""}
+                                                    onChange={(e) => handleMarkEdit(e, work.id)}
+                                                />
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 <hr className="my-4"/>

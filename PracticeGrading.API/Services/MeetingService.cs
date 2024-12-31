@@ -34,16 +34,18 @@ public class MeetingService(
             CallLink = request.CallLink,
             MaterialsLink = request.MaterialsLink,
             StudentWorks = request.StudentWorks.Select(
-                worksRequest => new StudentWork
+                workRequest => new StudentWork
                 {
-                    StudentName = worksRequest.StudentName,
-                    Theme = worksRequest.Theme,
-                    Supervisor = worksRequest.Supervisor,
-                    Consultant = worksRequest.Consultant,
-                    Reviewer = worksRequest.Reviewer,
-                    SupervisorMark = worksRequest.SupervisorMark,
-                    ReviewerMark = worksRequest.ReviewerMark,
-                    CodeLink = worksRequest.CodeLink,
+                    StudentName = workRequest.StudentName,
+                    Theme = workRequest.Theme,
+                    Supervisor = workRequest.Supervisor,
+                    Consultant = workRequest.Consultant,
+                    Reviewer = workRequest.Reviewer,
+                    SupervisorMark = workRequest.SupervisorMark,
+                    ReviewerMark = workRequest.ReviewerMark,
+                    CodeLink = workRequest.CodeLink,
+                    AverageCriteriaMarks = request.CriteriaId.Select(id => new AverageCriteriaMark { CriteriaId = id })
+                        .ToList(),
                 }).ToList(),
             Members = request.Members.Select(
                 memberRequest => new User
@@ -83,7 +85,7 @@ public class MeetingService(
 
         foreach (var meeting in meetings)
         {
-            var studentWorks = (meeting.StudentWorks ?? []).Select(
+            var studentWorks = meeting.StudentWorks.Select(
                 work => new StudentWorkDto(
                     work.Id,
                     work.StudentName,
@@ -93,13 +95,16 @@ public class MeetingService(
                     work.Reviewer,
                     work.SupervisorMark,
                     work.ReviewerMark,
-                    work.CodeLink)).ToList();
+                    work.CodeLink,
+                    work.AverageCriteriaMarks
+                        .Select(mark => new AverageCriteriaMarkDto(mark.CriteriaId, mark.AverageMark)).ToList(),
+                    work.FinalMark)).ToList();
 
             var members = (meeting.Members ?? []).Select(
                 member =>
                     new MemberDto(member.Id, member.UserName)).ToList();
 
-            var criteriaList = await this.GetCriteria((meeting.Criteria ?? []).Select(element => element.Id).ToList());
+            var criteriaList = await this.GetCriteria(meeting.Criteria.Select(element => element.Id).ToList());
 
             var criteriaDto = criteriaList.Select(
                     criteria => new CriteriaDto(
@@ -144,6 +149,7 @@ public class MeetingService(
             meeting.Info = request.Info;
             meeting.CallLink = request.CallLink;
             meeting.MaterialsLink = request.MaterialsLink;
+            meeting.Criteria = await this.GetCriteria(request.CriteriaId);
 
             foreach (var work in request.StudentWorks)
             {
@@ -160,6 +166,21 @@ public class MeetingService(
                     existingWork.SupervisorMark = work.SupervisorMark;
                     existingWork.ReviewerMark = work.ReviewerMark;
                     existingWork.CodeLink = work.CodeLink;
+
+                    foreach (var id in request.CriteriaId.Where(
+                                 id => existingWork.AverageCriteriaMarks.FirstOrDefault(
+                                     mark => mark.CriteriaId == id) == null))
+                    {
+                        existingWork.AverageCriteriaMarks?.Add(new AverageCriteriaMark { CriteriaId = id });
+                    }
+
+                    var marksToRemove = (existingWork.AverageCriteriaMarks ?? []).Where(
+                        mark => request.CriteriaId.All(id => mark.CriteriaId != id));
+
+                    foreach (var mark in marksToRemove)
+                    {
+                        existingWork.AverageCriteriaMarks?.Remove(mark);
+                    }
                 }
                 else
                 {
@@ -174,6 +195,8 @@ public class MeetingService(
                             SupervisorMark = work.SupervisorMark,
                             ReviewerMark = work.ReviewerMark,
                             CodeLink = work.CodeLink,
+                            AverageCriteriaMarks =
+                                request.CriteriaId.Select(id => new AverageCriteriaMark { CriteriaId = id }).ToList(),
                         });
                 }
             }
@@ -219,10 +242,20 @@ public class MeetingService(
                 await userRepository.Delete(member);
             }
 
-            meeting.Criteria = await this.GetCriteria(request.CriteriaId);
-
             await meetingRepository.Update(meeting);
         }
+    }
+
+    /// <summary>
+    /// Deletes meeting.
+    /// </summary>
+    /// <param name="id">Meeting id.</param>
+    public async Task DeleteMeeting(int id)
+    {
+        var meeting = await meetingRepository.GetById(id) ??
+                      throw new InvalidOperationException($"Meeting with ID {id} was not found.");
+
+        await meetingRepository.Delete(meeting);
     }
 
     /// <summary>
@@ -238,15 +271,22 @@ public class MeetingService(
     }
 
     /// <summary>
-    /// Deletes meeting.
+    /// Sets the student's final mark.
     /// </summary>
-    /// <param name="id">Meeting id.</param>
-    public async Task DeleteMeeting(int id)
+    /// <param name="meetingId">Meeting id.</param>
+    /// <param name="workId">Student work id.</param>
+    /// <param name="mark">Final mark.</param>
+    public async Task SetFinalMark(int meetingId, int workId, int mark)
     {
-        var meeting = await meetingRepository.GetById(id) ??
-                      throw new InvalidOperationException($"Meeting with ID {id} was not found.");
+        var meeting = await meetingRepository.GetById(meetingId) ??
+                      throw new InvalidOperationException($"Meeting with ID {meetingId} was not found.");
 
-        await meetingRepository.Delete(meeting);
+        var work = meeting.StudentWorks.FirstOrDefault(work => work.Id == workId);
+        if (work != null)
+        {
+            work.FinalMark = mark;
+            await meetingRepository.Update(meeting);
+        }
     }
 
     private async Task<List<Criteria>> GetCriteria(List<int> idList)

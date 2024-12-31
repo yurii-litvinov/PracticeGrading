@@ -78,5 +78,5 @@ public class StudentWork
     /// <summary>
     /// Gets or sets average criteria marks.
     /// </summary>
-    public ICollection<AverageCriteriaMark>? AverageCriteriaMarks { get; set; }
+    public required ICollection<AverageCriteriaMark> AverageCriteriaMarks { get; set; }
 }

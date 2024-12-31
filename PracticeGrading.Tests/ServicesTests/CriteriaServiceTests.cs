@@ -9,7 +9,7 @@ public class CriteriaServiceTests : TestBase
     [Test]
     public async Task TestAddCriteria()
     {
-        var rules = new List<AddRuleRequest>
+        var rules = new List<RuleRequest>
         {
             new(1,"desc1", 1),
             new(2, "desc2", 2),

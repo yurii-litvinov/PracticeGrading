@@ -22,6 +22,13 @@ public class MarkRepository(AppDbContext context)
     {
         await context.MemberMarks.AddAsync(memberMark);
         await context.SaveChangesAsync();
+
+        var mark = await this.GetById(memberMark.MemberId, memberMark.StudentWorkId);
+
+        if (mark?.StudentWork != null)
+        {
+            await this.CalculateAverageCriteriaMarks(mark.StudentWork);
+        }
     }
 
     /// <summary>
@@ -32,6 +39,11 @@ public class MarkRepository(AppDbContext context)
     {
         context.MemberMarks.Update(memberMark);
         await context.SaveChangesAsync();
+
+        if (memberMark.StudentWork != null)
+        {
+            await this.CalculateAverageCriteriaMarks(memberMark.StudentWork);
+        }
     }
 
     /// <summary>
@@ -40,10 +52,22 @@ public class MarkRepository(AppDbContext context)
     /// <param name="memberId">Member id.</param>
     /// <param name="workId">Student work id.</param>
     /// <returns>Member mark.</returns>
-    public async Task<MemberMark?> GetById(int memberId, int workId) =>
-        await context.MemberMarks
-            .Include(mark => mark.CriteriaMarks)
+    public async Task<MemberMark?> GetById(int memberId, int workId)
+    {
+        var memberMark = await context.MemberMarks
+            .Include(mark => mark.StudentWork)
+            .Include(mark => mark.CriteriaMarks).ThenInclude(criteriaMark => criteriaMark.SelectedRules)
             .FirstOrDefaultAsync(memberMark => memberMark.MemberId == memberId && memberMark.StudentWorkId == workId);
+
+        if (memberMark?.StudentWork != null)
+        {
+            await context.Entry(memberMark.StudentWork)
+                .Collection(work => work.AverageCriteriaMarks)
+                .LoadAsync();
+        }
+
+        return memberMark;
+    }
 
     /// <summary>
     /// Gets all member marks.
@@ -52,27 +76,10 @@ public class MarkRepository(AppDbContext context)
     /// <returns>List of member marks.</returns>
     public async Task<List<MemberMark>> GetAll(int workId)
     {
-        var memberMarks = await context.MemberMarks
-            .Include(mark => mark.CriteriaMarks)
+        return await context.MemberMarks
+            .Include(mark => mark.CriteriaMarks).ThenInclude(criteriaMark => criteriaMark.SelectedRules)
             .Where(mark => mark.StudentWorkId == workId)
             .ToListAsync();
-
-        foreach (var memberMark in memberMarks)
-        {
-            if (memberMark.CriteriaMarks == null)
-            {
-                continue;
-            }
-
-            foreach (var criteriaMark in memberMark.CriteriaMarks)
-            {
-                await context.Entry(criteriaMark)
-                    .Collection(mark => mark.SelectedRules)
-                    .LoadAsync();
-            }
-        }
-
-        return memberMarks;
     }
 
     /// <summary>
@@ -82,6 +89,32 @@ public class MarkRepository(AppDbContext context)
     public async Task Delete(MemberMark memberMark)
     {
         context.MemberMarks.Remove(memberMark);
+        await context.SaveChangesAsync();
+
+        if (memberMark.StudentWork != null)
+        {
+            await this.CalculateAverageCriteriaMarks(memberMark.StudentWork);
+        }
+    }
+
+    private async Task CalculateAverageCriteriaMarks(StudentWork work)
+    {
+        var memberMarks = await this.GetAll(work.Id);
+
+        foreach (var averageCriteriaMark in work.AverageCriteriaMarks)
+        {
+            var criteriaMarks = memberMarks
+                .SelectMany(
+                    memberMark => memberMark.CriteriaMarks
+                        .Where(mark => mark.CriteriaId == averageCriteriaMark.CriteriaId)
+                        .Select(mark => mark.Mark))
+                .ToList();
+
+            averageCriteriaMark.AverageMark = Math.Round(criteriaMarks.Average(), 1);
+        }
+
+        work.FinalMark = null;
+
         await context.SaveChangesAsync();
     }
 }
