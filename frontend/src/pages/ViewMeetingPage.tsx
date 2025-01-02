@@ -6,6 +6,7 @@ import {formatDate} from './MeetingsPage';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
 import Tooltip from 'bootstrap/js/dist/tooltip.js';
+import copy from 'copy-to-clipboard';
 
 export function ViewMeetingPage() {
     const {id} = useParams();
@@ -104,6 +105,23 @@ export function ViewMeetingPage() {
         if (value) setFinalMark(meeting.id, id, +value);
     }
 
+    const handleCopyLink = () => {
+        copy(`${window.location.origin}/meetings/${id}/member`);
+        tooltipRef.current.dispose();
+
+        const tooltipElement = document.getElementById('copy');
+        tooltipElement.setAttribute('title', 'Скопировано!');
+        tooltipRef.current = new Tooltip(tooltipElement);
+        tooltipRef.current.show();
+
+        setTimeout(() => {
+            tooltipRef.current.dispose();
+            const tooltipElement = document.getElementById('copy');
+            tooltipElement.setAttribute('title', 'Копировать ссылку');
+            tooltipRef.current = new Tooltip(tooltipElement);
+        }, 700);
+    }
+
     return (
         <>
             <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
@@ -128,23 +146,7 @@ export function ViewMeetingPage() {
                        style={{'--bs-icon-link-transform': 'translate3d(0, -.125rem, 0)'}}
                        onClick={(e) => {
                            e.preventDefault();
-                           navigator.clipboard.writeText(`${window.location.origin}/meetings/${id}/member`)
-                               .then(() => {
-                                   tooltipRef.current.dispose();
-
-                                   const tooltipElement = document.getElementById('copy');
-                                   tooltipElement.setAttribute('title', 'Скопировано!');
-                                   tooltipRef.current = new Tooltip(tooltipElement);
-                                   tooltipRef.current.show();
-
-                                   setTimeout(() => {
-                                       tooltipRef.current.dispose();
-                                       const tooltipElement = document.getElementById('copy');
-                                       tooltipElement.setAttribute('title', 'Копировать ссылку');
-                                       tooltipRef.current = new Tooltip(tooltipElement);
-                                   }, 700);
-
-                               });
+                           handleCopyLink();
                        }}>
                         {`${window.location.origin}/meetings/${id}/member`}
                         <i className="bi bi-clipboard mb-2"/>

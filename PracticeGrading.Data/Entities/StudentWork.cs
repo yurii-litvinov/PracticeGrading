@@ -21,6 +21,11 @@ public class StudentWork
     public required string StudentName { get; set; }
 
     /// <summary>
+    /// Gets or sets info.
+    /// </summary>
+    public string? Info { get; set; }
+
+    /// <summary>
     /// Gets or sets theme.
     /// </summary>
     public required string Theme { get; set; }

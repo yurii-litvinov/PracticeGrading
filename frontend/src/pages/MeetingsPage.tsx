@@ -51,7 +51,7 @@ export function MeetingsPage() {
                                 <h4 className="card-title pb-2 text-primary" id="info">{meeting.info}</h4>
                                 <p className="card-text">
                                     <strong>Дата:</strong> {formatDate(meeting.dateAndTime)}<br/>
-                                    <strong>Аудитория:</strong> {meeting.auditorium}
+                                    <strong>Аудитория:</strong> {meeting.auditorium || "—"}
                                 </p>
                                 <button className="btn btn-outline-primary me-2" id="view_meeting"
                                         onClick={() => handleViewMeeting(meeting.id)}>

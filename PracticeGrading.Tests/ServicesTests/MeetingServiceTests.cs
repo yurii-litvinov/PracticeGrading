@@ -19,6 +19,7 @@ public class MeetingServiceTests : TestBase
         {
             new(null,
                 "student",
+                string.Empty,
                 "theme",
                 "supervisor",
                 null,
@@ -96,6 +97,7 @@ public class MeetingServiceTests : TestBase
         await MeetingRepository.Create(meeting);
 
         var workRequest = new StudentWorkRequest(1,
+            string.Empty,
             string.Empty,
             string.Empty,
             string.Empty,

@@ -37,6 +37,7 @@ public class MeetingService(
                 workRequest => new StudentWork
                 {
                     StudentName = workRequest.StudentName,
+                    Info = workRequest.Info,
                     Theme = workRequest.Theme,
                     Supervisor = workRequest.Supervisor,
                     Consultant = workRequest.Consultant,
@@ -89,6 +90,7 @@ public class MeetingService(
                 work => new StudentWorkDto(
                     work.Id,
                     work.StudentName,
+                    work.Info,
                     work.Theme,
                     work.Supervisor,
                     work.Consultant,
@@ -159,6 +161,7 @@ public class MeetingService(
                 if (existingWork != null)
                 {
                     existingWork.StudentName = work.StudentName;
+                    existingWork.Info = work.Info;
                     existingWork.Theme = work.Theme;
                     existingWork.Supervisor = work.Supervisor;
                     existingWork.Consultant = work.Consultant;
@@ -188,6 +191,7 @@ public class MeetingService(
                         new StudentWork
                         {
                             StudentName = work.StudentName,
+                            Info = work.Info,
                             Theme = work.Theme,
                             Supervisor = work.Supervisor,
                             Consultant = work.Consultant,

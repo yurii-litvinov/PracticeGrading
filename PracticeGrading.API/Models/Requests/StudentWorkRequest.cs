@@ -11,6 +11,7 @@ namespace PracticeGrading.API.Models.Requests;
 public record StudentWorkRequest(
     int? Id,
     string StudentName,
+    string? Info,
     string Theme,
     string Supervisor,
     string? Consultant,

@@ -18,6 +18,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
 
     const initialStudentWorkState: StudentWork = {
         studentName: '',
+        info: '',
         theme: '',
         supervisor: '',
         consultant: '',
@@ -83,6 +84,11 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                                 <label className="form-label">ФИО студента</label>
                                 <input type="text" className="form-control" name="studentName"
                                        required value={studentWork.studentName} onChange={handleChange}/>
+                            </div>
+                            <div className="mb-2">
+                                <label className="form-label">Курс, направление</label>
+                                <input type="text" className="form-control" name="info"
+                                       value={studentWork.info} onChange={handleChange}/>
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">Тема практики/ВКР</label>

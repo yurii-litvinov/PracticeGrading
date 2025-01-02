@@ -59,13 +59,15 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOpti
 
 builder.Services.AddCustomAuth(builder.Configuration.GetSection("JwtOptions").Bind);
 
+var host = Environment.GetEnvironmentVariable("HOST");
+
 builder.Services.AddCors(
     options =>
     {
         options.AddPolicy(
             "CorsPolicy",
             policyBuilder => policyBuilder
-                .WithOrigins("http://localhost:3000")
+                .WithOrigins($"http://{host}:3000")
                 .AllowAnyMethod()
                 .AllowCredentials()
                 .AllowAnyHeader());

@@ -302,6 +302,12 @@ export function StudentWorkPage() {
                     <span
                         className="form-control-plaintext text-wrap span-custom">{studentWork.studentName}</span>
                 </div>
+                
+                <div className="d-flex mb-2 align-items-center">
+                    <label className="me-3 fw-bold text-end label-custom">Курс, направление</label>
+                    <span
+                        className="form-control-plaintext text-wrap span-custom">{studentWork.info || "—"}</span>
+                </div>
 
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Тема практики/ВКР</label>

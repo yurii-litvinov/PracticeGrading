@@ -11,6 +11,7 @@ namespace PracticeGrading.API.Models.DTOs;
 public record StudentWorkDto(
     int? Id,
     string StudentName,
+    string? Info,
     string Theme,
     string Supervisor,
     string? Consultant,
