@@ -9,7 +9,6 @@ export const formatDate = (date) => {
 }
 
 export function MeetingsPage() {
-    console.log(import.meta.env.VITE_API_URL)
     const [meetings, setMeetings] = useState([]);
     const navigate = useNavigate();
 
