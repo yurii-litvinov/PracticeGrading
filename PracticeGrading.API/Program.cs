@@ -4,6 +4,7 @@
 // </copyright>
 
 #pragma warning disable SA1200
+using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PracticeGrading.API;
@@ -58,6 +59,8 @@ builder.Services.AddScoped<JwtService>();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOptions"));
 
 builder.Services.AddCustomAuth(builder.Configuration.GetSection("JwtOptions").Bind);
+
+Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
 
 var host = Environment.GetEnvironmentVariable("HOST");
 
