@@ -45,7 +45,7 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                 });
         }
 
-        await markRepository.CreateMemberMark(memberMark);
+        await markRepository.Create(memberMark);
     }
 
     /// <summary>
@@ -59,7 +59,7 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                              $"Member mark with member ID {request.MemberId} and student work ID {request.StudentWorkId}  was not found.");
 
         memberMark.Mark = request.Mark;
-        memberMark.CriteriaMarks?.Clear();
+        memberMark.CriteriaMarks.Clear();
 
         foreach (var markRequest in request.CriteriaMarks)
         {
@@ -103,7 +103,7 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                     new MemberMarkDto(
                         0,
                         (int)memberId,
-                        (int)workId,
+                        workId,
                         [],
                         0)
                 ];

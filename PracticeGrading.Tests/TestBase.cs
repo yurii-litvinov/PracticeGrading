@@ -1,8 +1,12 @@
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using PracticeGrading.API;
+using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data;
 using PracticeGrading.Data.Entities;
@@ -20,6 +24,7 @@ public class TestBase
     protected UserRepository UserRepository;
     protected MeetingRepository MeetingRepository;
     protected CriteriaRepository CriteriaRepository;
+    protected MarkRepository MarkRepository;
 
     protected IOptions<JwtOptions> JwtOptions;
 
@@ -27,9 +32,11 @@ public class TestBase
     protected UserService UserService;
     protected MeetingService MeetingService;
     protected CriteriaService CriteriaService;
+    protected MarkService MarkService;
 
     protected StudentWork TestWork = new()
         { StudentName = string.Empty, Theme = string.Empty, Supervisor = string.Empty, AverageCriteriaMarks = [] };
+
     protected Criteria TestCriteria = new() { Name = string.Empty };
 
     [SetUp]
@@ -63,6 +70,7 @@ public class TestBase
         UserRepository = new UserRepository(_dbContext);
         MeetingRepository = new MeetingRepository(_dbContext);
         CriteriaRepository = new CriteriaRepository(_dbContext);
+        MarkRepository = new MarkRepository(_dbContext);
 
         JwtOptions = Options.Create(new JwtOptions
         {
@@ -76,6 +84,7 @@ public class TestBase
         UserService = new UserService(UserRepository, JwtService);
         MeetingService = new MeetingService(MeetingRepository, CriteriaRepository, UserRepository);
         CriteriaService = new CriteriaService(CriteriaRepository);
+        MarkService = new MarkService(MarkRepository, CriteriaRepository);
     }
 
     [TearDown]
@@ -85,5 +94,38 @@ public class TestBase
         _dbContext.Dispose();
         _factory.Dispose();
         Client.Dispose();
+    }
+
+    protected async Task CreateTestMeeting()
+    {
+        var meeting = new Meeting
+        {
+            Id = 1,
+            DateAndTime = DateTime.Now,
+            Criteria = [new Criteria { Id = 2, Name = string.Empty }],
+            StudentWorks =
+            [
+                new StudentWork
+                {
+                    Id = 3, StudentName = string.Empty, Theme = string.Empty, Supervisor = string.Empty,
+                    AverageCriteriaMarks = []
+                }
+            ],
+            Members = [new User { Id = 4, UserName = "member" }]
+        };
+
+        await MeetingRepository.Create(meeting);
+    }
+
+    protected async Task LoginAdmin()
+    {
+        var loginRequest = new LoginAdminRequest("admin", "admin");
+
+        var response = await Client.PostAsJsonAsync("/login", loginRequest);
+        var responseContent = await response.Content.ReadAsStringAsync();
+        using var jsonDoc = JsonDocument.Parse(responseContent);
+        var token = jsonDoc.RootElement.GetProperty("token").GetString();
+        
+        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 }

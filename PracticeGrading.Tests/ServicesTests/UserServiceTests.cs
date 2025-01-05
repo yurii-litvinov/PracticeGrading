@@ -16,7 +16,7 @@ public class UserServiceTests : TestBase
     }
 
     [Test]
-    public async Task TestLoginMember()
+    public async Task TestLoginMemberAsAdmin()
     {
         var member = new User
         {
@@ -42,7 +42,7 @@ public class UserServiceTests : TestBase
     }
 
     [Test]
-    public async Task TestLoginNonexistentUser()
+    public async Task TestLoginNonexistentUserAsAdmin()
     {
         var request = new LoginAdminRequest("non-existent", "password");
 
@@ -50,5 +50,27 @@ public class UserServiceTests : TestBase
 
         await action.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage($"User with UserName {request.UserName} was not found.");
+    }
+    
+    [Test]
+    public async Task TestLoginMember()
+    {
+        await CreateTestMeeting();
+        
+        var request = new LoginMemberRequest("member", 1);
+        var token = await UserService.LoginMember(request);
+
+        token.Should().NotBeEmpty();
+    }
+    
+    [Test]
+    public async Task TestLoginNonexistentMember()
+    {
+        await CreateTestMeeting();
+        
+        var request = new LoginMemberRequest("nonexistent", 1);
+        var token = await UserService.LoginMember(request);
+
+        token.Should().NotBeEmpty();
     }
 }

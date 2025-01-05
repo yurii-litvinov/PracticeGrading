@@ -18,7 +18,7 @@ public class MarkRepository(AppDbContext context)
     /// Creates new member mark.
     /// </summary>
     /// <param name="memberMark">New member mark.</param>
-    public async Task CreateMemberMark(MemberMark memberMark)
+    public async Task Create(MemberMark memberMark)
     {
         await context.MemberMarks.AddAsync(memberMark);
         await context.SaveChangesAsync();

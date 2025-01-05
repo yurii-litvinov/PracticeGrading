@@ -1,6 +1,4 @@
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Text.Json;
 using PracticeGrading.API.Models.Requests;
 
 namespace PracticeGrading.Tests.EndpointsTests;
@@ -10,14 +8,7 @@ public class MeetingEndpointsTests : TestBase
     [SetUp]
     public new async Task SetUp()
     {
-        var loginRequest = new LoginAdminRequest("admin", "admin");
-
-        var response = await Client.PostAsJsonAsync("/login", loginRequest);
-        var responseContent = await response.Content.ReadAsStringAsync();
-        using var jsonDoc = JsonDocument.Parse(responseContent);
-        var token = jsonDoc.RootElement.GetProperty("token").GetString();
-        
-        Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        await LoginAdmin();
     }
 
     [Test]

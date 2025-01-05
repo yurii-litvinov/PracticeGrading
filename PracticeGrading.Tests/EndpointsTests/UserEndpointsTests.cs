@@ -28,4 +28,19 @@ public class UserEndpointsTests : TestBase
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
     }
+    
+    [Test]
+    public async Task TestLoginMember()
+    {
+        await CreateTestMeeting();
+        
+        var loginRequest = new LoginMemberRequest("member", 1);
+
+        var response = await Client.PostAsJsonAsync("member/login", loginRequest);
+
+        response.EnsureSuccessStatusCode();
+
+        var responseBody = await response.Content.ReadAsStringAsync();
+        responseBody.Should().Contain("token");
+    }
 }
