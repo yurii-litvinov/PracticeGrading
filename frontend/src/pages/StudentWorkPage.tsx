@@ -302,12 +302,12 @@ export function StudentWorkPage() {
                     <span
                         className="form-control-plaintext text-wrap span-custom">{studentWork.studentName}</span>
                 </div>
-                
-                <div className="d-flex mb-2 align-items-center">
+
+                {studentWork.info ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Курс, направление</label>
                     <span
-                        className="form-control-plaintext text-wrap span-custom">{studentWork.info || "—"}</span>
-                </div>
+                        className="form-control-plaintext text-wrap span-custom">{studentWork.info}</span>
+                </div>) : (<></>)}
 
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Тема практики/ВКР</label>
@@ -320,19 +320,19 @@ export function StudentWorkPage() {
                         className="form-control-plaintext text-wrap span-custom">{studentWork.supervisor}</span>
                 </div>
 
-                <div className="d-flex mb-2 align-items-center">
+                {studentWork.consultant ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Консультант</label>
                     <span
-                        className="form-control-plaintext text-wrap span-custom">{studentWork.consultant || "—"}</span>
-                </div>
+                        className="form-control-plaintext text-wrap span-custom">{studentWork.consultant}</span>
+                </div>) : (<></>)}
 
-                <div className="d-flex mb-2 align-items-center">
+                {studentWork.reviewer ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Рецензент</label>
                     <span
                         className="form-control-plaintext text-wrap span-custom">{studentWork.reviewer || "—"}</span>
-                </div>
+                </div>) : (<></>)}
 
-                <div className="d-flex mb-2 align-items-center">
+                {studentWork.codeLink ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Ссылка на код</label>
                     <span className="form-control-plaintext w-auto text-wrap">{studentWork.codeLink ? (
                         <a href={studentWork.codeLink} target="_blank" rel="noopener noreferrer">
@@ -341,7 +341,7 @@ export function StudentWorkPage() {
                     ) : (
                         <span>—</span>
                     )}</span>
-                </div>
+                </div>) : (<></>)}
 
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Оценка научного руководителя</label>
@@ -349,11 +349,11 @@ export function StudentWorkPage() {
                         className="form-control-plaintext w-auto text-wrap">{studentWork.supervisorMark || "—"}</span>
                 </div>
 
-                <div className="d-flex mb-2 align-items-center">
+                {studentWork.reviewerMark ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Оценка рецензента</label>
                     <span
                         className="form-control-plaintext w-auto text-wrap">{studentWork.reviewerMark || "—"}</span>
-                </div>
+                </div>) : (<></>)}
             </div>
 
             {role === 'member' ? (<>

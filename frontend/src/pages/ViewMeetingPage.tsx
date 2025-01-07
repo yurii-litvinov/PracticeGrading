@@ -173,7 +173,7 @@ export function ViewMeetingPage() {
                     <div className="d-flex mb-2 align-items-center">
                         <label className="me-3 fw-bold text-end label-custom">Ссылка на созвон</label>
                         <a href={meeting.callLink}
-                           className="form-control-plaintext text-primary text-decoration-underline w-auto"
+                           className="form-control-plaintext text-primary text-decoration-underline w-auto span-custom"
                            target="_blank"
                            rel="noopener noreferrer">
                             {meeting.callLink}
@@ -230,13 +230,18 @@ export function ViewMeetingPage() {
                                     <tr>
                                         <th></th>
                                         <th>ФИО</th>
+                                        {meeting.studentWorks.some((work) => work.info) ?
+                                            (<th>Курс, направление</th>) : (<></>)}
                                         <th>Тема</th>
                                         <th>Научник</th>
                                         <th>Консультант</th>
-                                        <th>Рецензент</th>
+                                        {meeting.studentWorks.some((work) => work.reviewer) ? (
+                                            <th>Рецензент</th>) : (<></>)}
                                         <th>Оценка научника</th>
-                                        <th>Оценка рецезента</th>
-                                        <th>Код</th>
+                                        {meeting.studentWorks.some((work) => work.reviewerMark) ?
+                                            (<th>Оценка рецезента</th>) : (<></>)}
+                                        {meeting.studentWorks.some((work) => work.codeLink) ?
+                                            (<th>Код</th>) : (<></>)}
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -254,19 +259,24 @@ export function ViewMeetingPage() {
                                                 </button>
                                             </td>
                                             <td>{work.studentName}</td>
+                                            {meeting.studentWorks.some((work) => work.info) ?
+                                                (<td>{work.info || "—"}</td>) : (<></>)}
                                             <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                             <td>{work.supervisor}</td>
                                             <td>{work.consultant || "—"}</td>
-                                            <td>{work.reviewer || "—"}</td>
-                                            <td className="text-center">{work.supervisorMark || "—"}</td>
-                                            <td className="text-center">{work.reviewerMark || "—"}</td>
-                                            <td style={{minWidth: '85px'}}>{work.codeLink ? (
-                                                <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
-                                                    Ссылка
-                                                </a>
-                                            ) : (
-                                                <span>—</span>
-                                            )}</td>
+                                            {meeting.studentWorks.some((work) => work.reviewer) ?
+                                                (<td>{work.reviewer || "—"}</td>) : (<></>)}
+                                            <td>{work.supervisorMark || "—"}</td>
+                                            {meeting.studentWorks.some((work) => work.reviewerMark) ?
+                                                (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
+                                            {meeting.studentWorks.some((work) => work.codeLink) ?
+                                                (<td style={{minWidth: '85px'}}>{work.codeLink ? (
+                                                    <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
+                                                        Ссылка
+                                                    </a>
+                                                ) : (
+                                                    <span>—</span>
+                                                )}</td>) : (<></>)}
                                         </tr>
                                     ))}
                                     </tbody>

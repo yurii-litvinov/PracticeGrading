@@ -260,13 +260,17 @@ export function MeetingFormPage() {
                             <tr>
                                 <th></th>
                                 <th>ФИО</th>
+                                {meeting.studentWorks.some((work) => work.info) ?
+                                    (<th>Курс, направление</th>) : (<></>)}
                                 <th>Тема</th>
                                 <th>Научник</th>
                                 <th>Консультант</th>
-                                <th>Рецензент</th>
+                                {meeting.studentWorks.some((work) => work.reviewer) ? (<th>Рецензент</th>) : (<></>)}
                                 <th>Оценка научника</th>
-                                <th>Оценка рецезента</th>
-                                <th>Код</th>
+                                {meeting.studentWorks.some((work) => work.reviewerMark) ?
+                                    (<th>Оценка рецезента</th>) : (<></>)}
+                                {meeting.studentWorks.some((work) => work.codeLink) ?
+                                    (<th>Код</th>) : (<></>)}
                             </tr>
                             </thead>
                             <tbody>
@@ -280,7 +284,7 @@ export function MeetingFormPage() {
                                         <td style={{minWidth: '95px'}}>
                                             <button type="button" className="btn btn-sm btn-link"
                                                     onClick={() => handleStudentWorkDelete(index)}>
-                                                <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
+                                                <i className="bi bi-x-lg fs-5" style={{color: '#dc3545'}}></i>
                                             </button>
                                             <button type="button" className="btn btn-sm btn-link"
                                                     data-bs-toggle="modal" data-bs-target="#studentWorkModal"
@@ -289,19 +293,24 @@ export function MeetingFormPage() {
                                             </button>
                                         </td>
                                         <td>{work.studentName}</td>
+                                        {meeting.studentWorks.some((work) => work.info) ?
+                                            (<td>{work.info || "—"}</td>) : (<></>)}
                                         <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                         <td>{work.supervisor}</td>
                                         <td>{work.consultant || "—"}</td>
-                                        <td>{work.reviewer || "—"}</td>
+                                        {meeting.studentWorks.some((work) => work.reviewer) ?
+                                            (<td>{work.reviewer || "—"}</td>) : (<></>)}
                                         <td>{work.supervisorMark || "—"}</td>
-                                        <td>{work.reviewerMark || "—"}</td>
-                                        <td style={{minWidth: '85px'}}>{work.codeLink ? (
-                                            <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
-                                                Ссылка
-                                            </a>
-                                        ) : (
-                                            <span>—</span>
-                                        )}</td>
+                                        {meeting.studentWorks.some((work) => work.reviewerMark) ?
+                                            (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
+                                        {meeting.studentWorks.some((work) => work.codeLink) ?
+                                            (<td style={{minWidth: '85px'}}>{work.codeLink ? (
+                                                <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
+                                                    Ссылка
+                                                </a>
+                                            ) : (
+                                                <span>—</span>
+                                            )}</td>) : (<></>)}
                                     </tr>
                                 ))
                             )}

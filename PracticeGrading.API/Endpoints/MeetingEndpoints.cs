@@ -23,9 +23,10 @@ public static class MeetingEndpoints
         meetingGroup.MapPost("/new", CreateMeeting).RequireAuthorization("RequireAdminRole");
         meetingGroup.MapPut("/update", UpdateMeeting).RequireAuthorization("RequireAdminRole");
         meetingGroup.MapDelete("/delete", DeleteMeeting).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapPost("/fromFile", CreateMeetingsFromFile).RequireAuthorization("RequireAdminRole");
 
         meetingGroup.MapGet(string.Empty, GetMeeting).RequireAuthorization("RequireAdminOrMemberRole");
-        meetingGroup.MapPut("/setmark", SetFinalMark).RequireAuthorization("RequireAdminOrMemberRole");
+        meetingGroup.MapPut("/setMark", SetFinalMark).RequireAuthorization("RequireAdminOrMemberRole");
 
         meetingGroup.MapGet("/members", GetMembers).AllowAnonymous();
     }
@@ -63,6 +64,14 @@ public static class MeetingEndpoints
     private static async Task<IResult> SetFinalMark(int meetingId, int workId, int mark, MeetingService meetingService)
     {
         await meetingService.SetFinalMark(meetingId, workId, mark);
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> CreateMeetingsFromFile(
+        ParseScheduleRequest request,
+        MeetingService meetingService)
+    {
+        await meetingService.CreateMeetingsFromFile(request);
         return Results.Ok();
     }
 }

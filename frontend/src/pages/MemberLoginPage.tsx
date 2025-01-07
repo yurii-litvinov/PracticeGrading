@@ -21,11 +21,15 @@ export function MemberLoginPage() {
     }, [id]);
 
     const handleLogin = async () => {
-        const response = await loginMember(selectedMember, id);
-        const token = response.data.token;
-        sessionStorage.setItem('token', token);
-        setAuthHeader(token);
-        navigate(`/meetings/${id}/member`, {replace: true});
+        if (selectedMember === '') {
+            alert('Выберите себя из списка или введите ФИО');
+        } else {
+            const response = await loginMember(selectedMember, id);
+            const token = response.data.token;
+            sessionStorage.setItem('token', token);
+            setAuthHeader(token);
+            navigate(`/meetings/${id}/member`, {replace: true});
+        }
     }
 
     return (

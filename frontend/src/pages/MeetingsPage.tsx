@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {getMeetings, deleteMeeting} from '../services/ApiService';
+import {getMeetings, deleteMeeting, createMeetingsFromFile} from '../services/ApiService';
 import {format} from 'date-fns';
 import {ru} from 'date-fns/locale';
+import {FileModal} from '../components/FileModal'
 
 export const formatDate = (date) => {
     return format(new Date(date), 'd MMMM yyyy, HH:mm', {locale: ru});
@@ -12,8 +13,13 @@ export function MeetingsPage() {
     const [meetings, setMeetings] = useState([]);
     const navigate = useNavigate();
 
+    const fetchMeetings = () => {
+        getMeetings().then(response => setMeetings(response.data.sort((a, b) =>
+            new Date(a.dateAndTime) - new Date(b.dateAndTime))));
+    }
+
     useEffect(() => {
-        getMeetings().then(response => setMeetings(response.data));
+        fetchMeetings();
     }, []);
 
     const handleNewMeeting = () => {
@@ -34,15 +40,19 @@ export function MeetingsPage() {
 
     return (
         <>
-            <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end ps-2 pb-2 w-100">
+            <div className="d-flex flex-column mb-3 flex-sm-row align-items-start justify-content-end ps-2 pb-2 w-100">
                 <h1 className="me-auto w-100 mb-3 mb-sm-0 text-center text-sm-start">Заседания</h1>
                 <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
                     <button type="button" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2"
                             id="create-meeting" onClick={handleNewMeeting}>Создать заседание
                     </button>
+                    <button type="button" className="btn btn-outline-primary btn-lg mb-2 mb-sm-0 me-sm-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#fileModal">Загрузить из файла
+                    </button>
                 </div>
             </div>
-            
+
             <div className="row">
                 {meetings.map((meeting) => (
                     <div key={meeting.id} className="col-md-4 mb-4">
@@ -66,6 +76,7 @@ export function MeetingsPage() {
                     </div>
                 ))}
             </div>
+            <FileModal onSubmit={fetchMeetings}/>
         </>
     );
 }

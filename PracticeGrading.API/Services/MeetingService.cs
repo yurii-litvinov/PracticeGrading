@@ -293,6 +293,25 @@ public class MeetingService(
         }
     }
 
+    /// <summary>
+    /// Creates meetings from file.
+    /// </summary>
+    /// <param name="request">Schedule parsing request.</param>
+    public async Task CreateMeetingsFromFile(ParseScheduleRequest request)
+    {
+        var parser = new ScheduleParser.ScheduleParser(
+            new MemoryStream(Convert.FromBase64String(request.File)),
+            request.Headers,
+            request.Separator,
+            request.MembersColumn);
+
+        var meetings = parser.Parse();
+        foreach (var meeting in meetings)
+        {
+            await meetingRepository.Create(meeting);
+        }
+    }
+
     private async Task<List<Criteria>> GetCriteria(List<int> idList)
     {
         var criteria = new List<Criteria>();
