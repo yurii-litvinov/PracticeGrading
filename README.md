@@ -14,7 +14,7 @@
    ```shell
    git clone https://github.com/yurii-litvinov/PracticeGrading.git
    ```
-   
+
 3. Подключитесь к PostgreSQL и введите пароль (по умолчанию `postgres`):
    ```shell
    psql -U postgres
@@ -46,8 +46,9 @@
    npm install
    npm run dev
    ```
-   
+
 ## Сборка и запуск в Docker
+
 1. Убедитесь, что у вас установлен [Docker](https://www.docker.com).
 2. Клонируйте репозиторий:
    ```shell
@@ -65,6 +66,8 @@
    ```shell
    docker-compose down
    ```
+
+> Если необходимо, измените значение `HOST` в файле `.env` (например, укажите IP-адрес).
 
 ## Данные для входа
 

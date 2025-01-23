@@ -8,25 +8,45 @@ namespace PracticeGrading.Data.Entities;
 /// <summary>
 /// CriteriaMark entity.
 /// </summary>
-public class CriteriaMark : Criteria
+public class CriteriaMark
 {
     /// <summary>
-    /// Gets or sets mark.
+    /// Gets or sets criteria mark id.
     /// </summary>
-    public int Mark { get; set; }
+    public int Id { get; set; }
 
     /// <summary>
-    /// Gets or sets member id.
+    /// Gets or sets criteria id.
     /// </summary>
-    public int MemberId { get; set; }
+    public int CriteriaId { get; set; }
 
     /// <summary>
-    /// Gets or sets student work id.
+    /// Gets or sets criteria.
     /// </summary>
-    public int StudentWorkId { get; set; }
+    public Criteria? Criteria { get; set; }
+
+    /// <summary>
+    /// Gets or sets member mark id.
+    /// </summary>
+    public int MemberMarkId { get; set; }
 
     /// <summary>
     /// Gets or sets member mark.
     /// </summary>
     public MemberMark? MemberMark { get; set; }
+
+    /// <summary>
+    /// Gets or sets member comment.
+    /// </summary>
+    public string? Comment { get; set; }
+
+    /// <summary>
+    /// Gets or sets selected rules.
+    /// </summary>
+    public required ICollection<Rule> SelectedRules { get; set; }
+
+    /// <summary>
+    /// Gets or sets mark.
+    /// </summary>
+    public int Mark { get; set; }
 }

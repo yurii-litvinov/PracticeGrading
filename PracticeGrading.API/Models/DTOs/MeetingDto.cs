@@ -16,5 +16,5 @@ public record MeetingDto(
     string? CallLink,
     string? MaterialsLink,
     List<StudentWorkDto> StudentWorks,
-    List<string> Members,
-    List<int> CriteriaId);
+    List<MemberDto> Members,
+    List<CriteriaDto> Criteria);

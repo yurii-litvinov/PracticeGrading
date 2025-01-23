@@ -1,6 +1,6 @@
 import {useState} from 'react'
 import {useNavigate} from 'react-router-dom';
-import {loginAdmin, setAuthHeader} from '../services/apiService';
+import {loginAdmin, setAuthHeader} from '../services/ApiService';
 
 export function LoginPage() {
     const [username, setUsername] = useState('');

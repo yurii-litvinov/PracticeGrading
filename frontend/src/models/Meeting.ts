@@ -1,4 +1,6 @@
 import {StudentWork} from './StudentWork';
+import {Member} from './Member';
+import {Criteria} from './Criteria';
 
 /**
  * Interface for meeting.
@@ -19,6 +21,6 @@ export interface Meeting {
     callLink: string,
     materialsLink: string,
     studentWorks: StudentWork[],
-    members: string[],
-    criteriaId: number[]
+    members: Member[],
+    criteria: Criteria[]
 }

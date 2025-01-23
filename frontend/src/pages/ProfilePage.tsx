@@ -24,7 +24,7 @@ export function ProfilePage() {
     return (
         <div className="container mt-4">
             <h3>Пользователь: {username}</h3>
-            <button className="btn btn-outline-danger w-auto align-self-start" onClick={handleLogout}>
+            <button className="btn btn-outline-danger w-auto align-self-start" id = "exit" onClick={handleLogout}>
                 Выйти
             </button>
         </div>

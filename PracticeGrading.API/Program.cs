@@ -4,11 +4,11 @@
 // </copyright>
 
 #pragma warning disable SA1200
+using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PracticeGrading.API;
 using PracticeGrading.API.Endpoints;
-using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data;
 
@@ -16,6 +16,7 @@ using PracticeGrading.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(
@@ -59,14 +60,19 @@ builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOpti
 
 builder.Services.AddCustomAuth(builder.Configuration.GetSection("JwtOptions").Bind);
 
+Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
+
+var host = Environment.GetEnvironmentVariable("HOST");
+
 builder.Services.AddCors(
     options =>
     {
         options.AddPolicy(
             "CorsPolicy",
             policyBuilder => policyBuilder
-                .AllowAnyOrigin()
+                .WithOrigins($"http://{host}:3000")
                 .AllowAnyMethod()
+                .AllowCredentials()
                 .AllowAnyHeader());
     });
 
@@ -86,16 +92,16 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-app.MapPost("/login", Login);
+app.MapHub<MeetingHub>("/meetingHub");
 
 app.MapMeetingEndpoints();
 
 app.MapCriteriaEndpoints();
 
-async Task<IResult> Login(LoginAdminRequest request, UserService userService)
-{
-    var k = await userService.LoginAdmin(request);
-    return k == string.Empty ? Results.Unauthorized() : Results.Ok(new { Token = k });
-}
+app.MapUserEndpoints();
+
+app.MapMarkEndpoints();
 
 app.Run();
+
+public partial class Program;

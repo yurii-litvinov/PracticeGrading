@@ -17,9 +17,16 @@ public class CriteriaMarkConfiguration : IEntityTypeConfiguration<CriteriaMark>
     /// <summary>
     /// Configures criteria mark entity.
     /// </summary>
-    public void Configure(EntityTypeBuilder<CriteriaMark> builder) =>
+    public void Configure(EntityTypeBuilder<CriteriaMark> builder)
+    {
+        builder.HasKey(mark => mark.Id);
+
         builder.HasOne<MemberMark>(mark => mark.MemberMark)
-            .WithMany(mark => mark.CriteriaMarks)
-            .HasForeignKey(mark => new { mark.MemberId, mark.StudentWorkId })
-            .HasPrincipalKey(mark => new { mark.MemberId, mark.StudentWorkId });
+            .WithMany(memberMark => memberMark.CriteriaMarks);
+
+        builder.HasMany<Rule>(mark => mark.SelectedRules)
+            .WithOne(rule => rule.CriteriaMark)
+            .HasForeignKey(rule => rule.CriteriaMarkId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
 }

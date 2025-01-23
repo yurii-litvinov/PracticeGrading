@@ -21,6 +21,11 @@ public class StudentWork
     public required string StudentName { get; set; }
 
     /// <summary>
+    /// Gets or sets info.
+    /// </summary>
+    public string? Info { get; set; }
+
+    /// <summary>
     /// Gets or sets theme.
     /// </summary>
     public required string Theme { get; set; }
@@ -74,4 +79,9 @@ public class StudentWork
     /// Gets or sets members marks.
     /// </summary>
     public ICollection<MemberMark>? MemberMarks { get; set; }
+
+    /// <summary>
+    /// Gets or sets average criteria marks.
+    /// </summary>
+    public required ICollection<AverageCriteriaMark> AverageCriteriaMarks { get; set; }
 }

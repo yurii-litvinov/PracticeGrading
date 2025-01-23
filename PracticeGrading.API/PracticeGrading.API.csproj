@@ -9,8 +9,10 @@
 
     <ItemGroup>
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
+        <PackageReference Include="DotNetEnv" Version="3.1.1"/>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.10"/>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4"/>
+        <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.10"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.10">
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -26,12 +28,13 @@
 
     <ItemGroup>
         <ProjectReference Include="..\PracticeGrading.Data\PracticeGrading.Data.csproj"/>
+        <ProjectReference Include="..\ScheduleParser\ScheduleParser.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
+        <Content Include="..\.dockerignore">
+            <Link>.dockerignore</Link>
+        </Content>
     </ItemGroup>
 
 </Project>

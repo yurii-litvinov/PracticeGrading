@@ -1,5 +1,5 @@
 import React, {useRef, useState, useEffect} from 'react';
-import {StudentWork} from '../interfaces/StudentWork'
+import {StudentWork} from '../models/StudentWork'
 
 /**
  * Interface for student work modal props.
@@ -18,6 +18,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
 
     const initialStudentWorkState: StudentWork = {
         studentName: '',
+        info: '',
         theme: '',
         supervisor: '',
         consultant: '',
@@ -85,6 +86,11 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                                        required value={studentWork.studentName} onChange={handleChange}/>
                             </div>
                             <div className="mb-2">
+                                <label className="form-label">Курс, направление</label>
+                                <input type="text" className="form-control" name="info"
+                                       value={studentWork.info} onChange={handleChange}/>
+                            </div>
+                            <div className="mb-2">
                                 <label className="form-label">Тема практики/ВКР</label>
                                 <input type="text" className="form-control" name="theme"
                                        required value={studentWork.theme} onChange={handleChange}/>
@@ -133,7 +139,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                         <button type="button" className="btn btn-light" data-bs-dismiss="modal"
                                 onClick={handleClose}>Отмена
                         </button>
-                        <button type="button" className="btn btn-primary" onClick={handleSave}>Сохранить</button>
+                        <button type="button" className="btn btn-primary" id="save-student" onClick={handleSave}>Сохранить</button>
                     </div>
                 </div>
             </div>

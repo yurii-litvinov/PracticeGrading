@@ -11,10 +11,13 @@ namespace PracticeGrading.API.Models.DTOs;
 public record StudentWorkDto(
     int? Id,
     string StudentName,
+    string? Info,
     string Theme,
     string Supervisor,
     string? Consultant,
     string? Reviewer,
     int? SupervisorMark,
     int? ReviewerMark,
-    string? CodeLink);
+    string? CodeLink,
+    List<AverageCriteriaMarkDto> AverageCriteriaMarks,
+    int? FinalMark);

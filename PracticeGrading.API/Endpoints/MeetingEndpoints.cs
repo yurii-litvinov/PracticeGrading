@@ -18,12 +18,17 @@ public static class MeetingEndpoints
     /// </summary>
     public static void MapMeetingEndpoints(this IEndpointRouteBuilder app)
     {
-        var meetingGroup = app.MapGroup("/meetings").RequireAuthorization("RequireAdminRole");
+        var meetingGroup = app.MapGroup("/meetings");
 
-        meetingGroup.MapPost("/new", CreateMeeting);
-        meetingGroup.MapGet(string.Empty, GetMeeting);
-        meetingGroup.MapPut("/update", UpdateMeeting);
-        meetingGroup.MapDelete("/delete", DeleteMeeting);
+        meetingGroup.MapPost("/new", CreateMeeting).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapPut("/update", UpdateMeeting).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapDelete("/delete", DeleteMeeting).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapPost("/fromFile", CreateMeetingsFromFile).RequireAuthorization("RequireAdminRole");
+
+        meetingGroup.MapGet(string.Empty, GetMeeting).RequireAuthorization("RequireAdminOrMemberRole");
+        meetingGroup.MapPut("/setMark", SetFinalMark).RequireAuthorization("RequireAdminOrMemberRole");
+
+        meetingGroup.MapGet("/members", GetMembers).AllowAnonymous();
     }
 
     private static async Task<IResult> CreateMeeting(MeetingRequest request, MeetingService meetingService)
@@ -47,6 +52,26 @@ public static class MeetingEndpoints
     private static async Task<IResult> DeleteMeeting(int id, MeetingService meetingService)
     {
         await meetingService.DeleteMeeting(id);
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> GetMembers(int id, MeetingService meetingService)
+    {
+        var members = await meetingService.GetMembers(id);
+        return Results.Ok(members);
+    }
+
+    private static async Task<IResult> SetFinalMark(int meetingId, int workId, int mark, MeetingService meetingService)
+    {
+        await meetingService.SetFinalMark(meetingId, workId, mark);
+        return Results.Ok();
+    }
+
+    private static async Task<IResult> CreateMeetingsFromFile(
+        ParseScheduleRequest request,
+        MeetingService meetingService)
+    {
+        await meetingService.CreateMeetingsFromFile(request);
         return Results.Ok();
     }
 }

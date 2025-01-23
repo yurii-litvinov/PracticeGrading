@@ -9,6 +9,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using PracticeGrading.API.Models;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data.Repositories;
 
@@ -29,7 +30,7 @@ public static class Extensions
             .AddJwtBearer(
                 JwtBearerDefaults.AuthenticationScheme,
                 options =>
-                    options.TokenValidationParameters = new TokenValidationParameters()
+                    options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = true,
                         ValidateAudience = true,
@@ -46,7 +47,22 @@ public static class Extensions
         services.AddAuthorizationBuilder()
             .AddPolicy(
                 "RequireAdminRole",
-                policy => policy.RequireClaim(ClaimTypes.Role, "admin"));
+                policy => policy.RequireClaim(
+                    ClaimTypes.Role,
+                    RolesEnum.Admin.ToString().ToLower()));
+        services.AddAuthorizationBuilder()
+            .AddPolicy(
+                "RequireMemberRole",
+                policy => policy.RequireClaim(
+                    ClaimTypes.Role,
+                    RolesEnum.Member.ToString().ToLower()));
+        services.AddAuthorizationBuilder()
+            .AddPolicy(
+                "RequireAdminOrMemberRole",
+                policy => policy.RequireClaim(
+                    ClaimTypes.Role,
+                    RolesEnum.Admin.ToString().ToLower(),
+                    RolesEnum.Member.ToString().ToLower()));
     }
 
     /// <summary>
@@ -60,5 +76,7 @@ public static class Extensions
         services.AddScoped<MeetingRepository>();
         services.AddScoped<CriteriaService>();
         services.AddScoped<CriteriaRepository>();
+        services.AddScoped<MarkService>();
+        services.AddScoped<MarkRepository>();
     }
 }

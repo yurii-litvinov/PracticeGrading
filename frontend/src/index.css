@@ -113,3 +113,43 @@ body {
     color: inherit;
     border: none;
 }
+
+a {
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-all;
+}
+
+.label-custom {
+    flex-shrink: 0;
+    width: 13em;
+}
+
+.span-custom {
+    width: 29em;
+}
+
+@media (max-width: 768px) {
+    .label-custom {
+        width: 10em;
+    }
+
+    .span-custom {
+        width: 14em;
+    }
+}
+
+@media (max-width: 480px) {
+    .label-custom {
+        width: 9em;
+    }
+
+    .span-custom {
+        width: 10em;
+    }
+}
+
+.tooltip-light .tooltip-inner {
+    background-color: #f8f9fa;
+    color: #22252a;
+}

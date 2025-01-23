@@ -28,6 +28,7 @@ public class JwtService(IOptions<JwtOptions> options)
         var claims = new List<Claim>
         {
             new(ClaimTypes.Name, user.UserName),
+            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Role, user.Role != null ? user.Role.RoleName : string.Empty),
         };
 

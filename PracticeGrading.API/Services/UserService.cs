@@ -7,6 +7,7 @@ namespace PracticeGrading.API.Services;
 
 using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.Requests;
+using PracticeGrading.Data.Entities;
 using PracticeGrading.Data.Repositories;
 
 /// <summary>
@@ -32,5 +33,26 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
         }
 
         return string.Empty;
+    }
+
+    /// <summary>
+    /// Logins member.
+    /// </summary>
+    /// <param name="request">Member login request.</param>
+    /// <returns>JWT token.</returns>
+    public async Task<string> LoginMember(LoginMemberRequest request)
+    {
+        var user = await userRepository.GetByUserName(request.UserName);
+
+        if (user == null)
+        {
+            await userRepository.Create(
+                new User
+                    { UserName = request.UserName, MeetingId = request.MeetingId, RoleId = (int)RolesEnum.Member });
+            user = await userRepository.GetByUserName(request.UserName) ??
+                   throw new InvalidOperationException($"User with UserName {request.UserName} was not found.");
+        }
+
+        return jwtService.GenerateToken(user);
     }
 }

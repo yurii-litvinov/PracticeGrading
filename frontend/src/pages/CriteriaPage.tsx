@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {getCriteria, deleteCriteria, createCriteria, updateCriteria} from '../services/apiService';
+import {getCriteria, deleteCriteria, createCriteria, updateCriteria} from '../services/ApiService';
 import {CriteriaModal} from '../components/CriteriaModal'
 
 export function CriteriaPage() {
@@ -50,13 +50,17 @@ export function CriteriaPage() {
         fetchCriteria();
     }
 
-    return (<>
-            <div className="d-flex align-items-center justify-content-end ps-2 pb-2">
-                <h1 className="me-auto">Список критериев</h1>
-                <button type="button" className="btn btn-primary btn-lg" data-bs-toggle="modal"
-                        data-bs-target="#criteriaModal" onClick={() => setCriteriaToEditId(null)}>
-                    Добавить критерий
-                </button>
+    return (
+        <>
+            <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end ps-2 pb-2 w-100">
+                <h1 className="me-auto w-100 mb-3 mb-sm-0 text-center text-sm-start">Список критериев</h1>
+                <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
+                    <button type="button" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2"
+                            data-bs-toggle="modal" id="add-criteria"
+                            data-bs-target="#criteriaModal" onClick={() => setCriteriaToEditId(null)}>
+                        Добавить критерий
+                    </button>
+                </div>
             </div>
 
             <div className="accordion p-2" id="criteriaAccordion">
@@ -72,7 +76,7 @@ export function CriteriaPage() {
                                         data-bs-toggle="collapse"
                                         data-bs-target={`#collapse${criteria.id}`} aria-expanded="false"
                                         aria-controls={`collapse${criteria.id}`}>
-                                    <p className="pe-1">{criteria.name} {criteria.comment && (
+                                    <p className="pe-1" id="criteria">{criteria.name} {criteria.comment && (
                                         <>
                                             <br/>
                                             <small className="fs-6"
@@ -81,11 +85,12 @@ export function CriteriaPage() {
                                     )}
                                     </p>
                                 </button>
-                                <button type="button" className="btn btn-sm" style={{height: '40px'}}
+                                <button type="button" id="delete-criteria" className="btn btn-sm btn-link"
+                                        style={{height: '40px'}}
                                         onClick={() => handleDeleteCriteria(criteria.id)}>
-                                    <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
+                                    <i className="bi bi-x-lg fs-5" style={{color: '#dc3545'}}></i>
                                 </button>
-                                <button type="button" className="btn btn-sm me-3"
+                                <button type="button" className="btn btn-sm me-3 btn-link"
                                         data-bs-toggle="modal" data-bs-target="#criteriaModal"
                                         onClick={() => setCriteriaToEditId(criteria.id)}>
                                     <i className="bi bi-pencil fs-5" style={{color: '#007bff'}}></i>
