@@ -13,7 +13,6 @@ registerLocale('ru', ru);
 export function MeetingFormPage() {
     const {id} = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
     const [workToEditIndex, setWorkToEditIndex] = useState();
     const [criteria, setCriteria] = useState([]);
 
@@ -53,11 +52,7 @@ export function MeetingFormPage() {
     }, [id]);
 
     const handleBack = () => {
-        if (id) {
-            navigate(`/meetings/${id}`, {replace: true});
-        } else {
-            navigate("/meetings", {replace: true});
-        }
+        window.history.back();
     }
 
     const handleMeetingChange = (e) => {
@@ -95,13 +90,13 @@ export function MeetingFormPage() {
 
             if (response.status === 200) {
                 await signalRService.current.sendNotification(Actions.Update);
-                navigate(`/meetings/${id}`, {replace: true});
+                window.history.back();
             }
         } else {
             const response = await createMeeting(meeting);
 
             if (response.status === 200) {
-                navigate("/meetings", {replace: true});
+                window.history.back();
             }
         }
     }
@@ -159,6 +154,19 @@ export function MeetingFormPage() {
             };
         });
     }
+
+    useEffect(() => {
+        const handleBeforeUnload = (event) => {
+            event.preventDefault();
+            event.returnValue = "";
+        }
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        }
+    });
 
     return (
         <>
@@ -304,10 +312,16 @@ export function MeetingFormPage() {
                                         {meeting.studentWorks.some((work) => work.reviewerMark) ?
                                             (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
                                         {meeting.studentWorks.some((work) => work.codeLink) ?
-                                            (<td style={{minWidth: '85px'}}>{work.codeLink ? (
-                                                <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
-                                                    Ссылка
-                                                </a>
+                                            (<td style={{minWidth: '87px'}}>{work.codeLink ? (
+                                                work.codeLink !== 'NDA' ? (
+                                                    work.codeLink.split(' ').map((link, linkIndex) => (
+                                                        <div key={linkIndex} className="mb-2">
+                                                            <a href={link} target="_blank" rel="noopener noreferrer">
+                                                                Ссылка {work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                            </a>
+                                                        </div>
+                                                    ))
+                                                ) : (<span className="fst-italic">NDA</span>)
                                             ) : (
                                                 <span>—</span>
                                             )}</td>) : (<></>)}

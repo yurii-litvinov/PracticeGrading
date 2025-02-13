@@ -280,7 +280,7 @@ public class MeetingService(
     /// <param name="meetingId">Meeting id.</param>
     /// <param name="workId">Student work id.</param>
     /// <param name="mark">Final mark.</param>
-    public async Task SetFinalMark(int meetingId, int workId, int mark)
+    public async Task SetFinalMark(int meetingId, int workId, string mark)
     {
         var meeting = await meetingRepository.GetById(meetingId) ??
                       throw new InvalidOperationException($"Meeting with ID {meetingId} was not found.");

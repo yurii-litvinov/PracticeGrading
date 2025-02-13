@@ -61,7 +61,7 @@ public static class MeetingEndpoints
         return Results.Ok(members);
     }
 
-    private static async Task<IResult> SetFinalMark(int meetingId, int workId, int mark, MeetingService meetingService)
+    private static async Task<IResult> SetFinalMark(int meetingId, int workId, string mark, MeetingService meetingService)
     {
         await meetingService.SetFinalMark(meetingId, workId, mark);
         return Results.Ok();

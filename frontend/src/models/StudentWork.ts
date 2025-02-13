@@ -17,7 +17,7 @@ export interface StudentWork {
     supervisor: string,
     consultant?: string,
     reviewer?: string,
-    supervisorMark?: number,
-    reviewerMark?: number,
+    supervisorMark?: string,
+    reviewerMark?: string,
     codeLink?: string
 }

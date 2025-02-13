@@ -20,9 +20,9 @@ export function StudentWorkPage() {
     const navigate = useNavigate();
     const [criteria, setCriteria] = useState<Criteria[]>([]);
     const [studentWork, setStudentWork] = useState({});
-    const [isEditing, setIsEditing] = useState(true);
     const [otherMarks, setOtherMarks] = useState([]);
     const [otherMembers, setOtherMembers] = useState([]);
+    const [isChanged, setIsChanged] = useState(false);
     const closeButtonRef = useRef();
 
     const token = sessionStorage.getItem('token');
@@ -41,7 +41,8 @@ export function StudentWorkPage() {
         memberId: id,
         studentWorkId: workId,
         criteriaMarks: [],
-        mark: 0
+        mark: 0,
+        comment: ''
     }
 
     const [mark, setMark] = useState(initialMarkState);
@@ -72,7 +73,6 @@ export function StudentWorkPage() {
 
             if (targetMark) {
                 setMark(targetMark)
-                setIsEditing(false);
             }
 
             setOtherMarks(otherMarks);
@@ -99,7 +99,7 @@ export function StudentWorkPage() {
             }));
         }
         selectRules();
-    }, [criteria, mark.id, isEditing]);
+    }, [criteria, mark.id]);
 
     useEffect(() => {
         if (workId) {
@@ -140,15 +140,6 @@ export function StudentWorkPage() {
         calculateMark();
     }
 
-
-    const handleBack = () => {
-        if (role === 'member') {
-            navigate(`/meetings/${meetingId}/member`, {replace: true});
-        } else {
-            navigate(`/meetings/${meetingId}`, {replace: true});
-        }
-    }
-
     const calculateMark = () => {
         setMark((prevMark) => {
             let finalMark = prevMark.criteriaMarks[0]?.mark || 0;
@@ -175,7 +166,7 @@ export function StudentWorkPage() {
                     if (e.target.checked) {
                         updatedSelectedRules.push(rule);
                     } else {
-                        updatedSelectedRules.splice(updatedSelectedRules.indexOf(rule), 1);
+                        updatedSelectedRules.splice(updatedSelectedRules.findIndex(r => r.id === rule.id), 1);
                     }
 
                     return {
@@ -194,6 +185,7 @@ export function StudentWorkPage() {
         });
 
         calculateMark();
+        setIsChanged(true);
     }
 
     const handleRadioChange = (criteriaId, rule) => {
@@ -219,51 +211,69 @@ export function StudentWorkPage() {
         });
 
         calculateMark();
+        setIsChanged(true);
     }
 
     const handleCommentChange = (e, criteriaId) => {
         const newComment = e.target.value;
 
-        setMark(prevMark => {
-            const updatedCriteriaMarks = prevMark.criteriaMarks.map(criteriaMark => {
-                if (criteriaMark.criteriaId === criteriaId) {
-                    return {
-                        ...criteriaMark,
-                        comment: newComment
-                    };
-                }
-                return criteriaMark;
-            });
-
-            return {
+        if (criteriaId === null) {
+            setMark(prevMark => ({
                 ...prevMark,
-                criteriaMarks: updatedCriteriaMarks
-            };
-        });
+                comment: newComment
+            }));
+        } else {
+            setMark(prevMark => {
+                const updatedCriteriaMarks = prevMark.criteriaMarks.map(criteriaMark => {
+                    if (criteriaMark.criteriaId === criteriaId) {
+                        return {
+                            ...criteriaMark,
+                            comment: newComment
+                        };
+                    }
+                    return criteriaMark;
+                });
+
+                return {
+                    ...prevMark,
+                    criteriaMarks: updatedCriteriaMarks
+                };
+            });
+        }
+        
+        setIsChanged(true);
     }
 
     const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
+        saveMark();
+    }
 
+    const saveMark = () => {
         if (mark?.id == null || mark.id === 0) {
             createMemberMark(mark).then(response => signalRService.current.sendNotification(Actions.SendMark));
         } else {
             updateMemberMark(mark).then(response => signalRService.current.sendNotification(Actions.SendMark));
         }
 
-        if (role === 'member') {
-            setIsEditing(false);
-        } else {
-            if (closeButtonRef.current) {
-                closeButtonRef.current.click();
-            }
+        if (role === 'admin' && closeButtonRef.current) {
+            closeButtonRef.current.click();
         }
-
     }
 
-    const handleEdit = (event: React.FormEvent) => {
-        event.preventDefault();
-        setIsEditing(true);
+    useEffect(() => {
+        const handler = setTimeout(() => {
+            if (role === 'member' && isChanged) {
+                saveMark();
+                setIsChanged(false);
+            }
+        }, 1000);
+
+        return () => clearTimeout(handler);
+    }, [mark]);
+
+    const handleBack = () => {
+        window.history.back();
     }
 
     const isRuleSelected = (criteriaId, ruleId) => {
@@ -288,14 +298,6 @@ export function StudentWorkPage() {
 
     return (
         <>
-            <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
-                <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
-                    <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
-                            onClick={handleBack}>Назад к заседанию
-                    </button>
-                </div>
-            </div>
-
             <div className="d-flex flex-column p-2">
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">ФИО студента</label>
@@ -334,12 +336,16 @@ export function StudentWorkPage() {
 
                 {studentWork.codeLink ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Ссылка на код</label>
-                    <span className="form-control-plaintext w-auto text-wrap">{studentWork.codeLink ? (
-                        <a href={studentWork.codeLink} target="_blank" rel="noopener noreferrer">
-                            Ссылка
-                        </a>
+                    <span className="form-control-plaintext w-auto text-wrap">{studentWork.codeLink !== 'NDA' ? (
+                        studentWork.codeLink.split(' ').map((link, linkIndex) => (
+                            <div key={linkIndex} className="mb-2">
+                                <a href={link} target="_blank" rel="noopener noreferrer">
+                                    Ссылка {studentWork.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                </a>
+                            </div>
+                        ))
                     ) : (
-                        <span>—</span>
+                        <span className="fst-italic">NDA</span>
                     )}</span>
                 </div>) : (<></>)}
 
@@ -368,7 +374,7 @@ export function StudentWorkPage() {
                                 <span className="form-control-plaintext fs-5 w-auto text-wrap">{name}</span>
                             </div>
 
-                            <form onSubmit={handleSubmit}>
+                            <form>
                                 {criteria.map((criteria, index) => (
                                     <div key={criteria.id} className="mb-4">
                                         <label
@@ -385,7 +391,6 @@ export function StudentWorkPage() {
                                             {criteria.scale.map((rule, ruleIndex) => (
                                                 <div key={rule.id} className="form-check">
                                                     <input className="form-check-input" type="radio" name={criteria.id}
-                                                           disabled={!isEditing}
                                                            checked={isRuleSelected(criteria.id, rule.id)}
                                                            onChange={() => handleRadioChange(criteria.id, rule)}></input>
                                                     <label>
@@ -403,7 +408,6 @@ export function StudentWorkPage() {
                                                     {criteria.rules.map((rule) => (
                                                         <div key={rule.id} className="form-check">
                                                             <input className="form-check-input" type="checkbox"
-                                                                   disabled={!isEditing}
                                                                    checked={isRuleSelected(criteria.id, rule.id)}
                                                                    onChange={(e) => handleCheckboxChange(e, criteria.id, rule)}/>
                                                             <label>
@@ -419,7 +423,6 @@ export function StudentWorkPage() {
                                         <div className="my-2">
                                             <h6>Комментарий:</h6>
                                             <textarea type="text" className="form-control" name="comment"
-                                                      disabled={!isEditing}
                                                       value={mark.criteriaMarks.find(criteriaMark => criteriaMark.criteriaId === criteria.id)?.comment || ''}
                                                       onChange={(e) => handleCommentChange(e, criteria.id)}/>
                                         </div>
@@ -433,20 +436,21 @@ export function StudentWorkPage() {
                                         className="form-control-plaintext fs-5 w-auto text-wrap">{mark?.mark}</span>
                                 </div>
 
-                                {isEditing ? (
-                                    <button type="submit" className="btn btn-primary float-end btn-lg">
-                                        Сохранить
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        className="btn btn-secondary float-end btn-lg"
-                                        onClick={(e) => handleEdit(e)}
-                                    >
-                                        Редактировать
-                                    </button>
-                                )}
+                                <div className="my-2">
+                                    <h6>Общий комментарий:</h6>
+                                    <textarea type="text" className="form-control" name="comment"
+                                              value={mark.comment}
+                                              onChange={(e) => handleCommentChange(e, null)}/>
+                                </div>
                             </form>
+                        </div>
+                    </div>
+
+                    <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
+                        <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
+                            <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
+                                    onClick={handleBack}>Назад к заседанию
+                            </button>
                         </div>
                     </div>
 
@@ -496,6 +500,12 @@ export function StudentWorkPage() {
 
                                             </div>
                                         ))}
+
+                                        {memberMark.comment !== '' ?
+                                            (<div className="w-auto fst-italic ms-3 text-wrap">
+                                                <span className="fw-semibold">Общий комментарий:</span> {memberMark.comment}
+                                            </div>) : null}
+
                                     </div>
                                 </div>
                             </div>
@@ -504,6 +514,14 @@ export function StudentWorkPage() {
                     </div>
                 </>) :
                 (<>
+                        <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
+                            <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
+                                <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
+                                        onClick={handleBack}>Назад к заседанию
+                                </button>
+                            </div>
+                        </div>
+
                         <hr className="mb-4"/>
 
                         <h4 className="mb-4">Оценки членов комиссии</h4>
@@ -567,6 +585,12 @@ export function StudentWorkPage() {
 
                                                         </div>
                                                     ))}
+
+                                                    {memberMark.comment ?
+                                                        (<p className="w-auto">
+                                                            <span className="fw-semibold me-1">Общий комментарий:</span>{memberMark.comment}
+                                                        </p>)
+                                                        : null}
                                                 </div>
                                             </div>
                                         </div>
@@ -613,7 +637,6 @@ export function StudentWorkPage() {
                                                             <div key={rule.id} className="form-check">
                                                                 <input className="form-check-input" type="radio"
                                                                        name={criteria.id}
-                                                                       disabled={!isEditing}
                                                                        checked={isRuleSelected(criteria.id, rule.id)}
                                                                        onChange={() => handleRadioChange(criteria.id, rule)}></input>
                                                                 <label>
@@ -632,7 +655,6 @@ export function StudentWorkPage() {
                                                                     <div key={rule.id} className="form-check">
                                                                         <input className="form-check-input"
                                                                                type="checkbox"
-                                                                               disabled={!isEditing}
                                                                                checked={isRuleSelected(criteria.id, rule.id)}
                                                                                onChange={(e) => handleCheckboxChange(e, criteria.id, rule)}/>
                                                                         <label>
@@ -649,7 +671,6 @@ export function StudentWorkPage() {
                                                         <h6>Комментарий:</h6>
                                                         <textarea type="text" className="form-control"
                                                                   name="comment"
-                                                                  disabled={!isEditing}
                                                                   value={mark.criteriaMarks.find(criteriaMark => criteriaMark.criteriaId === criteria.id)?.comment || ''}
                                                                   onChange={(e) => handleCommentChange(e, criteria.id)}/>
                                                     </div>
@@ -662,6 +683,13 @@ export function StudentWorkPage() {
                                                     оценка:</label>
                                                 <span
                                                     className="form-control-plaintext fs-5 w-auto text-wrap">{mark?.mark}</span>
+                                            </div>
+
+                                            <div className="my-2">
+                                                <h6>Общий комментарий:</h6>
+                                                <textarea type="text" className="form-control" name="comment"
+                                                          value={mark.comment}
+                                                          onChange={(e) => handleCommentChange(e, null)}/>
                                             </div>
                                         </form>
                                     </div>

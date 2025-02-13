@@ -78,11 +78,11 @@ export function ViewMeetingPage() {
     }, [id]);
 
     const handleBack = () => {
-        navigate("/meetings", {replace: true})
+        window.history.back();
     }
 
     const handleEditMeeting = () => {
-        navigate(`/meetings/edit/${id}`, {replace: true});
+        navigate(`/meetings/edit/${id}`);
     }
 
     const handleRowClick = (id: number) => {
@@ -91,7 +91,7 @@ export function ViewMeetingPage() {
     };
 
     const handleIconClick = (workId: number) => {
-        navigate(`/meetings/${id}/studentwork/${workId}`, {replace: true});
+        navigate(`/meetings/${id}/studentwork/${workId}`);
     };
 
     const handleMarkEdit = (e, id) => {
@@ -102,7 +102,7 @@ export function ViewMeetingPage() {
             finalMark: value
         } : mark));
 
-        if (value) setFinalMark(meeting.id, id, +value);
+        if (value) setFinalMark(meeting.id, id, value);
     }
 
     const handleCopyLink = () => {
@@ -270,10 +270,17 @@ export function ViewMeetingPage() {
                                             {meeting.studentWorks.some((work) => work.reviewerMark) ?
                                                 (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
                                             {meeting.studentWorks.some((work) => work.codeLink) ?
-                                                (<td style={{minWidth: '85px'}}>{work.codeLink ? (
-                                                    <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
-                                                        Ссылка
-                                                    </a>
+                                                (<td style={{minWidth: '87px'}}>{work.codeLink ? (
+                                                    work.codeLink !== 'NDA' ? (
+                                                        work.codeLink.split(' ').map((link, linkIndex) => (
+                                                            <div key={linkIndex} className="mb-2">
+                                                                <a href={link} target="_blank"
+                                                                   rel="noopener noreferrer">
+                                                                    Ссылка {work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                                </a>
+                                                            </div>
+                                                        ))
+                                                    ) : (<span className="fst-italic">NDA</span>)
                                                 ) : (
                                                     <span>—</span>
                                                 )}</td>) : (<></>)}
@@ -319,7 +326,7 @@ export function ViewMeetingPage() {
                                             <td className="text-center">{marks.find(mark => mark.id === work.id).averageMark || "—"}</td>
                                             <td>
                                                 <input
-                                                    type="number"
+                                                    type="text"
                                                     className="form-control"
                                                     value={marks.find(mark => mark.id === work.id).finalMark || ""}
                                                     onChange={(e) => handleMarkEdit(e, work.id)}

@@ -48,17 +48,17 @@ public class StudentWork
     /// <summary>
     /// Gets or sets supervisor's mark.
     /// </summary>
-    public int? SupervisorMark { get; set; }
+    public string? SupervisorMark { get; set; }
 
     /// <summary>
     /// Gets or sets reviewer's mark.
     /// </summary>
-    public int? ReviewerMark { get; set; }
+    public string? ReviewerMark { get; set; }
 
     /// <summary>
     /// Gets or sets final mark.
     /// </summary>
-    public int? FinalMark { get; set; }
+    public string? FinalMark { get; set; }
 
     /// <summary>
     /// Gets or sets code link.

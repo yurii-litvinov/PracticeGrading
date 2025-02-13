@@ -23,7 +23,7 @@ export function MeetingsPage() {
     }, []);
 
     const handleNewMeeting = () => {
-        navigate("/meetings/new", {replace: true});
+        navigate("/meetings/new");
     }
 
     const handleDeleteMeeting = async (id) => {
@@ -35,7 +35,7 @@ export function MeetingsPage() {
     }
 
     const handleViewMeeting = async (id) => {
-        navigate(`/meetings/${id}`, {replace: true});
+        navigate(`/meetings/${id}`);
     }
 
     return (

@@ -110,7 +110,7 @@ public class MarkRepository(AppDbContext context)
                         .Select(mark => mark.Mark))
                 .ToList();
 
-            averageCriteriaMark.AverageMark = Math.Round(criteriaMarks.Average(), 1);
+            averageCriteriaMark.AverageMark = criteriaMarks.Count != 0 ? Math.Round(criteriaMarks.Average(), 1) : null;
         }
 
         work.FinalMark = null;

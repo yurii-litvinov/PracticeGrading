@@ -15,6 +15,7 @@ interface StudentWorkModalProps {
 export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProps) {
     const formRef = useRef();
     const closeButtonRef = useRef();
+    const [codeLinks, setCodeLinks] = useState(['']);
 
     const initialStudentWorkState: StudentWork = {
         studentName: '',
@@ -31,13 +32,19 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
     const [studentWork, setStudentWork] = useState(initialStudentWorkState);
 
     useEffect(() => {
+        setCodeLinks(['']);
+        
         if (studentWorkData) {
             setStudentWork(studentWorkData);
+            const links = studentWorkData.codeLink ? studentWorkData.codeLink.split(' ') : [''];
+            if (links[0] !== 'NDA') {
+                setCodeLinks(links);
+            }
         } else {
             setStudentWork(initialStudentWorkState);
         }
     }, [studentWorkData]);
-    
+
     const handleChange = (e) => {
         const {name, value} = e.target;
 
@@ -47,12 +54,32 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
         }));
     }
 
+    useEffect(() => {
+        if (codeLinks.length > 0 && codeLinks[codeLinks.length - 1] !== '') {
+            setCodeLinks([...codeLinks, '']);
+        }
+    }, [codeLinks]);
+
+    const handleLinksChange = (index: number, value: string) => {
+        const updatedLinks = [...codeLinks];
+        updatedLinks[index] = value;
+
+        if (value === '') {
+            updatedLinks.splice(index, 1);
+        }
+
+        setCodeLinks(updatedLinks);
+    }
+
     const handleSave = () => {
         if (formRef.current && !formRef.current.checkValidity()) {
             formRef.current.reportValidity();
             return;
         }
 
+        if (studentWork.codeLink !== 'NDA') {
+            studentWork.codeLink = codeLinks.join(' ').trim();
+        }
         onSave(studentWork);
         setStudentWork(studentWorkData ?? initialStudentWorkState);
 
@@ -62,7 +89,15 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
     }
 
     const handleClose = () => {
+        console.log(studentWork)
         setStudentWork(studentWorkData ?? initialStudentWorkState);
+    }
+
+    const handleCheck = (e) => {
+        setStudentWork((prev) => ({
+            ...prev,
+            codeLink: e.target.checked ? 'NDA' : codeLinks.join(' ')
+        }));
     }
 
     return (
@@ -111,26 +146,36 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                                        value={studentWork.reviewer} onChange={handleChange}/>
                             </div>
                             <div className="mb-2">
-                                <label className="form-label">Ссылка на код</label>
-                                <input type="url" className="form-control" name="codeLink"
-                                       value={studentWork.codeLink === 0 ? null : studentWork.codeLink}
-                                       onChange={handleChange}/>
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <label className="form-label">Ссылка на код</label>
+                                    <div className="form-check">
+                                        <input type="checkbox" className="form-check-input" id="ndaCheck"
+                                               checked={studentWork.codeLink === 'NDA'}
+                                               onChange={handleCheck}/>
+                                        <label className="form-check-label" htmlFor="ndaCheck">NDA</label>
+                                    </div>
+                                </div>
+                                {studentWork.codeLink === 'NDA' ? (<></>) :
+                                    (codeLinks.map((link, index) => (
+                                        <div key={index} className="mb-3">
+                                            <input
+                                                type="url"
+                                                className="form-control"
+                                                value={link}
+                                                onChange={(e) => handleLinksChange(index, e.target.value)}/>
+                                        </div>
+                                    )))
+                                }
                             </div>
-                            <div className="row">
-                                <div className="col-6 d-flex align-items-center">
-                                    <label className="form-label me-3">Оценка научного
-                                        руководителя</label>
-                                    <input type="number" className="form-control w-auto" name="supervisorMark"
-                                           min="2" max="5" step="1"
-                                           value={studentWork.supervisorMark ?? ''} onChange={handleChange}/>
-                                </div>
-                                <div className="col-6 d-flex align-items-center">
-                                    <label className="form-label me-3">Оценка
-                                        рецензента</label>
-                                    <input type="number" className="form-control w-auto" name="reviewerMark"
-                                           min="2" max="5" step="1"
-                                           value={studentWork.reviewerMark ?? ''} onChange={handleChange}/>
-                                </div>
+                            <div className="mb-2">
+                                <label className="form-label">Оценка научного руководителя</label>
+                                <input type="text" className="form-control" name="supervisorMark"
+                                       value={studentWork.supervisorMark ?? ''} onChange={handleChange}/>
+                            </div>
+                            <div className="mb-2">
+                                <label className="form-label">Оценка рецензента</label>
+                                <input type="text" className="form-control" name="reviewerMark"
+                                       value={studentWork.reviewerMark ?? ''} onChange={handleChange}/>
                             </div>
                         </form>
                     </div>
@@ -139,7 +184,9 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                         <button type="button" className="btn btn-light" data-bs-dismiss="modal"
                                 onClick={handleClose}>Отмена
                         </button>
-                        <button type="button" className="btn btn-primary" id="save-student" onClick={handleSave}>Сохранить</button>
+                        <button type="button" className="btn btn-primary" id="save-student"
+                                onClick={handleSave}>Сохранить
+                        </button>
                     </div>
                 </div>
             </div>

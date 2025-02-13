@@ -13,4 +13,5 @@ public record MemberMarkRequest(
     int MemberId,
     int StudentWorkId,
     List<CriteriaMarkRequest> CriteriaMarks,
-    int Mark);
+    int Mark,
+    string Comment);

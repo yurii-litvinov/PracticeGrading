@@ -27,6 +27,7 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
             MemberId = request.MemberId,
             StudentWorkId = request.StudentWorkId,
             Mark = request.Mark,
+            Comment = request.Comment,
             CriteriaMarks = [],
         };
 
@@ -59,6 +60,7 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                              $"Member mark with member ID {request.MemberId} and student work ID {request.StudentWorkId}  was not found.");
 
         memberMark.Mark = request.Mark;
+        memberMark.Comment = request.Comment;
         memberMark.CriteriaMarks.Clear();
 
         foreach (var markRequest in request.CriteriaMarks)
@@ -105,7 +107,8 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                         (int)memberId,
                         workId,
                         [],
-                        0)
+                        0,
+                        string.Empty)
                 ];
             }
 
@@ -133,7 +136,8 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                                     .ToList(),
                                 mark.Mark))
                         .ToList(),
-                    memberMark.Mark))
+                    memberMark.Mark,
+                    memberMark.Comment ?? string.Empty))
             .ToList();
 
         return dtoList;

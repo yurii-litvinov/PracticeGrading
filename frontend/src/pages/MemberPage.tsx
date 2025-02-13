@@ -72,8 +72,8 @@ export function MemberPage() {
         }
     }, [id]);
 
-    const handleIconClick = (workId: number) => {
-        navigate(`/meetings/${id}/studentwork/${workId}`, {replace: true});
+    const handleRowClick = (workId: number) => {
+        navigate(`/meetings/${id}/studentwork/${workId}`);
     };
 
     const handleMarkEdit = (e, id) => {
@@ -84,7 +84,7 @@ export function MemberPage() {
             finalMark: value
         } : mark));
 
-        if (value) setFinalMark(meeting.id, id, +value);
+        if (value) setFinalMark(meeting.id, id, value);
     }
 
     return (
@@ -165,7 +165,6 @@ export function MemberPage() {
                             <table className="table table-striped">
                                 <thead>
                                 <tr>
-                                    <th></th>
                                     <th>ФИО</th>
                                     {meeting.studentWorks.some((work) => work.info) ?
                                         (<th>Курс, направление</th>) : (<></>)}
@@ -183,17 +182,9 @@ export function MemberPage() {
                                 </thead>
                                 <tbody>
                                 {meeting.studentWorks.map((work) => (
-                                    <tr key={work.id}
-                                        className={selectedStudentId === work.id ? "table-info" : ""}>
-                                        <td style={{width: '30px'}}>
-                                            <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleIconClick(work.id);
-                                            }}>
-                                                <i className="bi bi-arrows-angle-expand fs-5"
-                                                   style={{color: '#007bff'}}></i>
-                                            </button>
-                                        </td>
+                                    <tr key={work.id} onClick={() => handleRowClick(work.id)}
+                                        className={selectedStudentId === work.id ? "table-info" : ""}
+                                        style={{cursor: "pointer"}}>
                                         <td>{work.studentName}</td>
                                         {meeting.studentWorks.some((work) => work.info) ?
                                             (<td>{work.info || "—"}</td>) : (<></>)}
@@ -206,10 +197,17 @@ export function MemberPage() {
                                         {meeting.studentWorks.some((work) => work.reviewerMark) ?
                                             (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
                                         {meeting.studentWorks.some((work) => work.codeLink) ?
-                                            (<td style={{minWidth: '85px'}}>{work.codeLink ? (
-                                                <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
-                                                    Ссылка
-                                                </a>
+                                            (<td style={{minWidth: '87px'}}>{work.codeLink ? (
+                                                work.codeLink !== 'NDA' ? (
+                                                    work.codeLink.split(' ').map((link, linkIndex) => (
+                                                        <div key={linkIndex} className="mb-2">
+                                                            <a href={link} target="_blank"
+                                                               rel="noopener noreferrer">
+                                                                Ссылка {work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                            </a>
+                                                        </div>
+                                                    ))
+                                                ) : (<span className="fst-italic">NDA</span>)
                                             ) : (
                                                 <span>—</span>
                                             )}</td>) : (<></>)}
@@ -243,7 +241,7 @@ export function MemberPage() {
                                         <td style={{width: '30px'}}>
                                             <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleIconClick(work.id);
+                                                handleRowClick(work.id);
                                             }}>
                                                 <i className="bi bi-arrows-angle-expand fs-5"
                                                    style={{color: '#007bff'}}></i>
@@ -256,7 +254,7 @@ export function MemberPage() {
                                         <td className="text-center">{marks.find(mark => mark.id === work.id).averageMark || "—"}</td>
                                         <td>
                                             <input
-                                                type="number"
+                                                type="text"
                                                 className="form-control"
                                                 value={marks.find(mark => mark.id === work.id).finalMark || ""}
                                                 onChange={(e) =>handleMarkEdit(e, work.id)}
