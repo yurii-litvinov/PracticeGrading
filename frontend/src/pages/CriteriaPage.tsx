@@ -112,7 +112,17 @@ export function CriteriaPage() {
                                     <ul className="list-unstyled ps-3">
                                         {criteria.rules.map((rule, index) => (
                                             <li key={index}>
-                                                {rule.value > 0 ? `+${rule.value}` : rule.value} {rule.description}
+                                                {rule.value > 0 ? `+${rule.value}` : rule.value}{" "}
+                                                {rule.description.split(/(https?:\/\/\S+)/g).map((part, i) =>
+                                                    part.match(/^https?:\/\//) ? (
+                                                        <a key={i} href={part} target="_blank"
+                                                           rel="noopener noreferrer">
+                                                            {part}
+                                                        </a>
+                                                    ) : (
+                                                        part
+                                                    )
+                                                )}
                                             </li>
                                         ))}
                                     </ul>

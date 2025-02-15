@@ -240,7 +240,7 @@ export function StudentWorkPage() {
                 };
             });
         }
-        
+
         setIsChanged(true);
     }
 
@@ -411,8 +411,17 @@ export function StudentWorkPage() {
                                                                    checked={isRuleSelected(criteria.id, rule.id)}
                                                                    onChange={(e) => handleCheckboxChange(e, criteria.id, rule)}/>
                                                             <label>
-                                                        <span
-                                                            className="fw-semibold">{rule.value}</span> {rule.description}
+                                                                <span className="fw-semibold">{rule.value}</span>{" "}
+                                                                {rule.description.split(/(https?:\/\/\S+)/g).map((part, i) =>
+                                                                    part.match(/^https?:\/\//) ? (
+                                                                        <a key={i} href={part} target="_blank"
+                                                                           rel="noopener noreferrer">
+                                                                            {part}
+                                                                        </a>
+                                                                    ) : (
+                                                                        part
+                                                                    )
+                                                                )}
                                                             </label>
                                                         </div>
                                                     ))}
@@ -477,9 +486,9 @@ export function StudentWorkPage() {
                                     <div className="accordion-body">
                                         {criteria.map((criteria, index) => (
                                             <div key={criteria.id} className="mb-2">
-                                                <label
-                                                    className="w-auto"><span
-                                                    className="fw-semibold me-1">{index + 1}. {criteria.name}:</span>
+                                                <label className="w-auto">
+                                                    <span
+                                                        className="fw-semibold me-1">{index + 1}. {criteria.name}:</span>
                                                     {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)?.mark}
                                                 </label>
 
@@ -588,7 +597,8 @@ export function StudentWorkPage() {
 
                                                     {memberMark.comment ?
                                                         (<p className="w-auto">
-                                                            <span className="fw-semibold me-1">Общий комментарий:</span>{memberMark.comment}
+                                                            <span
+                                                                className="fw-semibold me-1">Общий комментарий:</span>{memberMark.comment}
                                                         </p>)
                                                         : null}
                                                 </div>
@@ -640,8 +650,8 @@ export function StudentWorkPage() {
                                                                        checked={isRuleSelected(criteria.id, rule.id)}
                                                                        onChange={() => handleRadioChange(criteria.id, rule)}></input>
                                                                 <label>
-                                                        <span
-                                                            className="fw-semibold">{rule.value}</span> — {rule.description}
+                                                                    <span
+                                                                        className="fw-semibold">{rule.value}</span> — {rule.description}
                                                                 </label>
                                                             </div>
                                                         ))}
@@ -658,8 +668,19 @@ export function StudentWorkPage() {
                                                                                checked={isRuleSelected(criteria.id, rule.id)}
                                                                                onChange={(e) => handleCheckboxChange(e, criteria.id, rule)}/>
                                                                         <label>
-                                                        <span
-                                                            className="fw-semibold">{rule.value}</span> {rule.description}
+                                                                            <span
+                                                                                className="fw-semibold">{rule.value}</span>{" "}
+                                                                            {rule.description.split(/(https?:\/\/\S+)/g).map((part, i) =>
+                                                                                part.match(/^https?:\/\//) ? (
+                                                                                    <a key={i} href={part}
+                                                                                       target="_blank"
+                                                                                       rel="noopener noreferrer">
+                                                                                        {part}
+                                                                                    </a>
+                                                                                ) : (
+                                                                                    part
+                                                                                )
+                                                                            )}
                                                                         </label>
                                                                     </div>
                                                                 ))}
