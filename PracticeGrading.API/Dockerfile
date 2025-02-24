@@ -7,7 +7,6 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["PracticeGrading.API/PracticeGrading.API.csproj", "PracticeGrading.API/"]
 COPY ["PracticeGrading.Data/PracticeGrading.Data.csproj", "PracticeGrading.Data/"]
-COPY ["ScheduleParser/ScheduleParser.csproj", "ScheduleParser/"]
 RUN dotnet restore "PracticeGrading.API/PracticeGrading.API.csproj"
 COPY . .
 WORKDIR "/src/PracticeGrading.API"
