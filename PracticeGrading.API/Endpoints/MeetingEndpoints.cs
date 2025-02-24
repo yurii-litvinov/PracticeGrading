@@ -5,6 +5,10 @@
 
 namespace PracticeGrading.API.Endpoints;
 
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using PracticeGrading.API.Integrations;
+using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 
@@ -23,7 +27,10 @@ public static class MeetingEndpoints
         meetingGroup.MapPost("/new", CreateMeeting).RequireAuthorization("RequireAdminRole");
         meetingGroup.MapPut("/update", UpdateMeeting).RequireAuthorization("RequireAdminRole");
         meetingGroup.MapDelete("/delete", DeleteMeeting).RequireAuthorization("RequireAdminRole");
-        meetingGroup.MapPost("/fromFile", CreateMeetingsFromFile).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapPost("/fromFile", CreateMeetingsFromFile).RequireAuthorization("RequireAdminRole")
+            .DisableAntiforgery();
+        meetingGroup.MapPost("/uploadTheses", UploadTheses).RequireAuthorization("RequireAdminRole")
+            .DisableAntiforgery();
 
         meetingGroup.MapGet(string.Empty, GetMeeting).RequireAuthorization("RequireAdminOrMemberRole");
         meetingGroup.MapPut("/setMark", SetFinalMark).RequireAuthorization("RequireAdminOrMemberRole");
@@ -61,17 +68,47 @@ public static class MeetingEndpoints
         return Results.Ok(members);
     }
 
-    private static async Task<IResult> SetFinalMark(int meetingId, int workId, string mark, MeetingService meetingService)
+    private static async Task<IResult> SetFinalMark(
+        int meetingId,
+        int workId,
+        string mark,
+        MeetingService meetingService)
     {
         await meetingService.SetFinalMark(meetingId, workId, mark);
         return Results.Ok();
     }
 
     private static async Task<IResult> CreateMeetingsFromFile(
-        ParseScheduleRequest request,
+        [FromForm] ParseScheduleRequest request,
         MeetingService meetingService)
     {
         await meetingService.CreateMeetingsFromFile(request);
         return Results.Ok();
+    }
+
+    private static async Task<IResult> UploadTheses(
+        [FromForm] IFormFileCollection fileCollection,
+        [FromForm] string thesisInfosString)
+    {
+        var files = new Dictionary<string, StreamContent>();
+        foreach (var file in fileCollection)
+        {
+            var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            var fileContent = new StreamContent(memoryStream);
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+            files[file.FileName] = fileContent;
+        }
+
+        var thesisInfos = JsonSerializer.Deserialize<List<ThesisInfo>>(thesisInfosString) ?? [];
+
+        var uploader = new ThesisUploader(files, thesisInfos);
+        var uploaded = await uploader.Upload();
+
+        return Results.Ok(uploaded);
     }
 }

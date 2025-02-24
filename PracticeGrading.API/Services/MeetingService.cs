@@ -5,6 +5,8 @@
 
 namespace PracticeGrading.API.Services;
 
+using System.Text.Json;
+using PracticeGrading.API.Integrations;
 using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.DTOs;
 using PracticeGrading.API.Models.Requests;
@@ -299,10 +301,10 @@ public class MeetingService(
     /// <param name="request">Schedule parsing request.</param>
     public async Task CreateMeetingsFromFile(ParseScheduleRequest request)
     {
-        var parser = new ScheduleParser.ScheduleParser(
-            new MemoryStream(Convert.FromBase64String(request.File)),
-            request.Headers,
-            request.Separator,
+        var parser = new ScheduleParser(
+            request.File.OpenReadStream(),
+            JsonSerializer.Deserialize<List<string>>(request.Headers) ?? [],
+            JsonSerializer.Deserialize<List<List<string>>>(request.Separator) ?? [],
             request.MembersColumn);
 
         var meetings = parser.Parse();

@@ -88,10 +88,17 @@ export const updateMemberMark = async (memberMark) =>
     await axiosService.put(`marks/update`, memberMark);
 
 export const deleteMemberMark = async (workId: number, memberId: number) =>
-    await axiosService.delete(`marks/delete`, {params: {memberId, workId}})
+    await axiosService.delete(`marks/delete`, {params: {memberId, workId}});
 
 export const setFinalMark = async (meetingId: number, workId: number, mark: number) =>
-    await axiosService.put(`meetings/setMark?meetingId=${meetingId}&workId=${workId}&mark=${mark}`)
+    await axiosService.put(`meetings/setMark?meetingId=${meetingId}&workId=${workId}&mark=${mark}`);
 
 export const createMeetingsFromFile = async (formData) =>
-    await axiosService.post(`meetings/fromFile`, formData);
+    await axiosService.post(`meetings/fromFile`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+
+export const uploadTheses = async (formData) =>
+    await axiosService.post(`meetings/uploadTheses`, formData);

@@ -13,12 +13,6 @@ export function FileModal({onSubmit}) {
     const [membersColumn, setMembersColumn] = useState(null);
     const [type, setType] = useState("practice");
 
-    const handleFileChange = (e) => {
-        if (e.target.files) {
-            setFile(e.target.files[0]);
-        }
-    };
-
     const formatRows = (rows) => {
         const filteredRows = rows.filter((row) =>
             !row.every((cell) => JSON.stringify(cell) === JSON.stringify([DataFields.Empty])));
@@ -41,9 +35,7 @@ export function FileModal({onSubmit}) {
         setHeaders(formatRows(rows)[0]);
     }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
+    const handleSubmit = async () => {
         if (formRef.current && !formRef.current.checkValidity()) {
             formRef.current.reportValidity();
             return;
@@ -62,7 +54,10 @@ export function FileModal({onSubmit}) {
         };
 
         try {
-            await createMeetingsFromFile(request);
+            const formData = new FormData();
+            formData.append('file', file)
+            formData.append('headers', JSON.stringify(headers))
+            await createMeetingsFromFile(formData);
             onSubmit();
 
             if (closeButtonRef.current) {
@@ -91,7 +86,7 @@ export function FileModal({onSubmit}) {
                             <input className="form-control"
                                    required
                                    type="file" accept=".xlsx"
-                                   onChange={handleFileChange}
+                                   onChange={(e) => setFile(e.target.files[0])}
                             />
                         </form>
 

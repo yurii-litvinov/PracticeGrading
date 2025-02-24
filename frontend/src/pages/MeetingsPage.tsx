@@ -30,7 +30,7 @@ export function MeetingsPage() {
         const isConfirmed = window.confirm('Вы уверены, что хотите удалить это заседание?');
         if (isConfirmed) {
             await deleteMeeting(id);
-            getMeetings().then(response => setMeetings(response.data));
+            fetchMeetings();
         }
     }
 

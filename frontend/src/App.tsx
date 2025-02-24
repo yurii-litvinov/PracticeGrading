@@ -9,6 +9,7 @@ import {ViewMeetingPage} from './pages/ViewMeetingPage';
 import {MemberLoginPage} from './pages/MemberLoginPage';
 import {MemberPage} from './pages/MemberPage';
 import {StudentWorkPage} from './pages/StudentWorkPage';
+import {FinishMeetingPage} from './pages/FinishMeetingPage';
 
 export function App() {
     const router = createBrowserRouter([
@@ -35,6 +36,10 @@ export function App() {
                 {
                     path: "/meetings/edit/:id",
                     element: <MeetingFormPage/>,
+                },
+                {
+                    path: "/meetings/finish/:id",
+                    element: <FinishMeetingPage/>,
                 },
                 {
                     path: "/criteria",

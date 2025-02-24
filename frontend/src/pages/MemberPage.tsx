@@ -36,6 +36,10 @@ export function MemberPage() {
                     const mark = Math.round(work.averageCriteriaMarks.reduce((sum, mark) =>
                         sum + mark.averageMark, 0) / work.averageCriteriaMarks.length * 10) / 10;
 
+                    if (work.finalMark === null && mark !== 0) {
+                        setFinalMark(meeting.id, work.id, Math.round(mark));
+                    }
+
                     return {
                         id: work.id,
                         averageMark: mark,
@@ -170,7 +174,8 @@ export function MemberPage() {
                                         (<th>Курс, направление</th>) : (<></>)}
                                     <th>Тема</th>
                                     <th>Научник</th>
-                                    <th>Консультант</th>
+                                    {meeting.studentWorks.some((work) => work.consultant) ? (
+                                        <th>Консультант</th>) : (<></>)}
                                     {meeting.studentWorks.some((work) => work.reviewer) ? (
                                         <th>Рецензент</th>) : (<></>)}
                                     <th>Оценка научника</th>
@@ -190,7 +195,8 @@ export function MemberPage() {
                                             (<td>{work.info || "—"}</td>) : (<></>)}
                                         <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                         <td>{work.supervisor}</td>
-                                        <td>{work.consultant || "—"}</td>
+                                        {meeting.studentWorks.some((work) => work.consultant) ? (
+                                            <td>{work.consultant || "—"}</td>) : (<></>)}
                                         {meeting.studentWorks.some((work) => work.reviewer) ?
                                             (<td>{work.reviewer || "—"}</td>) : (<></>)}
                                         <td>{work.supervisorMark || "—"}</td>
