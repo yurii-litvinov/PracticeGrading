@@ -94,11 +94,7 @@ export const setFinalMark = async (meetingId: number, workId: number, mark: numb
     await axiosService.put(`meetings/setMark?meetingId=${meetingId}&workId=${workId}&mark=${mark}`);
 
 export const createMeetingsFromFile = async (formData) =>
-    await axiosService.post(`meetings/fromFile`, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data',
-        },
-    });
+    await axiosService.post(`meetings/fromFile`, formData);
 
 export const uploadTheses = async (formData) =>
     await axiosService.post(`meetings/uploadTheses`, formData);
