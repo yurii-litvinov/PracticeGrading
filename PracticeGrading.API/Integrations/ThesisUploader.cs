@@ -64,8 +64,15 @@ public class ThesisUploader
             form.Add(jsonContent, "thesis_info", "thesis_info");
 
             var response = await client.PostAsync(Url, form);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var jsonDocument = JsonDocument.Parse(responseContent);
 
-            if (response.IsSuccessStatusCode)
+            if (!jsonDocument.RootElement.TryGetProperty("status", out var status))
+            {
+                continue;
+            }
+
+            if (status.GetInt32() != 500)
             {
                 uploaded.Add(thesisInfo.Author);
             }

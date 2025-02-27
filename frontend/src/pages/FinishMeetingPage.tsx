@@ -42,7 +42,6 @@ export function FinishMeetingPage() {
 
     const handleBack = () => {
         window.history.back();
-        console.log(thesisInfos)
     }
 
     const handleLoad = async () => {
@@ -109,6 +108,7 @@ export function FinishMeetingPage() {
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Ключ доступа к API</label>
                     <input className="form-control"
+                           value={thesisInfos[0]?.secret_key || ""}
                            required
                            type="text"
                            onChange={(e) => setThesisInfos(prevInfos =>
@@ -178,8 +178,15 @@ export function FinishMeetingPage() {
                                     <td>{work.finalMark}</td>
                                     <td>
                                         <select className="form-select w-auto"
-                                                onChange={(e) => thesisInfos.find(thesis => thesis.id === work.id).type_id = Number(e.target.value)}>
-                                            <option selected value="" disabled>Выберите тип работы</option>
+                                                value={thesisInfos.find(thesis => thesis.id === work.id)?.type_id || ""}
+                                                onChange={(e) => {
+                                                    setThesisInfos(prev => prev.map(thesis =>
+                                                        thesis.id === work.id
+                                                            ? {...thesis, type_id: Number(e.target.value)}
+                                                            : thesis
+                                                    ));
+                                                }}>
+                                            <option value="" disabled>Выберите тип работы</option>
                                             {TypeOptions.map(option => (
                                                 <option key={option.value} value={option.value}>{option.label}</option>
                                             ))}
@@ -187,8 +194,15 @@ export function FinishMeetingPage() {
                                     </td>
                                     <td>
                                         <select className="form-select w-auto"
-                                                onChange={(e) => thesisInfos.find(thesis => thesis.id === work.id).course_id = Number(e.target.value)}>
-                                            <option selected value="" disabled>Выберите направление обучения</option>
+                                                value={thesisInfos.find(thesis => thesis.id === work.id)?.course_id || ""}
+                                                onChange={(e) => {
+                                                    setThesisInfos(prev => prev.map(thesis =>
+                                                        thesis.id === work.id
+                                                            ? {...thesis, course_id: Number(e.target.value)}
+                                                            : thesis
+                                                    ));
+                                                }}>
+                                            <option value="" disabled>Выберите направление обучения</option>
                                             {CourseOptions.map(option => (
                                                 <option key={option.value} value={option.value}>{option.label}</option>
                                             ))}
@@ -220,7 +234,8 @@ export function FinishMeetingPage() {
                                 здесь
                             </a>.
                         </p>
-                        <button type="button" className="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <button type="button" className="btn-close" aria-label="Close"
+                                onClick={(e) => setUploaded([])}></button>
                     </div>
                 ) : (<></>)}
 
