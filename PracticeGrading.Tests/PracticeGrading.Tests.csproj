@@ -33,4 +33,10 @@
         <ProjectReference Include="..\PracticeGrading.Data\PracticeGrading.Data.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Include="..\..\..\Downloads\vrk_test.xlsx">
+        <Link>TestData\vrk_test.xlsx</Link>
+      </Content>
+    </ItemGroup>
+
 </Project>

@@ -193,7 +193,7 @@ public class ScheduleParser
 
         meeting.DateAndTime = DateTime.Parse(
             $"{Regex.Replace(data[DataFields.Date], TextInBracketsPattern, DateTime.Now.Year.ToString())}, {data[DataFields.Time]}",
-            new CultureInfo("ru-RU")).ToUniversalTime();
+            new CultureInfo("ru-RU"));
         meeting.Auditorium = data[DataFields.Auditorium];
         meeting.Info = data[DataFields.Info];
         meeting.CallLink = data[DataFields.CallLink];
