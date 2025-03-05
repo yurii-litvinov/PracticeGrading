@@ -4,15 +4,8 @@ using FluentAssertions;
 
 namespace PracticeGrading.Tests.IntegrationsTests;
 
-public class ScheduleParserTests
+public class ScheduleParserTests : TestBase
 {
-    [OneTimeSetUp]
-    public void Setup()
-    {
-        var projectDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.Parent?.Parent?.FullName;
-        Directory.SetCurrentDirectory(projectDirectory ?? throw new InvalidOperationException());
-    }
-
     [Test]
     public void ParseVkrTest()
     {

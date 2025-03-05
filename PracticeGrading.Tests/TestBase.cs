@@ -85,6 +85,10 @@ public class TestBase
         MeetingService = new MeetingService(MeetingRepository, CriteriaRepository, UserRepository);
         CriteriaService = new CriteriaService(CriteriaRepository);
         MarkService = new MarkService(MarkRepository, CriteriaRepository);
+
+        if (!Directory.GetCurrentDirectory().Contains("Debug")) return;
+        var projectDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.Parent?.Parent?.FullName;
+        Directory.SetCurrentDirectory(projectDirectory ?? throw new InvalidOperationException());
     }
 
     [TearDown]
@@ -125,7 +129,7 @@ public class TestBase
         var responseContent = await response.Content.ReadAsStringAsync();
         using var jsonDoc = JsonDocument.Parse(responseContent);
         var token = jsonDoc.RootElement.GetProperty("token").GetString();
-        
+
         Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 }

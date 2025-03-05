@@ -1,4 +1,6 @@
+using System.Text.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.Data.Entities;
 
@@ -165,5 +167,72 @@ public class MeetingServiceTests : TestBase
 
         await action.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage($"Meeting with ID {id} was not found.");
+    }
+
+    [Test]
+    public async Task TestGetMembers()
+    {
+        var members = new List<User> { new() { UserName = "member1" }, new() { UserName = "member2" } };
+        var meeting = new Meeting { Id = 111, Criteria = [TestCriteria], StudentWorks = [TestWork], Members = members };
+        await MeetingRepository.Create(meeting);
+
+        var memberDtos = await MeetingService.GetMembers(meeting.Id);
+
+        memberDtos.Count.Should().Be(members.Count);
+    }
+
+    [Test]
+    public async Task TestGetMembersOfNonexistentMeeting()
+    {
+        const int id = 99;
+        var action = async () => await MeetingService.GetMembers(id);
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage($"Meeting with ID {id} was not found.");
+    }
+
+    [Test]
+    public async Task TestSetFinalMark()
+    {
+        TestWork.Id = 15;
+        var meeting = new Meeting { Id = 101, Criteria = [TestCriteria], StudentWorks = [TestWork] };
+        await MeetingRepository.Create(meeting);
+
+        await MeetingService.SetFinalMark(meeting.Id, TestWork.Id, "B");
+        var meetings = await MeetingService.GetMeeting(meeting.Id);
+        var work = meetings.First().StudentWorks.FirstOrDefault(dto => dto.Id == TestWork.Id);
+
+        work?.FinalMark.Should().Be("B");
+    }
+
+    [Test]
+    public async Task TestSetFinalMarkWithNonexistentMeeting()
+    {
+        const int id = 88;
+        var action = async () => await MeetingService.SetFinalMark(id, 111, "F");
+
+        await action.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage($"Meeting with ID {id} was not found.");
+    }
+
+    [Test]
+    public async Task TestCreateMeetingsFromFile()
+    {
+        var filePath = Path.Combine("TestData", "vkr_test.xlsx");
+        await using var stream = new MemoryStream(await File.ReadAllBytesAsync(filePath));
+        var file = new FormFile(stream, 0, stream.Length, "file", Path.GetFileName(filePath));
+
+        var headers = new List<string> { "studentName", "theme", "supervisor", "reviewer" };
+        var separator = new List<List<string>> { new() { "date" }, new() { "time, auditorium", "info" } };
+        const int membersColumn = 5;
+
+        var request = new ParseScheduleRequest(file, JsonSerializer.Serialize(headers),
+            JsonSerializer.Serialize(separator), membersColumn);
+        
+        await MeetingService.CreateMeetingsFromFile(request);
+
+        var meetings = await MeetingService.GetMeeting();
+
+        meetings.Count.Should().Be(2);
     }
 }
