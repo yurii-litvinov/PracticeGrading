@@ -250,13 +250,13 @@ export function StudentWorkPage() {
     }
 
     const saveMark = () => {
-        if (mark?.id == null || mark.id === 0) {
-            createMemberMark(mark).then(response => signalRService.current.sendNotification(Actions.SendMark));
+        if (role === 'member') {
+            if (mark?.id == null || mark.id === 0) {
+                createMemberMark(mark).then(response => signalRService.current.sendNotification(Actions.SendMark));
+            } else {
+                updateMemberMark(mark).then(response => signalRService.current.sendNotification(Actions.SendMark));
+            }
         } else {
-            updateMemberMark(mark).then(response => signalRService.current.sendNotification(Actions.SendMark));
-        }
-
-        if (role === 'admin' && closeButtonRef.current) {
             closeButtonRef.current.click();
         }
     }
