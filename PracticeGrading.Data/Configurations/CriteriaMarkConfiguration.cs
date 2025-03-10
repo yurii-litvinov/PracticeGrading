@@ -25,8 +25,6 @@ public class CriteriaMarkConfiguration : IEntityTypeConfiguration<CriteriaMark>
             .WithMany(memberMark => memberMark.CriteriaMarks);
 
         builder.HasMany<Rule>(mark => mark.SelectedRules)
-            .WithOne(rule => rule.CriteriaMark)
-            .HasForeignKey(rule => rule.CriteriaMarkId)
-            .OnDelete(DeleteBehavior.SetNull);
+            .WithMany(rule => rule.CriteriaMarks);
     }
 }

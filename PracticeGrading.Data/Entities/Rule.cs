@@ -43,10 +43,5 @@ public class Rule
     /// <summary>
     /// Gets or sets criteria mark id.
     /// </summary>
-    public int? CriteriaMarkId { get; set; }
-
-    /// <summary>
-    /// Gets or sets criteria mark.
-    /// </summary>
-    public CriteriaMark? CriteriaMark { get; set; }
+    public ICollection<CriteriaMark> CriteriaMarks { get; set; }
 }
