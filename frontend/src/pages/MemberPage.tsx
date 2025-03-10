@@ -82,7 +82,7 @@ export function MemberPage() {
 
     const handleMarkEdit = (e, id) => {
         const value = e.target.value;
-        
+
         setMarks(marks.map(mark => mark.id === id ? {
             ...mark,
             finalMark: value
@@ -231,7 +231,6 @@ export function MemberPage() {
                             <table className="table table-striped">
                                 <thead>
                                 <tr>
-                                    <th></th>
                                     <th>ФИО</th>
                                     {meeting.criteria.map((criteria) => (
                                         <th key={criteria.id}>{criteria.name}</th>
@@ -244,18 +243,10 @@ export function MemberPage() {
                                 {meeting.studentWorks.map((work) => (
                                     <tr key={work.id}
                                         className={selectedStudentId === work.id ? "table-info" : ""}>
-                                        <td style={{width: '30px'}}>
-                                            <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRowClick(work.id);
-                                            }}>
-                                                <i className="bi bi-arrows-angle-expand fs-5"
-                                                   style={{color: '#007bff'}}></i>
-                                            </button>
-                                        </td>
                                         <td>{work.studentName}</td>
                                         {work.averageCriteriaMarks.map((mark) => (
-                                            <td key={mark.criteriaId} className="text-center">{mark.averageMark || "—"}</td>
+                                            <td key={mark.criteriaId}
+                                                className="text-center">{mark.averageMark || "—"}</td>
                                         ))}
                                         <td className="text-center">{marks.find(mark => mark.id === work.id).averageMark || "—"}</td>
                                         <td>
@@ -263,7 +254,7 @@ export function MemberPage() {
                                                 type="text"
                                                 className="form-control"
                                                 value={marks.find(mark => mark.id === work.id).finalMark || ""}
-                                                onChange={(e) =>handleMarkEdit(e, work.id)}
+                                                onChange={(e) => handleMarkEdit(e, work.id)}
                                             />
                                         </td>
                                     </tr>
