@@ -44,7 +44,7 @@ public class ScheduleParserTests : TestBase
     [
         new Meeting
         {
-            DateAndTime = new DateTime(2025, 5, 20, 10, 0, 0),
+            DateAndTime = new DateTime(2025, 5, 20, 10, 0, 0).ToUniversalTime(),
             Auditorium = "ауд. 3381",
             Info = "СП, бакалавры ПИ, ГЭК 5080-01",
             CallLink = string.Empty,
@@ -93,7 +93,7 @@ public class ScheduleParserTests : TestBase
 
         new Meeting
         {
-            DateAndTime = new DateTime(2025, 5, 20, 12, 30, 0),
+            DateAndTime = new DateTime(2025, 5, 20, 12, 30, 0).ToUniversalTime(),
             Auditorium = "ауд. 3381",
             Info = "Информатика, магистры матобеса, ГЭК 5665-01",
             CallLink = string.Empty,
@@ -135,7 +135,7 @@ public class ScheduleParserTests : TestBase
     [
         new Meeting
         {
-            DateAndTime = new DateTime(2024, 1, 6, 12, 0, 0),
+            DateAndTime = new DateTime(2024, 1, 6, 12, 0, 0).ToUniversalTime(),
             Auditorium = "Teams",
             Info = "День матстатистики и вычислительной математики",
             CallLink =
@@ -170,7 +170,7 @@ public class ScheduleParserTests : TestBase
 
         new Meeting
         {
-            DateAndTime = new DateTime(2024, 1, 8, 12, 00, 0),
+            DateAndTime = new DateTime(2024, 1, 8, 12, 00, 0).ToUniversalTime(),
             Auditorium = "Teams",
             Info = "День low level, околокомиляторных наук и хранения данных",
             CallLink = string.Empty,

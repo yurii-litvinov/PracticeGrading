@@ -10,7 +10,7 @@ export function FileModal({onSubmit}) {
     const [file, setFile] = useState(null);
     const [separator, setSeparator] = useState(null);
     const [headers, setHeaders] = useState(null);
-    const [membersColumn, setMembersColumn] = useState(null);
+    const [membersColumn, setMembersColumn] = useState(0);
     const [type, setType] = useState("practice");
 
     const formatRows = (rows) => {
@@ -41,22 +41,12 @@ export function FileModal({onSubmit}) {
             return;
         }
 
-        const fileData = await file.arrayBuffer();
-        const base64File = btoa(
-            new Uint8Array(fileData).reduce((data, byte) => data + String.fromCharCode(byte), '')
-        );
-
-        const request = {
-            file: base64File,
-            headers: headers,
-            separator: separator,
-            membersColumn: membersColumn - 1,
-        };
-
         try {
             const formData = new FormData();
-            formData.append('file', file)
-            formData.append('headers', JSON.stringify(headers))
+            formData.append('file', file);
+            formData.append('headers', JSON.stringify(headers));
+            formData.append('separator', JSON.stringify(separator));
+            formData.append('membersColumn', membersColumn - 1);
             await createMeetingsFromFile(formData);
             onSubmit();
 
@@ -97,7 +87,7 @@ export function FileModal({onSubmit}) {
                                    id="inlineRadio1"
                                    onChange={() => {
                                        setType("practice");
-                                       setMembersColumn(null);
+                                       setMembersColumn(0);
                                    }}/>
                             <label className="form-check-label" htmlFor="inlineRadio1">Защиты практик</label>
                         </div>
