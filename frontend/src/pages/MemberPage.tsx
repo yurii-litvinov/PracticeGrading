@@ -33,17 +33,18 @@ export function MemberPage() {
 
             setMarks(
                 meeting.studentWorks.map(work => {
-                    const mark = Math.round(work.averageCriteriaMarks.reduce((sum, mark) =>
-                        sum + mark.averageMark, 0) / work.averageCriteriaMarks.length * 10) / 10;
+                    const averageMarks = work.averageCriteriaMarks.filter(item => item.averageMark !== null);
+                    const mark = Math.round(averageMarks.reduce((sum, mark) =>
+                        sum + mark.averageMark, 0) / averageMarks.length * 10) / 10;
 
-                    if (work.finalMark === null && mark !== 0) {
+                    if (work.finalMark === '' && !isNaN(mark)) {
                         setFinalMark(meeting.id, work.id, Math.round(mark));
                     }
 
                     return {
                         id: work.id,
                         averageMark: mark,
-                        finalMark: work.finalMark === null ? Math.round(mark) : work.finalMark
+                        finalMark: work.finalMark
                     };
                 })
             );
@@ -88,7 +89,7 @@ export function MemberPage() {
             finalMark: value
         } : mark));
 
-        if (value) setFinalMark(meeting.id, id, value);
+        setFinalMark(meeting.id, id, value);
     }
 
     return (
@@ -138,8 +139,12 @@ export function MemberPage() {
             <hr className="my-4"/>
 
             <div>
-                <div className="d-flex p-2 mb-2 align-items-center">
-                    <h4>Список защищающихся студентов</h4>
+                <div className="d-flex p-2 align-items-center">
+                    <div>
+                        <h4>Список защищающихся студентов</h4>
+                        <p className="small mb-0" style={{color: '#9a9d9f'}}>Для перехода к оцениванию нажмите на
+                            соответствующую строку таблицы на вкладке «Работы студентов»</p>
+                    </div>
                 </div>
             </div>
 

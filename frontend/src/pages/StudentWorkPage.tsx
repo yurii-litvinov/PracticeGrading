@@ -98,7 +98,6 @@ export function StudentWorkPage() {
                 }))
             }));
         }
-        selectRules();
     }, [criteria, mark.id]);
 
     useEffect(() => {
@@ -484,31 +483,35 @@ export function StudentWorkPage() {
                                      className="accordion-collapse collapse"
                                      data-bs-parent="#marksAccordion">
                                     <div className="accordion-body">
-                                        {criteria.map((criteria, index) => (
-                                            <div key={criteria.id} className="mb-2">
-                                                <label className="w-auto">
+                                        {criteria.map((criteria, index) => {
+                                            const criteriaMark = memberMark.criteriaMarks.find(m => m.criteriaId === criteria.id);
+                                            if (criteriaMark?.mark === null) return null;
+
+                                            return (
+                                                <div key={criteria.id} className="mb-2">
+                                                    <label className="w-auto">
                                                     <span
                                                         className="fw-semibold me-1">{index + 1}. {criteria.name}:</span>
-                                                    {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)?.mark}
-                                                </label>
+                                                        {criteriaMark?.mark}
+                                                    </label>
 
-                                                <ul className="list-unstyled ps-3 mb-1">
-                                                    {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)
-                                                        ?.selectedRules.sort((a, b) => b.value - a.value).map((rule, index) => (
+                                                    <ul className="list-unstyled ps-3 mb-1">
+                                                        {criteriaMark?.selectedRules.sort((a, b) => b.value - a.value).map((rule, index) => (
                                                             <li key={index}>
                                                                 {rule.isScaleRule ? (<>{rule.value} — {rule.description}</>)
                                                                     : (<>{rule.value} {rule.description}</>)}
                                                             </li>
                                                         ))}
-                                                </ul>
+                                                    </ul>
 
-                                                {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)?.comment ?
-                                                    (<p
-                                                        className="w-auto fst-italic ms-3">Комментарий: {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment}</p>)
-                                                    : null}
+                                                    {criteriaMark?.comment ?
+                                                        (<p
+                                                            className="w-auto fst-italic ms-3">Комментарий: {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment}</p>)
+                                                        : null}
 
-                                            </div>
-                                        ))}
+                                                </div>
+                                            );
+                                        })}
 
                                         {memberMark.comment !== '' ?
                                             (<div className="w-auto fst-italic ms-3 text-wrap">
@@ -569,38 +572,42 @@ export function StudentWorkPage() {
                                                  className="accordion-collapse collapse"
                                                  data-bs-parent="#marksAccordion">
                                                 <div className="accordion-body">
-                                                    {criteria.map((criteria, index) => (
-                                                        <div key={criteria.id} className="mb-2">
-                                                            <label
-                                                                className="w-auto"><span
-                                                                className="fw-semibold me-1">{index + 1}. {criteria.name}:</span>
-                                                                {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)?.mark}
-                                                            </label>
+                                                    {criteria.map((criteria, index) => {
+                                                        const criteriaMark = memberMark.criteriaMarks.find(m => m.criteriaId === criteria.id);
+                                                        if (criteriaMark?.mark === null) return null;
 
-                                                            <ul className="list-unstyled ps-3 mb-1">
-                                                                {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)
-                                                                    ?.selectedRules.sort((a, b) => b.value - a.value).map((rule, index) => (
+                                                        return (
+                                                            <div key={criteria.id} className="mb-2">
+                                                                <label className="w-auto">
+                                                    <span
+                                                        className="fw-semibold me-1">{index + 1}. {criteria.name}:</span>
+                                                                    {criteriaMark?.mark}
+                                                                </label>
+
+                                                                <ul className="list-unstyled ps-3 mb-1">
+                                                                    {criteriaMark?.selectedRules.sort((a, b) => b.value - a.value).map((rule, index) => (
                                                                         <li key={index}>
                                                                             {rule.isScaleRule ? (<>{rule.value} — {rule.description}</>)
                                                                                 : (<>{rule.value} {rule.description}</>)}
                                                                         </li>
                                                                     ))}
-                                                            </ul>
+                                                                </ul>
 
-                                                            {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id)?.comment ?
-                                                                (<p
-                                                                    className="w-auto fst-italic ms-3">Комментарий: {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment}</p>)
-                                                                : null}
+                                                                {criteriaMark?.comment ?
+                                                                    (<p
+                                                                        className="w-auto fst-italic ms-3">Комментарий: {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment}</p>)
+                                                                    : null}
 
-                                                        </div>
-                                                    ))}
+                                                            </div>
+                                                        );
+                                                    })}
 
-                                                    {memberMark.comment ?
-                                                        (<p className="w-auto">
+                                                    {memberMark.comment !== '' ?
+                                                        (<div className="w-auto fst-italic ms-3 text-wrap">
                                                             <span
-                                                                className="fw-semibold me-1">Общий комментарий:</span>{memberMark.comment}
-                                                        </p>)
-                                                        : null}
+                                                                className="fw-semibold">Общий комментарий:</span> {memberMark.comment}
+                                                        </div>) : null}
+
                                                 </div>
                                             </div>
                                         </div>

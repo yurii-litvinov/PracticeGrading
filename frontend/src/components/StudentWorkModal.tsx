@@ -89,7 +89,6 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
     }
 
     const handleClose = () => {
-        console.log(studentWork)
         setStudentWork(studentWorkData ?? initialStudentWorkState);
     }
 

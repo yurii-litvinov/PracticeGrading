@@ -54,7 +54,7 @@ CREATE TABLE "StudentWork" (
                                "Reviewer" text,
                                "SupervisorMark" text,
                                "ReviewerMark" text,
-                               "FinalMark" text,
+                               "FinalMark" text NOT NULL,
                                "CodeLink" text,
                                "MeetingId" integer NOT NULL,
                                CONSTRAINT "PK_StudentWork" PRIMARY KEY ("Id"),
@@ -100,7 +100,7 @@ CREATE TABLE "CriteriaMark" (
                                 "CriteriaId" integer NOT NULL,
                                 "MemberMarkId" integer NOT NULL,
                                 "Comment" text,
-                                "Mark" integer NOT NULL,
+                                "Mark" integer,
                                 CONSTRAINT "PK_CriteriaMark" PRIMARY KEY ("Id"),
                                 CONSTRAINT "FK_CriteriaMark_Criteria_CriteriaId" FOREIGN KEY ("CriteriaId") REFERENCES "Criteria" ("Id") ON DELETE CASCADE,
                                 CONSTRAINT "FK_CriteriaMark_MemberMarks_MemberMarkId" FOREIGN KEY ("MemberMarkId") REFERENCES "MemberMarks" ("Id") ON DELETE CASCADE
@@ -141,7 +141,7 @@ CREATE INDEX "IX_CriteriaMarkRule_SelectedRulesId" ON "CriteriaMarkRule" ("Selec
 CREATE INDEX "IX_CriteriaMeeting_MeetingsId" ON "CriteriaMeeting" ("MeetingsId");
 
 
-CREATE INDEX "IX_MemberMarks_MemberId" ON "MemberMarks" ("MemberId");
+CREATE UNIQUE INDEX "IX_MemberMarks_MemberId_StudentWorkId" ON "MemberMarks" ("MemberId", "StudentWorkId");
 
 
 CREATE INDEX "IX_MemberMarks_StudentWorkId" ON "MemberMarks" ("StudentWorkId");

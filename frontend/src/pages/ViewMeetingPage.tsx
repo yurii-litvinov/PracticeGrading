@@ -35,17 +35,18 @@ export function ViewMeetingPage() {
 
             setMarks(
                 meeting.studentWorks.map(work => {
-                    const mark = Math.round(work.averageCriteriaMarks.reduce((sum, mark) =>
-                        sum + mark.averageMark, 0) / work.averageCriteriaMarks.length * 10) / 10;
-                    
-                    if (work.finalMark === null && mark !== 0) {
+                    const averageMarks = work.averageCriteriaMarks.filter(item => item.averageMark !== null);
+                    const mark = Math.round(averageMarks.reduce((sum, mark) =>
+                        sum + mark.averageMark, 0) / averageMarks.length * 10) / 10;
+
+                    if (work.finalMark === '' && !isNaN(mark)) {
                         setFinalMark(meeting.id, work.id, Math.round(mark));
                     }
 
                     return {
                         id: work.id,
                         averageMark: mark,
-                        finalMark: work.finalMark === null ? Math.round(mark) : work.finalMark
+                        finalMark: work.finalMark
                     };
                 })
             );
@@ -111,7 +112,7 @@ export function ViewMeetingPage() {
             finalMark: value
         } : mark));
 
-        if (value) setFinalMark(meeting.id, id, value);
+        setFinalMark(meeting.id, id, value);
     }
 
     const handleCopyLink = () => {

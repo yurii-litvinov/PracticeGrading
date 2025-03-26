@@ -58,7 +58,7 @@ public class StudentWork
     /// <summary>
     /// Gets or sets final mark.
     /// </summary>
-    public string? FinalMark { get; set; }
+    public string FinalMark { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets code link.

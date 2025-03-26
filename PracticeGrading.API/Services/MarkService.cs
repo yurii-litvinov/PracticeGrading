@@ -61,21 +61,41 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
 
         memberMark.Mark = request.Mark;
         memberMark.Comment = request.Comment;
-        memberMark.CriteriaMarks.Clear();
 
         foreach (var markRequest in request.CriteriaMarks)
         {
             var criteria = await criteriaRepository.GetById(markRequest.CriteriaId);
             var rulesId = markRequest.SelectedRules.Select(ruleRequest => ruleRequest.Id);
+            var existingCriteriaMark = (memberMark.CriteriaMarks ?? [])
+                .FirstOrDefault(criteriaMark => criteriaMark.CriteriaId == markRequest.CriteriaId);
 
-            memberMark.CriteriaMarks?.Add(
-                new CriteriaMark
-                {
-                    CriteriaId = markRequest.CriteriaId,
-                    Mark = markRequest.Mark,
-                    Comment = markRequest.Comment,
-                    SelectedRules = (criteria?.Rules ?? []).Where(rule => rulesId.Contains(rule.Id)).ToList(),
-                });
+            if (existingCriteriaMark != null)
+            {
+                existingCriteriaMark.Mark = markRequest.Mark;
+                existingCriteriaMark.Comment = markRequest.Comment;
+                existingCriteriaMark.SelectedRules =
+                    (criteria?.Rules ?? []).Where(rule => rulesId.Contains(rule.Id)).ToList();
+            }
+            else
+            {
+                memberMark.CriteriaMarks?.Add(
+                    new CriteriaMark
+                    {
+                        CriteriaId = markRequest.CriteriaId,
+                        Mark = markRequest.Mark,
+                        Comment = markRequest.Comment,
+                        SelectedRules = (criteria?.Rules ?? []).Where(rule => rulesId.Contains(rule.Id)).ToList(),
+                    });
+            }
+        }
+
+        var criteriaMarksToRemove = (memberMark.CriteriaMarks ?? [])
+            .Where(mark => request.CriteriaMarks.All(markRequest => markRequest.CriteriaId != mark.CriteriaId))
+            .ToList();
+
+        foreach (var mark in criteriaMarksToRemove)
+        {
+            memberMark.CriteriaMarks?.Remove(mark);
         }
 
         await markRepository.Update(memberMark);

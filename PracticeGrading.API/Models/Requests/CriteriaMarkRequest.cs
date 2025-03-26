@@ -14,4 +14,4 @@ public record CriteriaMarkRequest(
     int MemberMarkId,
     string Comment,
     List<RuleRequest> SelectedRules,
-    int Mark);
+    int? Mark);

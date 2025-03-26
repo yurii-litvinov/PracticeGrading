@@ -48,5 +48,5 @@ public class CriteriaMark
     /// <summary>
     /// Gets or sets mark.
     /// </summary>
-    public int Mark { get; set; }
+    public int? Mark { get; set; }
 }

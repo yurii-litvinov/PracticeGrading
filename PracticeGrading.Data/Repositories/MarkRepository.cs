@@ -106,14 +106,15 @@ public class MarkRepository(AppDbContext context)
             var criteriaMarks = memberMarks
                 .SelectMany(
                     memberMark => memberMark.CriteriaMarks
-                        .Where(mark => mark.CriteriaId == averageCriteriaMark.CriteriaId)
-                        .Select(mark => mark.Mark))
+                        .Where(mark => mark.CriteriaId == averageCriteriaMark.CriteriaId))
+                .Select(mark => mark.Mark)
                 .ToList();
 
-            averageCriteriaMark.AverageMark = criteriaMarks.Count != 0 ? Math.Round(criteriaMarks.Average(), 1) : null;
+            var average = criteriaMarks.Average();
+            averageCriteriaMark.AverageMark = average.HasValue ? Math.Round(average.Value, 1) : null;
         }
 
-        work.FinalMark = null;
+        work.FinalMark = string.Empty;
 
         await context.SaveChangesAsync();
     }
