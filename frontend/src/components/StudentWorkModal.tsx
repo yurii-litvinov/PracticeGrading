@@ -32,8 +32,6 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
     const [studentWork, setStudentWork] = useState(initialStudentWorkState);
 
     useEffect(() => {
-        setCodeLinks(['']);
-        
         if (studentWorkData) {
             setStudentWork(studentWorkData);
             const links = studentWorkData.codeLink ? studentWorkData.codeLink.split(' ') : [''];
@@ -82,6 +80,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
         }
         onSave(studentWork);
         setStudentWork(studentWorkData ?? initialStudentWorkState);
+        setCodeLinks(['']);
 
         if (closeButtonRef.current) {
             closeButtonRef.current.click();
@@ -90,6 +89,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
 
     const handleClose = () => {
         setStudentWork(studentWorkData ?? initialStudentWorkState);
+        setCodeLinks(['']);
     }
 
     const handleCheck = (e) => {
