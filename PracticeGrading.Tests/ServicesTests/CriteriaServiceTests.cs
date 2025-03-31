@@ -11,9 +11,9 @@ public class CriteriaServiceTests : TestBase
     {
         var rules = new List<RuleRequest>
         {
-            new(1,"desc1", 1),
-            new(2, "desc2", 2),
-            new(3, "desc3", 3),
+            new(1, "type1", "desc1", 1),
+            new(2, "type2", "desc2", 2),
+            new(3, "type3", "desc3", 3),
         };
 
         var request = new CriteriaRequest(null, "name", null, rules, rules);
@@ -69,7 +69,7 @@ public class CriteriaServiceTests : TestBase
             null,
             [],
             []);
-        
+
         await CriteriaService.UpdateCriteria(request);
 
         var criteriaList = await CriteriaService.GetCriteria(request.Id);
@@ -86,7 +86,7 @@ public class CriteriaServiceTests : TestBase
             null,
             [],
             []);
-        
+
         var action = async () => await CriteriaService.UpdateCriteria(request);
 
         await action.Should().ThrowAsync<InvalidOperationException>()

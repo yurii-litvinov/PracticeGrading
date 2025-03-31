@@ -59,5 +59,6 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new CriteriaConfiguration());
         modelBuilder.ApplyConfiguration(new RuleConfiguration());
         modelBuilder.ApplyConfiguration(new CriteriaMarkConfiguration());
+        modelBuilder.ApplyConfiguration(new SelectedRuleConfiguration());
     }
 }

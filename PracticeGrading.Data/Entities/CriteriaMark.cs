@@ -43,7 +43,7 @@ public class CriteriaMark
     /// <summary>
     /// Gets or sets selected rules.
     /// </summary>
-    public required ICollection<Rule> SelectedRules { get; set; }
+    public required ICollection<SelectedRule> SelectedRules { get; set; }
 
     /// <summary>
     /// Gets or sets mark.

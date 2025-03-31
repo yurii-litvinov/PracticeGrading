@@ -3,9 +3,9 @@
 // Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
 // </copyright>
 
-using System.Text.Json.Serialization;
-
 namespace PracticeGrading.API.Models;
+
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Information about the student work to be uploaded to the SP Department website.

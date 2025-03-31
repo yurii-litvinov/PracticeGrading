@@ -116,9 +116,11 @@ public class MeetingService(
                         criteria.Name,
                         criteria.Comment,
                         (criteria.Rules ?? []).Where(rule => rule.IsScaleRule).Select(
-                            rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)).ToList(),
+                            rule => new RuleDto(rule.Id, rule.Type, rule.Description, rule.Value, rule.IsScaleRule))
+                        .ToList(),
                         (criteria.Rules ?? []).Where(rule => !rule.IsScaleRule).Select(
-                            rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)).ToList()))
+                            rule => new RuleDto(rule.Id, rule.Type, rule.Description, rule.Value, rule.IsScaleRule))
+                        .ToList()))
                 .ToList();
 
             meetingsDto.Add(

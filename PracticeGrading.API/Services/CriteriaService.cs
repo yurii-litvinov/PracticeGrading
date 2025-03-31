@@ -40,6 +40,7 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
             criteria.Rules.Add(
                 new Rule
                 {
+                    Type = ruleRequest.Type,
                     Description = ruleRequest.Description,
                     Value = ruleRequest.Value,
                     IsScaleRule = false,
@@ -76,9 +77,11 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
                     criteria.Name,
                     criteria.Comment,
                     (criteria.Rules ?? []).Where(rule => rule.IsScaleRule).Select(
-                        rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)).ToList(),
+                        rule => new RuleDto(rule.Id, rule.Type, rule.Description, rule.Value, rule.IsScaleRule))
+                    .ToList(),
                     (criteria.Rules ?? []).Where(rule => !rule.IsScaleRule).Select(
-                        rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)).ToList()))
+                        rule => new RuleDto(rule.Id, rule.Type, rule.Description, rule.Value, rule.IsScaleRule))
+                    .ToList()))
             .ToList();
 
         return dtoList;
@@ -138,6 +141,7 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
 
                 if (existingRule != null)
                 {
+                    existingRule.Type = ruleRequest.Type;
                     existingRule.Description = ruleRequest.Description;
                     existingRule.Value = ruleRequest.Value;
                 }
@@ -146,6 +150,7 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
                     criteria.Rules?.Add(
                         new Rule
                         {
+                            Type = ruleRequest.Type,
                             Description = ruleRequest.Description,
                             Value = ruleRequest.Value,
                             IsScaleRule = false,

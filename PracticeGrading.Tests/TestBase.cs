@@ -16,8 +16,8 @@ namespace PracticeGrading.Tests;
 
 public class TestBase
 {
-    private WebApplicationFactory<Program> _factory;
-    private AppDbContext _dbContext;
+    private WebApplicationFactory<Program> factory;
+    private AppDbContext dbContext;
 
     protected HttpClient Client;
 
@@ -42,7 +42,7 @@ public class TestBase
     [SetUp]
     public void SetUp()
     {
-        _factory = new WebApplicationFactory<Program>()
+        factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
             {
                 builder.ConfigureServices(services =>
@@ -60,17 +60,17 @@ public class TestBase
                 });
             });
 
-        Client = _factory.CreateClient();
+        Client = factory.CreateClient();
 
-        var scope = _factory.Services.CreateScope();
-        _dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var scope = factory.Services.CreateScope();
+        dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        _dbContext.Database.EnsureCreated();
+        dbContext.Database.EnsureCreated();
 
-        UserRepository = new UserRepository(_dbContext);
-        MeetingRepository = new MeetingRepository(_dbContext);
-        CriteriaRepository = new CriteriaRepository(_dbContext);
-        MarkRepository = new MarkRepository(_dbContext);
+        UserRepository = new UserRepository(dbContext);
+        MeetingRepository = new MeetingRepository(dbContext);
+        CriteriaRepository = new CriteriaRepository(dbContext);
+        MarkRepository = new MarkRepository(dbContext);
 
         JwtOptions = Options.Create(new JwtOptions
         {
@@ -84,7 +84,7 @@ public class TestBase
         UserService = new UserService(UserRepository, JwtService);
         MeetingService = new MeetingService(MeetingRepository, CriteriaRepository, UserRepository);
         CriteriaService = new CriteriaService(CriteriaRepository);
-        MarkService = new MarkService(MarkRepository, CriteriaRepository);
+        MarkService = new MarkService(MarkRepository);
 
         if (!Directory.GetCurrentDirectory().Contains("Debug")) return;
         var projectDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.Parent?.Parent?.FullName;
@@ -94,9 +94,9 @@ public class TestBase
     [TearDown]
     public void TearDown()
     {
-        _dbContext.Database.EnsureDeleted();
-        _dbContext.Dispose();
-        _factory.Dispose();
+        dbContext.Database.EnsureDeleted();
+        dbContext.Dispose();
+        factory.Dispose();
         Client.Dispose();
     }
 

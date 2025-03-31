@@ -13,5 +13,5 @@ public record CriteriaMarkDto(
     int CriteriaId,
     int MemberMarkId,
     string Comment,
-    List<RuleDto> SelectedRules,
+    List<SelectedRuleDto> SelectedRules,
     int? Mark);

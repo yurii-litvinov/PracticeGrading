@@ -14,7 +14,7 @@ using PracticeGrading.Data.Repositories;
 /// Service for working with marks.
 /// </summary>
 /// <param name="markRepository">Repository for marks.</param>
-public class MarkService(MarkRepository markRepository, CriteriaRepository criteriaRepository)
+public class MarkService(MarkRepository markRepository)
 {
     /// <summary>
     /// Adds member mark.
@@ -33,16 +33,18 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
 
         foreach (var markRequest in request.CriteriaMarks)
         {
-            var criteria = await criteriaRepository.GetById(markRequest.CriteriaId);
-            var rulesId = markRequest.SelectedRules.Select(ruleRequest => ruleRequest.Id);
-
             memberMark.CriteriaMarks.Add(
                 new CriteriaMark
                 {
                     CriteriaId = markRequest.CriteriaId,
                     Mark = markRequest.Mark,
                     Comment = markRequest.Comment,
-                    SelectedRules = (criteria?.Rules ?? []).Where(rule => rulesId.Contains(rule.Id)).ToList(),
+                    SelectedRules = markRequest.SelectedRules.Select(
+                        ruleRequest => new SelectedRule
+                        {
+                            RuleId = ruleRequest.RuleId,
+                            Value = ruleRequest.Value,
+                        }).ToList(),
                 });
         }
 
@@ -64,8 +66,6 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
 
         foreach (var markRequest in request.CriteriaMarks)
         {
-            var criteria = await criteriaRepository.GetById(markRequest.CriteriaId);
-            var rulesId = markRequest.SelectedRules.Select(ruleRequest => ruleRequest.Id);
             var existingCriteriaMark = (memberMark.CriteriaMarks ?? [])
                 .FirstOrDefault(criteriaMark => criteriaMark.CriteriaId == markRequest.CriteriaId);
 
@@ -73,8 +73,13 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
             {
                 existingCriteriaMark.Mark = markRequest.Mark;
                 existingCriteriaMark.Comment = markRequest.Comment;
-                existingCriteriaMark.SelectedRules =
-                    (criteria?.Rules ?? []).Where(rule => rulesId.Contains(rule.Id)).ToList();
+                existingCriteriaMark.SelectedRules.Clear();
+                existingCriteriaMark.SelectedRules = markRequest.SelectedRules.Select(
+                    ruleRequest => new SelectedRule
+                    {
+                        RuleId = ruleRequest.RuleId,
+                        Value = ruleRequest.Value,
+                    }).ToList();
             }
             else
             {
@@ -84,7 +89,12 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                         CriteriaId = markRequest.CriteriaId,
                         Mark = markRequest.Mark,
                         Comment = markRequest.Comment,
-                        SelectedRules = (criteria?.Rules ?? []).Where(rule => rulesId.Contains(rule.Id)).ToList(),
+                        SelectedRules = markRequest.SelectedRules.Select(
+                            ruleRequest => new SelectedRule
+                            {
+                                RuleId = ruleRequest.RuleId,
+                                Value = ruleRequest.Value,
+                            }).ToList(),
                     });
             }
         }
@@ -146,13 +156,8 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                                 mark.CriteriaId,
                                 mark.MemberMarkId,
                                 mark.Comment ?? string.Empty,
-                                new List<RuleDto>(
-                                        mark.SelectedRules.Select(
-                                            rule => new RuleDto(
-                                                rule.Id,
-                                                rule.Description,
-                                                rule.Value,
-                                                rule.IsScaleRule)))
+                                new List<SelectedRuleDto>(
+                                        mark.SelectedRules.Select(rule => new SelectedRuleDto(rule.RuleId, rule.Value)))
                                     .ToList(),
                                 mark.Mark))
                         .ToList(),

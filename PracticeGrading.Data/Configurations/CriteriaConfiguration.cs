@@ -24,5 +24,10 @@ public class CriteriaConfiguration : IEntityTypeConfiguration<Criteria>
         builder.HasMany<Rule>(criteria => criteria.Rules)
             .WithOne(rule => rule.Criteria)
             .HasForeignKey(rule => rule.CriteriaId);
+
+        builder.HasMany<AverageCriteriaMark>()
+            .WithOne()
+            .HasForeignKey(mark => mark.CriteriaId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

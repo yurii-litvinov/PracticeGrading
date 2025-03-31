@@ -17,5 +17,8 @@
         </PackageReference>
         <AdditionalFiles Include="../stylecop.json"/>
     </ItemGroup>
+    <ItemGroup>
+      <Compile Remove="Migrations\20250330200723_selectedrules.cs" />
+    </ItemGroup>
 
 </Project>
