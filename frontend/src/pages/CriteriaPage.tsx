@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {getCriteria, deleteCriteria, createCriteria, updateCriteria} from '../services/ApiService';
 import {CriteriaModal} from '../components/CriteriaModal'
+import {RuleTypes} from '../models/RuleTypes'
 
 export function CriteriaPage() {
     const [criteria, setCriteria] = useState([]);
@@ -112,6 +113,7 @@ export function CriteriaPage() {
                                     <ul className="list-unstyled ps-3">
                                         {criteria.rules.map((rule, index) => (
                                             <li key={index}>
+                                                {rule.type === RuleTypes.Range ? "До " : ""}
                                                 {rule.value > 0 ? `+${rule.value}` : rule.value}{" "}
                                                 {rule.description.split(/(https?:\/\/\S+)/g).map((part, i) =>
                                                     part.match(/^https?:\/\//) ? (
