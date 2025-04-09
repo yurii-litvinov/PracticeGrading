@@ -106,7 +106,7 @@ public class TestBase
         {
             Id = 1,
             DateAndTime = DateTime.Now,
-            Criteria = [new Criteria { Id = 2, Name = string.Empty }],
+            Criteria = [new Criteria { Id = 12, Name = string.Empty }],
             StudentWorks =
             [
                 new StudentWork

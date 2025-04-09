@@ -31,8 +31,8 @@ public class MeetingRepositoryTests : TestBase
     {
         var criteriaList = new List<Criteria>
         {
-            new() { Id = 1, Name = "criteria1" },
-            new() { Id = 2, Name = "criteria2" }
+            new() { Id = 12, Name = "criteria1" },
+            new() { Id = 22, Name = "criteria2" }
         };
 
         var members = new List<User>

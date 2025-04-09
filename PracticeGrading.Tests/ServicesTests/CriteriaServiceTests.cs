@@ -11,9 +11,9 @@ public class CriteriaServiceTests : TestBase
     {
         var rules = new List<RuleRequest>
         {
-            new(1, "type1", "desc1", 1),
-            new(2, "type2", "desc2", 2),
-            new(3, "type3", "desc3", 3),
+            new(100, "type1", "desc1", 1),
+            new(102, "type2", "desc2", 2),
+            new(103, "type3", "desc3", 3),
         };
 
         var request = new CriteriaRequest(null, "name", null, rules, rules);
@@ -22,9 +22,9 @@ public class CriteriaServiceTests : TestBase
 
         var criteria = await CriteriaRepository.GetAll();
 
-        criteria.Should().HaveCount(1);
-        criteria.First().Name.Should().BeEquivalentTo(request.Name);
-        criteria.First().Rules.Should().HaveCount(rules.Count * 2);
+        criteria.Should().HaveCount(6);
+        criteria.Last().Name.Should().BeEquivalentTo(request.Name);
+        criteria.Last().Rules.Should().HaveCount(rules.Count * 2);
     }
 
     [Test]
@@ -33,7 +33,7 @@ public class CriteriaServiceTests : TestBase
         await CriteriaRepository.Create(new Criteria { Name = "name" });
         await CriteriaRepository.Create(new Criteria { Name = "name" });
 
-        CriteriaService.GetCriteria().Result.Should().HaveCount(2);
+        CriteriaService.GetCriteria().Result.Should().HaveCount(7);
     }
 
     [Test]
@@ -103,7 +103,7 @@ public class CriteriaServiceTests : TestBase
 
         var criteriaList = await CriteriaService.GetCriteria();
 
-        criteriaList.Should().BeEmpty();
+        criteriaList.Should().HaveCount(5);
     }
 
     [Test]

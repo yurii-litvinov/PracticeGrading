@@ -13,8 +13,8 @@ public class MeetingServiceTests : TestBase
     {
         var criteriaList = new List<Criteria>
         {
-            new() { Id = 1, Name = "criteria1" },
-            new() { Id = 2, Name = "criteria2" }
+            new() { Id = 10, Name = "criteria1" },
+            new() { Id = 20, Name = "criteria2" }
         };
 
         var works = new List<StudentWorkRequest>
