@@ -49,15 +49,21 @@ public class MarkTableGenerator
 
             foreach (var member in meeting.Members)
             {
+                var memberMark =
+                    memberMarks.FirstOrDefault(mark => mark.StudentWorkId == work.Id && mark.MemberId == member.Id);
+
+                if (memberMark == null)
+                {
+                    continue;
+                }
+
                 sheet.WriteRow([new CellInfo(member.Name)], false, true);
 
                 var memberRow = new List<CellInfo>();
-                var memberMark =
-                    memberMarks.FirstOrDefault(mark => mark.StudentWorkId == work.Id && mark.MemberId == member.Id);
                 memberRow.AddRange(
-                    (memberMark?.CriteriaMarks ?? []).Select(
+                    (memberMark.CriteriaMarks ?? []).Select(
                         mark => new CellInfo(mark.Mark.ToString() ?? string.Empty)));
-                memberRow.Add(new CellInfo(memberMark?.Mark.ToString() ?? string.Empty));
+                memberRow.Add(new CellInfo(memberMark.Mark.ToString() ?? string.Empty));
 
                 sheet.WriteRow(
                     memberRow,
@@ -67,7 +73,13 @@ public class MarkTableGenerator
                     rowIndex: sheet.GetLastRowIndex(),
                     columnIndex: 1);
             }
+
+            sheet.WriteEmptyRows(1);
         }
+
+        sheet.AutosizeColumns(0, header.Count + 1);
+        sheet.SetDefaultRowHeight(35);
+        sheet.SetColumnWidth(5, 10);
 
         return generator.GetStream();
     }
