@@ -118,10 +118,78 @@ CREATE TABLE "SelectedRule" (
 );
 
 
+INSERT INTO "Criteria" ("Id", "Comment", "Name")
+VALUES (1, NULL, 'Ясность изложения цели работы, актуальность');
+INSERT INTO "Criteria" ("Id", "Comment", "Name")
+VALUES (2, 'Тут и далее имеется в виду ''как их донёс защищающийся''', 'Сложность работы');
+INSERT INTO "Criteria" ("Id", "Comment", "Name")
+VALUES (3, NULL, 'Полнота и целостность работы');
+INSERT INTO "Criteria" ("Id", "Comment", "Name")
+VALUES (4, NULL, 'Представление');
+INSERT INTO "Criteria" ("Id", "Comment", "Name")
+VALUES (5, 'для теоретических работ и работ с закрытым кодом не оценивается', 'Код');
+
+
 INSERT INTO "Role" ("Id", "RoleName")
 VALUES (1, 'admin');
 INSERT INTO "Role" ("Id", "RoleName")
 VALUES (2, 'member');
+
+
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (1, 1, 'понятное коммерческое или научное применение', TRUE, NULL, 5);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (2, 1, 'сфера полезности размыта, есть сомнения в актуальности, проект чисто для получения опыта', TRUE, NULL, 3);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (3, 1, '«мы в восторге от Вашей изобретательности, но поражены Вашей неосведомлённостью»', TRUE, NULL, 2);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (4, 1, 'делалось что-то, что уже и так все умеют, не имеет смысла даже с образовательной точки зрения', TRUE, NULL, 1);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (5, 1, 'вообще не нужно', TRUE, NULL, 0);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (6, 1, 'за отсутствие указания достаточно узкой группы людей, кому нужна работа (для инженерных работ — конкретной компании/организации/коллектива)', FALSE, 'fixed', -1);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (7, 2, 'с нуля за полгода не воспроизвести, требует глубокого погружения и серьёзных усилий', TRUE, NULL, 5);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (8, 2, 'честная работа за семестр, не требуется предварительных специальных знаний, однако требуются значимые усилия', TRUE, NULL, 4);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (9, 2, 'в целом несложно, кажется, что средним студентом делается за месяц, или за неделю членом комиссии', TRUE, NULL, 3);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (10, 2, 'делается что-то понятное и довольно простое, но пришлось почитать, поразбираться, решать проблемы', TRUE, NULL, 2);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (11, 2, 'по ощущениям, делается средним второкурсником часов за 10', TRUE, NULL, 1);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (12, 2, 'уровень домашней работы первого курса или сделано просто по учебнику', TRUE, NULL, 0);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (13, 2, 'за демонстрацию недостаточного погружения в предметную область', FALSE, 'range', -3);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (14, 3, 'по умолчанию', TRUE, NULL, 5);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (15, 3, 'за отсутствие внятных выводов из обзора', FALSE, 'fixed', -1);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (16, 3, 'за плохо оформленный текст отчёта', FALSE, 'range', -3);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (17, 3, 'за отсутствие или некачественный обзор', FALSE, 'range', -4);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (18, 3, 'за отсутствие экспериментов (плана экспериментов) или апробации результата (для теоретических работ не применяется)', FALSE, 'range', -4);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (19, 3, 'за слабое позиционирование результатов автора относительно уже существовавших или полученных другими членами команды', FALSE, 'range', -4);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (20, 4, 'слайды идеальны, выступление хорошо подготовлено, ответы на вопросы чёткие и по делу', TRUE, NULL, 5);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (21, 4, 'за каждую минуту сверх 7 минут на выступление', FALSE, 'custom', -1);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (22, 4, 'за значимое количество опечаток на слайдах', FALSE, 'fixed', -1);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (23, 4, 'за ошибки в представлении результатов экспериментов', FALSE, 'fixed', -1);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (24, 4, 'за каждое нарушение пунктов из чеклиста по оформлению презентаций: https://docs.google.com/spreadsheets/d/1LvHveX6TdbzexuACcqGPeHIEph6cm4Hd0arCRQBqODw', FALSE, 'custom', -1);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (25, 4, 'за недостаточно подробное изложение', FALSE, 'range', -5);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (26, 5, 'по умолчанию', TRUE, NULL, 5);
+INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "Value")
+VALUES (27, 5, 'за каждый отсутствующий пункт из чеклиста по оформлению репозитория: https://github.com/yurii-litvinov/courses/blob/master/additional/repo-checklist/repo-checklist.pdf', FALSE, 'custom', -1);
 
 
 INSERT INTO "Users" ("Id", "MeetingId", "PasswordHash", "RoleId", "UserName")
@@ -162,10 +230,22 @@ CREATE INDEX "IX_Users_RoleId" ON "Users" ("RoleId");
 
 
 SELECT setval(
+               pg_get_serial_sequence('"Criteria"', 'Id'),
+               GREATEST(
+                       (SELECT MAX("Id") FROM "Criteria") + 1,
+                       nextval(pg_get_serial_sequence('"Criteria"', 'Id'))),
+               false);
+SELECT setval(
                pg_get_serial_sequence('"Role"', 'Id'),
                GREATEST(
                        (SELECT MAX("Id") FROM "Role") + 1,
                        nextval(pg_get_serial_sequence('"Role"', 'Id'))),
+               false);
+SELECT setval(
+               pg_get_serial_sequence('"Rule"', 'Id'),
+               GREATEST(
+                       (SELECT MAX("Id") FROM "Rule") + 1,
+                       nextval(pg_get_serial_sequence('"Rule"', 'Id'))),
                false);
 SELECT setval(
                pg_get_serial_sequence('"Users"', 'Id'),
