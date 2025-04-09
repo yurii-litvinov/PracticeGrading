@@ -3,11 +3,10 @@
 // Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
 // </copyright>
 
-namespace PracticeGrading.API.Integrations;
+namespace PracticeGrading.API.Integrations.ThesisUploader;
 
 using System.Text;
 using System.Text.Json;
-using PracticeGrading.API.Models;
 
 /// <summary>
 /// Class for uploading student works to the SP Department website.

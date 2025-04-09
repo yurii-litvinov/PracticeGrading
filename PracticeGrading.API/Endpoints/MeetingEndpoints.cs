@@ -3,12 +3,13 @@
 // Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
 // </copyright>
 
+using PracticeGrading.API.Integrations.XlsxGenerator;
+
 namespace PracticeGrading.API.Endpoints;
 
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
-using PracticeGrading.API.Integrations;
-using PracticeGrading.API.Models;
+using PracticeGrading.API.Integrations.ThesisUploader;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 
@@ -31,6 +32,7 @@ public static class MeetingEndpoints
             .DisableAntiforgery();
         meetingGroup.MapPost("/uploadTheses", UploadTheses).RequireAuthorization("RequireAdminRole")
             .DisableAntiforgery();
+        meetingGroup.MapGet("/getMarkTable", GetMarkTable).RequireAuthorization("RequireAdminRole");
 
         meetingGroup.MapGet(string.Empty, GetMeeting).RequireAuthorization("RequireAdminOrMemberRole");
         meetingGroup.MapPut("/setMark", SetFinalMark).RequireAuthorization("RequireAdminOrMemberRole");
@@ -110,5 +112,16 @@ public static class MeetingEndpoints
         var uploaded = await uploader.Upload();
 
         return Results.Ok(uploaded);
+    }
+
+    private static async Task<IResult> GetMarkTable(int id, MeetingService meetingService, MarkService markService)
+    {
+        var meetings = await meetingService.GetMeeting(id);
+        var meeting = meetings.First();
+        var memberMarks = await markService.GetMemberMarks();
+
+        var table = new MarkTableGenerator().Generate(meeting, memberMarks);
+
+        return Results.File(table, "application/octet-stream", "table.xlsx");
     }
 }

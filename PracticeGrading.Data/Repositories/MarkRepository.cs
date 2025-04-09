@@ -70,15 +70,26 @@ public class MarkRepository(AppDbContext context)
     }
 
     /// <summary>
-    /// Gets all member marks.
+    /// Gets all student marks.
     /// </summary>
     /// <param name="workId">Student work id.</param>
     /// <returns>List of member marks.</returns>
-    public async Task<List<MemberMark>> GetAll(int workId)
+    public async Task<List<MemberMark>> GetStudentMarks(int workId)
     {
         return await context.MemberMarks
             .Include(mark => mark.CriteriaMarks).ThenInclude(criteriaMark => criteriaMark.SelectedRules)
             .Where(mark => mark.StudentWorkId == workId)
+            .ToListAsync();
+    }
+
+    /// <summary>
+    /// Gets all member marks.
+    /// </summary>
+    /// <returns>List of member marks.</returns>
+    public async Task<List<MemberMark>> GetAll()
+    {
+        return await context.MemberMarks
+            .Include(mark => mark.CriteriaMarks).ThenInclude(criteriaMark => criteriaMark.SelectedRules)
             .ToListAsync();
     }
 
@@ -99,7 +110,7 @@ public class MarkRepository(AppDbContext context)
 
     private async Task CalculateAverageCriteriaMarks(StudentWork work)
     {
-        var memberMarks = await this.GetAll(work.Id);
+        var memberMarks = await this.GetStudentMarks(work.Id);
 
         foreach (var averageCriteriaMark in work.AverageCriteriaMarks)
         {

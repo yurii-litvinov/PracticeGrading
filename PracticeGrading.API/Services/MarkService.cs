@@ -117,16 +117,12 @@ public class MarkService(MarkRepository markRepository)
     /// <param name="workId">Student work id.</param>
     /// <param name="memberId">Member id.</param>
     /// <returns>List of member marks.</returns>
-    public async Task<List<MemberMarkDto>> GetMemberMarks(int workId, int? memberId = null)
+    public async Task<List<MemberMarkDto>> GetMemberMarks(int? workId = null, int? memberId = null)
     {
-        List<MemberMark> memberMarks;
-        if (memberId == null)
+        List<MemberMark> memberMarks = [];
+        if (workId != null && memberId != null)
         {
-            memberMarks = await markRepository.GetAll(workId);
-        }
-        else
-        {
-            var memberMark = await markRepository.GetById((int)memberId, workId);
+            var memberMark = await markRepository.GetById((int)memberId, (int)workId);
 
             if (memberMark == null)
             {
@@ -135,7 +131,7 @@ public class MarkService(MarkRepository markRepository)
                     new MemberMarkDto(
                         0,
                         (int)memberId,
-                        workId,
+                        (int)workId,
                         [],
                         0,
                         string.Empty)
@@ -143,6 +139,14 @@ public class MarkService(MarkRepository markRepository)
             }
 
             memberMarks = [memberMark];
+        }
+        else if (workId != null)
+        {
+            memberMarks = await markRepository.GetStudentMarks((int)workId);
+        }
+        else
+        {
+            memberMarks = await markRepository.GetAll();
         }
 
         var dtoList = memberMarks.Select(

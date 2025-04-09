@@ -1,7 +1,8 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {useParams} from 'react-router-dom';
-import {getMeetings, uploadTheses} from '../services/ApiService';
+import {getMeetings, uploadTheses, getMarkTable} from '../services/ApiService';
 import {TypeOptions, CourseOptions} from '../models/ThesisOptions';
+import {format} from 'date-fns';
 
 export function FinishMeetingPage() {
     const {id} = useParams();
@@ -11,6 +12,7 @@ export function FinishMeetingPage() {
     const [loading, setLoading] = useState(false);
     const [uploaded, setUploaded] = useState([]);
     const formRef = useRef();
+    const [filename, setFileName] = useState('');
 
     useEffect(() => {
         if (id) {
@@ -33,6 +35,7 @@ export function FinishMeetingPage() {
                     secret_key: ''
                 }));
 
+                setFileName(meeting.info + ", " + format(new Date(meeting.dateAndTime), 'dd.MM.yyyy') + ".xlsx")
                 setThesisInfos(infos);
                 setWorks(filteredWorks);
                 setUploaded([]);
@@ -71,6 +74,22 @@ export function FinishMeetingPage() {
         } finally {
             setLoading(false);
         }
+    }
+
+    const handleDownload = async () => {
+        const response = await getMarkTable(id);
+        const blob = new Blob([response.data]);
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     }
 
     return (
@@ -254,6 +273,17 @@ export function FinishMeetingPage() {
                 </div>
 
                 <hr className="my-4"/>
+
+                <div className="p-2">
+                    <h5>Скачивание таблицы с оценками</h5>
+                    <p> Полученная .xlsx-таблица содержит оценки, выставленные членами комиссии, средние оценки и
+                        итоговую оценку каждой работы.</p>
+                </div>
+                <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
+                    <button type="button" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2"
+                            onClick={handleDownload}>Скачать
+                    </button>
+                </div>
             </div>
         </>
     );
