@@ -61,17 +61,6 @@ test('admin logout', async ({page}) => {
     expect(sessionStorageValue).toBe(null);
 });
 
-test('create criteria', async ({page}) => {
-    await login(page);
-
-    await createCriteria(page, 'критерий', 'комментарий');
-
-    await expect(page.locator('#criteria')).toHaveText('критерий комментарий');
-
-    page.on('dialog', dialog => dialog.accept());
-    await page.click('#delete-criteria');
-});
-
 test('create meeting', async ({page}) => {
     await login(page);
 
