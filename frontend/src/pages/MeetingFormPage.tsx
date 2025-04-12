@@ -96,7 +96,7 @@ export function MeetingFormPage() {
             const response = await createMeeting(meeting);
 
             if (response.status === 200) {
-                window.history.back();
+                navigate(`/meetings/${id}`, { replace: true });
             }
         }
     }

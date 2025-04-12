@@ -101,3 +101,6 @@ export const uploadTheses = async (formData) =>
 
 export const getMarkTable = async (id: number) =>
     await axiosService.get(`meetings/getMarkTable`, {params: {id}, responseType: 'blob'});
+
+export const getDocuments = async (id: number, coordinators: string, chairman: string) =>
+    await axiosService.get(`meetings/getDocuments`, {params: {id, coordinators, chairman}, responseType: 'blob'});

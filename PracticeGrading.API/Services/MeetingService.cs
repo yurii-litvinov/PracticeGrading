@@ -310,8 +310,11 @@ public class MeetingService(
             request.MembersColumn);
 
         var meetings = parser.Parse();
+        var criteria = await criteriaRepository.GetAll();
+
         foreach (var meeting in meetings)
         {
+            meeting.Criteria = criteria;
             await meetingRepository.Create(meeting);
         }
     }

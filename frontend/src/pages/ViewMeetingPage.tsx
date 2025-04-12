@@ -7,6 +7,7 @@ import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
 import Tooltip from 'bootstrap/js/dist/tooltip.js';
 import copy from 'copy-to-clipboard';
+import {DocumentsModel} from '../components/DocumentsModel';
 
 export function ViewMeetingPage() {
     const {id} = useParams();
@@ -206,6 +207,15 @@ export function ViewMeetingPage() {
                     </div>
                 )}
             </div>
+
+            <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
+                <button type="button" className="btn btn-outline-primary btn-lg mb-2 mb-sm-0 me-sm-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#docsModal">Сгенерировать документы
+                </button>
+            </div>
+            
+            <DocumentsModel meeting={meeting}/>
 
             <hr className="my-4"/>
 

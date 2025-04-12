@@ -3,13 +3,14 @@
 // Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
 // </copyright>
 
-using PracticeGrading.API.Integrations.XlsxGenerator;
-
 namespace PracticeGrading.API.Endpoints;
 
+using System.IO.Compression;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using PracticeGrading.API.Integrations;
 using PracticeGrading.API.Integrations.ThesisUploader;
+using PracticeGrading.API.Integrations.XlsxGenerator;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 
@@ -33,6 +34,7 @@ public static class MeetingEndpoints
         meetingGroup.MapPost("/uploadTheses", UploadTheses).RequireAuthorization("RequireAdminRole")
             .DisableAntiforgery();
         meetingGroup.MapGet("/getMarkTable", GetMarkTable).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapGet("/getDocuments", GetDocuments).RequireAuthorization("RequireAdminRole");
 
         meetingGroup.MapGet(string.Empty, GetMeeting).RequireAuthorization("RequireAdminOrMemberRole");
         meetingGroup.MapPut("/setMark", SetFinalMark).RequireAuthorization("RequireAdminOrMemberRole");
@@ -123,5 +125,44 @@ public static class MeetingEndpoints
         var table = new MarkTableGenerator().Generate(meeting, memberMarks);
 
         return Results.File(table, "application/octet-stream", "table.xlsx");
+    }
+
+    private static async Task<IResult> GetDocuments(
+        int id,
+        string coordinators,
+        string chairman,
+        MeetingService meetingService)
+    {
+        var meetings = await meetingService.GetMeeting(id);
+        var meeting = meetings.First();
+
+        var zipStream = new MemoryStream();
+        var generator = new DocumentsGenerator(meeting);
+
+        using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            var (file, fileName) = generator.GenerateStatement(coordinators, chairman);
+            var entry = archive.CreateEntry(fileName, CompressionLevel.Optimal);
+
+            await using (var entryStream = entry.Open())
+            {
+                await file.CopyToAsync(entryStream);
+            }
+
+            await file.DisposeAsync();
+
+            foreach (var member in meeting.Members)
+            {
+                (file, fileName) = generator.GenerateGradingSheet(member.Name);
+                entry = archive.CreateEntry(fileName, CompressionLevel.Optimal);
+
+                await using var entryStream = entry.Open();
+                await file.CopyToAsync(entryStream);
+            }
+        }
+
+        zipStream.Position = 0;
+
+        return Results.File(zipStream, "application/zip", "documents.zip");
     }
 }
