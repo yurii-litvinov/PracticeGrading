@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useRef} from 'react';
 import {useParams} from 'react-router-dom';
-import {getMeetings, uploadTheses, getMarkTable} from '../services/ApiService';
+import {getMeetings, uploadTheses, getMarkTable, getMarkTableForStudents} from '../services/ApiService';
 import {TypeOptions, CourseOptions} from '../models/ThesisOptions';
 import {format} from 'date-fns';
 
@@ -35,7 +35,7 @@ export function FinishMeetingPage() {
                     secret_key: ''
                 }));
 
-                setFileName(meeting.info + ", " + format(new Date(meeting.dateAndTime), 'dd.MM.yyyy') + ".xlsx")
+                setFileName(meeting.info + ", " + format(new Date(meeting.dateAndTime), 'dd.MM.yyyy'))
                 setThesisInfos(infos);
                 setWorks(filteredWorks);
                 setUploaded([]);
@@ -83,7 +83,23 @@ export function FinishMeetingPage() {
 
         const link = document.createElement('a');
         link.href = url;
-        link.download = filename;
+        link.download = filename + ".xlsx";
+
+        document.body.appendChild(link);
+        link.click();
+
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    }
+
+    const handleDownloadForStudents = async () => {
+        const response = await getMarkTableForStudents(id);
+        const blob = new Blob([response.data]);
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename + " (для студентов).xlsx";
 
         document.body.appendChild(link);
         link.click();
@@ -278,8 +294,12 @@ export function FinishMeetingPage() {
                     <h5>Скачивание таблицы с оценками</h5>
                     <p> Полученная .xlsx-таблица содержит оценки, выставленные членами комиссии, средние оценки и
                         итоговую оценку каждой работы.</p>
+                    <p> Таблица для студентов не содержит оценок членов комиссии.</p>
                 </div>
                 <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
+                    <button type="button" className="btn btn-outline-primary btn-lg mb-2 mb-sm-0 me-sm-2"
+                            onClick={handleDownloadForStudents}>Скачать версию для студентов
+                    </button>
                     <button type="button" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2"
                             onClick={handleDownload}>Скачать
                     </button>

@@ -34,6 +34,7 @@ public static class MeetingEndpoints
         meetingGroup.MapPost("/uploadTheses", UploadTheses).RequireAuthorization("RequireAdminRole")
             .DisableAntiforgery();
         meetingGroup.MapGet("/getMarkTable", GetMarkTable).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapGet("/getMarkTableForStudents", GetMarkTableForStudents).RequireAuthorization("RequireAdminRole");
         meetingGroup.MapGet("/getDocuments", GetDocuments).RequireAuthorization("RequireAdminRole");
 
         meetingGroup.MapGet(string.Empty, GetMeeting).RequireAuthorization("RequireAdminOrMemberRole");
@@ -123,6 +124,16 @@ public static class MeetingEndpoints
         var memberMarks = await markService.GetMemberMarks();
 
         var table = new MarkTableGenerator().Generate(meeting, memberMarks);
+
+        return Results.File(table, "application/octet-stream", "table.xlsx");
+    }
+
+    private static async Task<IResult> GetMarkTableForStudents(int id, MeetingService meetingService)
+    {
+        var meetings = await meetingService.GetMeeting(id);
+        var meeting = meetings.First();
+
+        var table = new MarkTableGenerator().GenerateForStudents(meeting);
 
         return Results.File(table, "application/octet-stream", "table.xlsx");
     }

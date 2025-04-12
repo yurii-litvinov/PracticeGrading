@@ -83,4 +83,45 @@ public class MarkTableGenerator
 
         return generator.GetStream();
     }
+
+    /// <summary>
+    /// Generates the mark table for students.
+    /// </summary>
+    /// <param name="meeting">Meeting DTO.</param>
+    /// <returns>.xlsx file as a stream.</returns>
+    public Stream GenerateForStudents(MeetingDto meeting)
+    {
+        var generator = new XlsxGenerator();
+        var sheet = generator.CreateSheet();
+
+        var header = new List<CellInfo> { new("ФИО студента") };
+        header.AddRange(meeting.Criteria.Select(criteria => new CellInfo(criteria.Name)));
+        header.Add(new CellInfo("Итоговая оценка"));
+
+        sheet.WriteRow(header, true, false, HorizontalAlignment.Center);
+
+        foreach (var work in meeting.StudentWorks)
+        {
+            sheet.WriteRow([new CellInfo(work.StudentName)]);
+
+            var studentRow = new List<CellInfo>();
+            studentRow.AddRange(
+                work.AverageCriteriaMarks.Select(mark => new CellInfo(mark.AverageMark.ToString() ?? string.Empty)));
+            studentRow.Add(new CellInfo(work.FinalMark ?? string.Empty));
+
+            sheet.WriteRow(
+                studentRow,
+                false,
+                false,
+                HorizontalAlignment.Center,
+                rowIndex: sheet.GetLastRowIndex(),
+                columnIndex: 1);
+        }
+
+        sheet.AutosizeColumns(0, header.Count + 1);
+        sheet.SetDefaultRowHeight(35);
+        sheet.SetColumnWidth(5, 10);
+
+        return generator.GetStream();
+    }
 }
