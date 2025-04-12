@@ -145,7 +145,7 @@ export function ViewMeetingPage() {
                             onClick={handleFinishMeeting}>Завершить
                     </button>
                     <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
-                            onClick={handleBack}>Назад
+                            id="back" onClick={handleBack}>Назад
                     </button>
                 </div>
             </div>

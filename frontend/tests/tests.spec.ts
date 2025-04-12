@@ -71,7 +71,8 @@ test('create meeting', async ({page}) => {
     
     await createMeeting(page, 'заседание');
 
-    await expect(page).toHaveURL('/meetings');
+    await expect(page).toHaveURL('/meetings/1');
+    await page.click('#back');
     await expect(page.locator('#info')).toHaveText('заседание');
 
     page.on('dialog', dialog => dialog.accept());
