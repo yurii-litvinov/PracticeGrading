@@ -140,7 +140,7 @@ public static class MeetingEndpoints
 
     private static async Task<IResult> GetDocuments(
         int id,
-        string coordinators,
+        string coordinator,
         string chairman,
         MeetingService meetingService)
     {
@@ -152,7 +152,7 @@ public static class MeetingEndpoints
 
         using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
         {
-            var (file, fileName) = generator.GenerateStatement(coordinators, chairman);
+            var (file, fileName) = generator.GenerateStatement(coordinator, chairman);
             var entry = archive.CreateEntry(fileName, CompressionLevel.Optimal);
 
             await using (var entryStream = entry.Open())

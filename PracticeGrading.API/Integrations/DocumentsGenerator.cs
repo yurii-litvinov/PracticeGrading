@@ -53,10 +53,10 @@ public class DocumentsGenerator
     /// <summary>
     /// Generates the statement document.
     /// </summary>
-    /// <param name="coordinators">Coordinators.</param>
+    /// <param name="coordinator">coordinator.</param>
     /// <param name="chairman">Chairman.</param>
     /// <returns>File with its name.</returns>
-    public (Stream File, string FileName) GenerateStatement(string coordinators, string chairman)
+    public (Stream File, string FileName) GenerateStatement(string coordinator, string chairman)
     {
         var statementData = new Dictionary<string, string>
         {
@@ -70,7 +70,7 @@ public class DocumentsGenerator
                     this.meeting.Members.Where(member => member.Name != chairman)
                         .Select((member, index) => $"{index + 1}. {member.Name}"))
             },
-            { "[coordinators]", coordinators },
+            { "[coordinator]", coordinator },
             { "[chairman]", chairman },
         };
 
@@ -153,7 +153,6 @@ public class DocumentsGenerator
     {
         var firstRow = table.Rows[0];
         var secondRow = table.Rows[1];
-        secondRow.RemoveCell(StatementTableSize - 1);
 
         for (var i = 1; i < colCount - 1; i++)
         {
@@ -166,19 +165,16 @@ public class DocumentsGenerator
             secondRow.CreateCell();
         }
 
-        firstRow.GetCell(colCount).RemoveParagraph(0);
         var paragraphs = new List<string> { "Итоговая", "оценка*" };
 
         foreach (var paragraph in paragraphs)
         {
-            var finalRun = firstRow.GetCell(colCount).AddParagraph().CreateRun();
+            var finalRun = firstRow.GetCell(colCount - 1).AddParagraph().CreateRun();
             finalRun.Paragraph.Alignment = ParagraphAlignment.CENTER;
             finalRun.FontFamily = FontFamily;
             finalRun.FontSize = FontSize;
             finalRun.SetText(paragraph);
         }
-
-        firstRow.RemoveCell(StatementTableSize - 1);
 
         MergeCellVertically(table, 0, 0, 1);
         MergeCellVertically(table, colCount - 1, 0, 1);

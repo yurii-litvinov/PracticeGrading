@@ -105,5 +105,5 @@ export const getMarkTable = async (id: number) =>
 export const getMarkTableForStudents = async (id: number) =>
     await axiosService.get(`meetings/getMarkTableForStudents`, {params: {id}, responseType: 'blob'});
 
-export const getDocuments = async (id: number, coordinators: string, chairman: string) =>
-    await axiosService.get(`meetings/getDocuments`, {params: {id, coordinators, chairman}, responseType: 'blob'});
+export const getDocuments = async (id: number, coordinator: string, chairman: string) =>
+    await axiosService.get(`meetings/getDocuments`, {params: {id, coordinator, chairman}, responseType: 'blob'});
