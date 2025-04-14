@@ -23,4 +23,5 @@ RUN dotnet publish "PracticeGrading.API.csproj" -c $BUILD_CONFIGURATION -o /app/
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY ["PracticeGrading.API/Integrations/Templates", "/app/Integrations/Templates/"]
 ENTRYPOINT ["dotnet", "PracticeGrading.API.dll"]

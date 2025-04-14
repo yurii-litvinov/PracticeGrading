@@ -165,6 +165,7 @@ public class DocumentsGenerator
             secondRow.CreateCell();
         }
 
+        firstRow.GetCell(colCount - 1).RemoveParagraph(0);
         var paragraphs = new List<string> { "Итоговая", "оценка*" };
 
         foreach (var paragraph in paragraphs)
@@ -179,14 +180,17 @@ public class DocumentsGenerator
         MergeCellVertically(table, 0, 0, 1);
         MergeCellVertically(table, colCount - 1, 0, 1);
 
-        firstRow.MergeCells(1, colCount - 2);
+        if (colCount - 2 > 1)
+        {
+            firstRow.MergeCells(1, colCount - 2);
+        }
     }
 
     private (string CommissionNumber, string Major) ProcessMeetingInfo()
     {
         var info = this.meeting.Info;
 
-        if (info == null)
+        if (info == null || !info.Contains(Prefix))
         {
             throw new ArgumentException("Invalid meeting information.");
         }
