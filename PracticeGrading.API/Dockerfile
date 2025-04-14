@@ -1,4 +1,8 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+
+RUN sed -i 's/^Components: main$/& contrib/' /etc/apt/sources.list.d/debian.sources
+RUN apt-get update; apt-get install -y ttf-mscorefonts-installer fontconfig
+
 WORKDIR /app
 EXPOSE 8080
 
