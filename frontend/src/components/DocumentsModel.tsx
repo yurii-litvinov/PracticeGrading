@@ -20,22 +20,27 @@ export function DocumentsModel({meeting}) {
             return;
         }
 
-        const response = await getDocuments(meeting.id, coordinator, chairman);
-        const blob = new Blob([response.data]);
-        const url = window.URL.createObjectURL(blob);
+        try {
+            const response = await getDocuments(meeting.id, coordinator, chairman);
+            const blob = new Blob([response.data]);
+            const url = window.URL.createObjectURL(blob);
 
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = "Документы.zip";
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = "Документы.zip";
 
-        document.body.appendChild(link);
-        link.click();
+            document.body.appendChild(link);
+            link.click();
 
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
 
-        if (closeButtonRef.current) {
-            closeButtonRef.current.click();
+            if (closeButtonRef.current) {
+                closeButtonRef.current.click();
+            }
+        } catch {
+            alert('Что-то пошло не так. Пожалуйста, проверьте информацию о заседании, ' +
+                'она должна содержать номер комиссии. Например, ГЭК 1234-56.');
         }
     };
 

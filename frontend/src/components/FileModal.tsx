@@ -9,7 +9,7 @@ export function FileModal({onSubmit}) {
     const [file, setFile] = useState(null);
     const [separator, setSeparator] = useState(null);
     const [headers, setHeaders] = useState(null);
-    const [membersColumn, setMembersColumn] = useState(0);
+    const [membersColumn, setMembersColumn] = useState('A');
     const [type, setType] = useState("practice");
 
     const formatRows = (rows) => {
@@ -34,6 +34,15 @@ export function FileModal({onSubmit}) {
         setHeaders(formatRows(rows)[0]);
     }
 
+    const processMembersColumn = (letter) => {
+        const charCode = letter.toUpperCase().charCodeAt(0) - 65;
+        if (letter === '' || charCode < 0 || charCode > 25) {
+            throw new Error("Invalid column letter");
+        }
+
+        return charCode;
+    }
+
     const handleSubmit = async () => {
         if (formRef.current && !formRef.current.checkValidity()) {
             formRef.current.reportValidity();
@@ -41,11 +50,12 @@ export function FileModal({onSubmit}) {
         }
 
         try {
+            const columnIndex = processMembersColumn(membersColumn);
             const formData = new FormData();
             formData.append('file', file);
             formData.append('headers', JSON.stringify(headers));
             formData.append('separator', JSON.stringify(separator));
-            formData.append('membersColumn', membersColumn - 1);
+            formData.append('membersColumn', type === "practice" ? -1 : columnIndex);
             await createMeetingsFromFile(formData);
             onSubmit();
 
@@ -87,7 +97,7 @@ export function FileModal({onSubmit}) {
                                        id="inlineRadio1"
                                        onChange={() => {
                                            setType("practice");
-                                           setMembersColumn(0);
+                                           setMembersColumn('A');
                                        }}/>
                                 <label className="form-check-label" htmlFor="inlineRadio1">Защиты практик</label>
                             </div>
@@ -96,7 +106,7 @@ export function FileModal({onSubmit}) {
                                        id="inlineRadio2"
                                        onChange={() => {
                                            setType("vkr");
-                                           setMembersColumn(7);
+                                           setMembersColumn('G');
                                        }}/>
                                 <label className="form-check-label" htmlFor="inlineRadio2">Защиты ВКР</label>
                             </div>
@@ -141,14 +151,14 @@ export function FileModal({onSubmit}) {
                                 </>) : (
                                 <>
                                     <div className="d-flex align-items-center mb-4">
-                                        <h6 className="form-label mb-0 me-2">Номер колонки с членами комиссии:</h6>
+                                        <h6 className="form-label mb-0 me-2">Колонка с членами комиссии:</h6>
                                         <input
-                                            type="number"
+                                            type="text" maxLength="1"
                                             className="form-control"
-                                            style={{maxWidth: '65px'}}
+                                            style={{maxWidth: '65px', textTransform: "uppercase"}}
                                             value={membersColumn}
                                             onChange={(e) => setMembersColumn(e.target.value)}
-                                            placeholder="0"
+                                            placeholder="A"
                                         />
                                     </div>
 
