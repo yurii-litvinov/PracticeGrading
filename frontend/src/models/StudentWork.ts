@@ -19,5 +19,10 @@ export interface StudentWork {
     reviewer?: string,
     supervisorMark?: string,
     reviewerMark?: string,
-    codeLink?: string
+    codeLink?: string,
+    reportLink?: string,
+    supervisorReviewLink?: string,
+    consultantReviewLink?: string,
+    reviewerReviewLink?: string,
+    additionalLink?: string
 }

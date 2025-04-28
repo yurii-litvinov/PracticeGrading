@@ -47,6 +47,11 @@ public class MeetingService(
                     SupervisorMark = workRequest.SupervisorMark,
                     ReviewerMark = workRequest.ReviewerMark,
                     CodeLink = workRequest.CodeLink,
+                    ReportLink = workRequest.ReportLink,
+                    SupervisorReviewLink = workRequest.SupervisorReviewLink,
+                    ConsultantReviewLink = workRequest.ConsultantReviewLink,
+                    ReviewerReviewLink = workRequest.ReviewerReviewLink,
+                    AdditionalLink = workRequest.AdditionalLink,
                     AverageCriteriaMarks = request.CriteriaId.Select(id => new AverageCriteriaMark { CriteriaId = id })
                         .ToList(),
                 }).ToList(),
@@ -100,6 +105,11 @@ public class MeetingService(
                     work.SupervisorMark,
                     work.ReviewerMark,
                     work.CodeLink,
+                    work.ReportLink,
+                    work.SupervisorReviewLink,
+                    work.ConsultantReviewLink,
+                    work.ReviewerReviewLink,
+                    work.AdditionalLink,
                     work.AverageCriteriaMarks
                         .Select(mark => new AverageCriteriaMarkDto(mark.CriteriaId, mark.AverageMark)).ToList(),
                     work.FinalMark)).ToList();
@@ -173,6 +183,11 @@ public class MeetingService(
                     existingWork.SupervisorMark = work.SupervisorMark;
                     existingWork.ReviewerMark = work.ReviewerMark;
                     existingWork.CodeLink = work.CodeLink;
+                    existingWork.ReportLink = work.ReportLink;
+                    existingWork.SupervisorReviewLink = work.SupervisorReviewLink;
+                    existingWork.ConsultantReviewLink = work.ConsultantReviewLink;
+                    existingWork.ReviewerReviewLink = work.ReviewerReviewLink;
+                    existingWork.AdditionalLink = work.AdditionalLink;
 
                     foreach (var id in request.CriteriaId.Where(
                                  id => existingWork.AverageCriteriaMarks.FirstOrDefault(
@@ -203,6 +218,11 @@ public class MeetingService(
                             SupervisorMark = work.SupervisorMark,
                             ReviewerMark = work.ReviewerMark,
                             CodeLink = work.CodeLink,
+                            ReportLink = work.ReportLink,
+                            SupervisorReviewLink = work.SupervisorReviewLink,
+                            ConsultantReviewLink = work.ConsultantReviewLink,
+                            ReviewerReviewLink = work.ReviewerReviewLink,
+                            AdditionalLink = work.AdditionalLink,
                             AverageCriteriaMarks =
                                 request.CriteriaId.Select(id => new AverageCriteriaMark { CriteriaId = id }).ToList(),
                         });

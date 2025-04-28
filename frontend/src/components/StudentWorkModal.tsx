@@ -26,7 +26,12 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
         reviewer: '',
         supervisorMark: undefined,
         reviewerMark: undefined,
-        codeLink: ''
+        codeLink: '',
+        reportLink: '',
+        supervisorReviewLink: '',
+        consultantReviewLink: '',
+        reviewerReviewLink: '',
+        additionalLink: ''
     }
 
     const [studentWork, setStudentWork] = useState(initialStudentWorkState);
@@ -175,6 +180,31 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
                                 <label className="form-label">Оценка рецензента</label>
                                 <input type="text" className="form-control" name="reviewerMark"
                                        value={studentWork.reviewerMark ?? ''} onChange={handleChange}/>
+                            </div>
+                            <div className="mb-2">
+                                <label className="form-label">Ссылка на отчёт</label>
+                                <input type="url" className="form-control" name="reportLink"
+                                       value={studentWork.reportLink ?? ''} onChange={handleChange}/>
+                            </div>
+                            <div className="mb-2">
+                                <label className="form-label">Ссылка на отзыв научника</label>
+                                <input type="url" className="form-control" name="supervisorReviewLink"
+                                       value={studentWork.supervisorReviewLink ?? ''} onChange={handleChange}/>
+                            </div>
+                            <div className="mb-2">
+                                <label className="form-label">Ссылка на отзыв консультанта</label>
+                                <input type="url" className="form-control" name="consultantReviewLink"
+                                       value={studentWork.consultantReviewLink ?? ''} onChange={handleChange}/>
+                            </div>
+                            <div className="mb-2">
+                                <label className="form-label">Ссылка на рецензию</label>
+                                <input type="url" className="form-control" name="reviewerReviewLink"
+                                       value={studentWork.reviewerReviewLink ?? ''} onChange={handleChange}/>
+                            </div>
+                            <div className="mb-2">
+                                <label className="form-label">Ссылка на дополнительные материалы</label>
+                                <input type="url" className="form-control" name="additionalLink"
+                                       value={studentWork.additionalLink ?? ''} onChange={handleChange}/>
                             </div>
                         </form>
                     </div>

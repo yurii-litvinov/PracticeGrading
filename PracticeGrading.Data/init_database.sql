@@ -57,6 +57,11 @@ CREATE TABLE "StudentWork" (
                                "ReviewerMark" text,
                                "FinalMark" text NOT NULL,
                                "CodeLink" text,
+                               "ReportLink" text,
+                               "SupervisorReviewLink" text,
+                               "ConsultantReviewLink" text,
+                               "ReviewerReviewLink" text,
+                               "AdditionalLink" text,
                                "MeetingId" integer NOT NULL,
                                CONSTRAINT "PK_StudentWork" PRIMARY KEY ("Id"),
                                CONSTRAINT "FK_StudentWork_Meetings_MeetingId" FOREIGN KEY ("MeetingId") REFERENCES "Meetings" ("Id") ON DELETE CASCADE

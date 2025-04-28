@@ -18,4 +18,9 @@ public record StudentWorkRequest(
     string? Reviewer,
     string? SupervisorMark,
     string? ReviewerMark,
-    string? CodeLink);
+    string? CodeLink,
+    string? ReportLink,
+    string? SupervisorReviewLink,
+    string? ConsultantReviewLink,
+    string? ReviewerReviewLink,
+    string? AdditionalLink);

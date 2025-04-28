@@ -199,8 +199,20 @@ export function StudentWorkPage() {
                         className="form-control-plaintext text-wrap span-custom">{studentWork.reviewer || "—"}</span>
                 </div>) : (<></>)}
 
+                <div className="d-flex mb-2 align-items-center">
+                    <label className="me-3 fw-bold text-end label-custom">Оценка научного руководителя</label>
+                    <span
+                        className="form-control-plaintext w-auto text-wrap">{studentWork.supervisorMark || "—"}</span>
+                </div>
+
+                {studentWork.reviewerMark ? (<div className="d-flex mb-2 align-items-center">
+                    <label className="me-3 fw-bold text-end label-custom">Оценка рецензента</label>
+                    <span
+                        className="form-control-plaintext w-auto text-wrap">{studentWork.reviewerMark || "—"}</span>
+                </div>) : (<></>)}
+
                 {studentWork.codeLink ? (<div className="d-flex mb-2 align-items-center">
-                    <label className="me-3 fw-bold text-end label-custom">Ссылка на код</label>
+                    <label className="me-3 fw-bold text-end label-custom">Код</label>
                     <span className="form-control-plaintext w-auto text-wrap">{studentWork.codeLink !== 'NDA' ? (
                         studentWork.codeLink.split(' ').map((link, linkIndex) => (
                             <div key={linkIndex} className="mb-2">
@@ -214,17 +226,42 @@ export function StudentWorkPage() {
                     )}</span>
                 </div>) : (<></>)}
 
-                <div className="d-flex mb-2 align-items-center">
-                    <label className="me-3 fw-bold text-end label-custom">Оценка научного руководителя</label>
+                {studentWork.reportLink ? (<div className="d-flex mb-2 align-items-center">
+                    <label className="me-3 fw-bold text-end label-custom">Отчёт</label>
                     <span
-                        className="form-control-plaintext w-auto text-wrap">{studentWork.supervisorMark || "—"}</span>
-                </div>
-
-                {studentWork.reviewerMark ? (<div className="d-flex mb-2 align-items-center">
-                    <label className="me-3 fw-bold text-end label-custom">Оценка рецензента</label>
-                    <span
-                        className="form-control-plaintext w-auto text-wrap">{studentWork.reviewerMark || "—"}</span>
+                        className="form-control-plaintext w-auto text-wrap">
+                        <a href={studentWork.reportLink} target="_blank" rel="noopener noreferrer">Ссылка</a></span>
                 </div>) : (<></>)}
+
+                {studentWork.supervisorReviewLink ? (<div className="d-flex mb-2 align-items-center">
+                    <label className="me-3 fw-bold text-end label-custom">Отзыв научника</label>
+                    <span
+                        className="form-control-plaintext w-auto text-wrap">
+                        <a href={studentWork.supervisorReviewLink} target="_blank" rel="noopener noreferrer">Ссылка</a></span>
+                </div>) : (<></>)}
+
+                {studentWork.consultantReviewLink ? (<div className="d-flex mb-2 align-items-center">
+                    <label className="me-3 fw-bold text-end label-custom">Отзыв консультанта</label>
+                    <span
+                        className="form-control-plaintext w-auto text-wrap">
+                        <a href={studentWork.consultantReviewLink} target="_blank" rel="noopener noreferrer">Ссылка</a></span>
+                </div>) : (<></>)}
+
+                {studentWork.reviewerReviewLink ? (<div className="d-flex mb-2 align-items-center">
+                    <label className="me-3 fw-bold text-end label-custom">Рецензия</label>
+                    <span
+                        className="form-control-plaintext w-auto text-wrap">
+                        <a href={studentWork.reviewerReviewLink} target="_blank"
+                           rel="noopener noreferrer">Ссылка</a></span>
+                </div>) : (<></>)}
+
+                {studentWork.additionalLink ? (<div className="d-flex mb-2 align-items-center">
+                    <label className="me-3 fw-bold text-end label-custom">Дополнительные материалы</label>
+                    <span
+                        className="form-control-plaintext w-auto text-wrap">
+                        <a href={studentWork.additionalLink} target="_blank" rel="noopener noreferrer">Ссылка</a></span>
+                </div>) : (<></>)}
+               
             </div>
 
             {role === 'member' ? (<>
@@ -249,8 +286,8 @@ export function StudentWorkPage() {
 
                     <h4 className="mb-4">Оценки других членов комиссии</h4>
                     <MemberMarkCard role={role} otherMarks={otherMarks} otherMembers={otherMembers} criteria={criteria}/>
-                </>) 
-                
+                </>)
+
                 : (<>
                         <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
                             <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
