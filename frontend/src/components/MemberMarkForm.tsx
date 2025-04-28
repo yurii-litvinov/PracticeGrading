@@ -234,8 +234,8 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
                                         {rule.type === RuleTypes.Range ? (
                                             <div className="mt-1 mb-2" style={{maxWidth: '500px'}}>
                                                 <input
-                                                    value={rule.value - mark.criteriaMarks.find(c => c.criteriaId === criteria.id)
-                                                        ?.selectedRules.find(s => s.ruleId === rule.id)?.value ?? 0}
+                                                    value={rule.value - (mark.criteriaMarks.find(c => c.criteriaId === criteria.id)
+                                                        ?.selectedRules.find(s => s.ruleId === rule.id)?.value ?? 0)}
                                                     type="range"
                                                     className="form-range"
                                                     min={rule.value} max={0} step={1}

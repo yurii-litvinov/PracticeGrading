@@ -20,7 +20,8 @@ using PracticeGrading.Data.Repositories;
 public class MeetingService(
     MeetingRepository meetingRepository,
     CriteriaRepository criteriaRepository,
-    UserRepository userRepository)
+    UserRepository userRepository,
+    MarkRepository markRepository)
 {
     /// <summary>
     /// Adds new meeting.
@@ -267,6 +268,12 @@ public class MeetingService(
 
             foreach (var member in membersToRemove)
             {
+                var marks = await markRepository.GetAll();
+                foreach (var mark in marks.Where(mark => mark.MemberId == member.Id))
+                {
+                    await markRepository.Delete(mark);
+                }
+
                 await userRepository.Delete(member);
             }
 

@@ -102,7 +102,7 @@ export function MeetingFormPage() {
     }
 
     useEffect(() => {
-        if (meeting.members.length > 0 && meeting.members[meeting.members.length - 1].name !== '') {
+        if (meeting.members.length === 0 || meeting.members[meeting.members.length - 1].name !== '') {
             setMeeting((prevMeeting) => ({
                 ...prevMeeting,
                 members: [...prevMeeting.members, {id: null, name: ''}]
