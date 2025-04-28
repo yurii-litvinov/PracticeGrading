@@ -82,7 +82,7 @@ public class TestBase
 
         JwtService = new JwtService(JwtOptions);
         UserService = new UserService(UserRepository, JwtService);
-        MeetingService = new MeetingService(MeetingRepository, CriteriaRepository, UserRepository);
+        MeetingService = new MeetingService(MeetingRepository, CriteriaRepository, UserRepository, MarkRepository);
         CriteriaService = new CriteriaService(CriteriaRepository);
         MarkService = new MarkService(MarkRepository);
 
