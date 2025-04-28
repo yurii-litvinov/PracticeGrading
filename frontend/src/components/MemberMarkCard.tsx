@@ -64,7 +64,15 @@ export function MemberMarkCard({role, otherMarks, otherMembers, criteria, handle
 
                                                             return (<li key={index}>
                                                                 {rule.isScaleRule ? (<>{selected.value} — {rule.description}</>)
-                                                                    : (<>{selected.value} {rule.description}</>)}
+                                                                    : (selected.value !== 0 ?
+                                                                        (<>{selected.value} {rule.description
+                                                                            .split(/(https?:\/\/\S+)/g).map((part, i) =>
+                                                                                part.match(/^https?:\/\//) ? (
+                                                                                    <a key={i} href={part} target="_blank"
+                                                                                       rel="noopener noreferrer">
+                                                                                        {part}
+                                                                                    </a>) : (part))}</>)
+                                                                        : (<></>))}
                                                             </li>)
                                                         }
                                                     )}

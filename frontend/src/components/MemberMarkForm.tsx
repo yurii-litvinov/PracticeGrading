@@ -58,7 +58,6 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
                         return criteria.find(criteria => criteria.id === criteriaId).rules.find(r => r.id === selectedRule.ruleId)
                     });
 
-                    console.log(notScaleRules)
                     notScaleRules.push({ruleId: rule.id, value: rule.value})
 
                     return {
@@ -80,8 +79,8 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
         setIsChanged(true);
     }
 
-    const handleInputChange = (e, criteriaId, rule) => {
-        const newValue = e.target.value === '' ? undefined : Number(e.target.value);
+    const handleInputChange = (value, criteriaId, rule) => {
+        const newValue = value === '' ? undefined : Number(value);
 
         setMark((prevMark) => {
             const updatedCriteriaMarks = prevMark.criteriaMarks.map((criteriaMark) => {
@@ -222,25 +221,31 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
                                         </label>
 
                                         {rule.type === RuleTypes.Range ? (
-                                            <select className="form-select w-auto"
-                                                    value={mark.criteriaMarks.find(criteriaMark =>
-                                                        criteriaMark.criteriaId === criteria.id)?.selectedRules
-                                                        .find(selected => selected.ruleId === rule.id)?.value ?? 0}
-                                                    onChange={(e) => handleInputChange(e, criteria.id, rule)}>
-                                                {Array.from({length: Math.abs(rule.value) + 1}, (_, i) => -i)
-                                                    .map((num) => (
-                                                        <option key={num} value={num}>
-                                                            {num}
-                                                        </option>
-                                                    ))}
-                                            </select>) : rule.type === RuleTypes.Custom ? (
+                                            <div className="mt-1 mb-2" style={{maxWidth: '500px'}}>
+                                                <input
+                                                    value={rule.value - mark.criteriaMarks.find(c => c.criteriaId === criteria.id)
+                                                        ?.selectedRules.find(s => s.ruleId === rule.id)?.value ?? 0}
+                                                    type="range"
+                                                    className="form-range"
+                                                    min={rule.value} max={0} step={1}
+                                                    onChange={(e) =>
+                                                        handleInputChange(rule.value - e.target.value, criteria.id, rule)}/>
+
+                                                <div className="d-flex justify-content-between ps-2 pe-1">
+                                                    {Array.from(
+                                                        {length: Math.abs(rule.value) + 1},
+                                                        (_, i) => (
+                                                            <span key={i}>{0 - i}</span>
+                                                        ))}
+                                                </div>
+                                            </div>) : rule.type === RuleTypes.Custom ? (
                                             <input type="number"
                                                    className="form-control w-auto"
                                                    value={mark.criteriaMarks.find(criteriaMark =>
                                                        criteriaMark.criteriaId === criteria.id)?.selectedRules
                                                        .find(selected => selected.ruleId === rule.id)?.value ?? ''}
                                                    step="1"
-                                                   onChange={(e) => handleInputChange(e, criteria.id, rule)}
+                                                   onChange={(e) => handleInputChange(e.target.value, criteria.id, rule)}
                                                    placeholder="0"
                                             />) : (<></>)}
                                     </div>

@@ -85,7 +85,6 @@ export function DocumentsModel({meeting}) {
                                 </div>
                             </div>
                         </form>
-
                     </div>
 
                     <div className="modal-footer">
