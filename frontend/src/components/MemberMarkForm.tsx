@@ -145,6 +145,17 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
         setIsChanged(true);
     }
 
+    const handleMarkChange = (value) => {
+        if ((value >= 1 && value <= 5) || value === '') {
+            setMark(prevMark => ({
+                ...prevMark,
+                mark: value
+            }));
+
+            setIsChanged(true);
+        }
+    }
+
     const isRuleSelected = (criteriaId, ruleId) => {
         return mark.criteriaMarks.some((criteriaMark) =>
             criteriaMark.criteriaId === criteriaId &&
@@ -240,7 +251,7 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
                                                 </div>
                                             </div>) : rule.type === RuleTypes.Custom ? (
                                             <input type="number"
-                                                   className="form-control w-auto"
+                                                   className="form-control w-auto mb-2"
                                                    value={mark.criteriaMarks.find(criteriaMark =>
                                                        criteriaMark.criteriaId === criteria.id)?.selectedRules
                                                        .find(selected => selected.ruleId === rule.id)?.value ?? ''}
@@ -266,8 +277,14 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
 
             <div className="d-flex mb-2 align-items-center">
                 <label className="me-2 fw-semibold fs-5 w-auto">Итоговая оценка:</label>
-                <span
-                    className="form-control-plaintext fs-5 w-auto text-wrap">{mark?.mark}</span>
+                <input type="number"
+                       className="form-control fs-5 w-auto"
+                       value={mark?.mark ?? ''}
+                       min={1} max={5}
+                       step="1"
+                       onChange={(e) => handleMarkChange(e.target.value)}
+                       placeholder="0"
+                />
             </div>
 
             <div className="my-2">
