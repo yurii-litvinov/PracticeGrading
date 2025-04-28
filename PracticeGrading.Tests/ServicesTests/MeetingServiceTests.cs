@@ -28,6 +28,11 @@ public class MeetingServiceTests : TestBase
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null),
         };
 
@@ -103,6 +108,11 @@ public class MeetingServiceTests : TestBase
             string.Empty,
             string.Empty,
             string.Empty,
+            null,
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,

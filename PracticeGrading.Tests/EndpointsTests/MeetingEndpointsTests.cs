@@ -154,6 +154,11 @@ public class MeetingEndpointsTests : TestBase
                     null,
                     null,
                     null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
                     null)
             ],
             [],
