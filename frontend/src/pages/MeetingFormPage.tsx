@@ -1,32 +1,34 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {useNavigate, useParams, useLocation} from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 import DatePicker, {registerLocale} from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import ru from 'date-fns/locale/ru';
+import {ru} from 'date-fns/locale/ru';
 import {StudentWorkModal} from '../components/StudentWorkModal';
 import {createMeeting, getCriteria, getMeetings, updateMeeting} from '../services/ApiService';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
+import {StudentWork} from '../models/StudentWork';
+import {Meeting} from '../models/Meeting';
+import {Criteria} from '../models/Criteria';
 
 registerLocale('ru', ru);
 
 export function MeetingFormPage() {
     const {id} = useParams();
-    const navigate = useNavigate();
-    const [workToEditIndex, setWorkToEditIndex] = useState();
-    const [criteria, setCriteria] = useState([]);
+    const [workToEditIndex, setWorkToEditIndex] = useState<number | null>();
+    const [criteria, setCriteria] = useState<Criteria[]>([]);
 
     const signalRService = useRef<SignalRService | null>(null);
 
-    const [meeting, setMeeting] = useState({
-        id: null,
+    const [meeting, setMeeting] = useState<Meeting>({
+        id: undefined,
         dateAndTime: new Date(),
         auditorium: '',
         info: '',
         callLink: '',
         materialsLink: '',
         studentWorks: [],
-        members: [{id: null, name: ''}],
+        members: [{id: undefined, name: ''}],
         criteria: []
     });
 
@@ -36,7 +38,7 @@ export function MeetingFormPage() {
 
     useEffect(() => {
         if (id) {
-            getMeetings(id).then(response => setMeeting(response.data[0]));
+            getMeetings(Number(id)).then(response => setMeeting(response.data[0]));
             console.log(meeting.criteria)
 
             signalRService.current = new SignalRService(id, handleNotification);
@@ -55,7 +57,7 @@ export function MeetingFormPage() {
         window.history.back();
     }
 
-    const handleMeetingChange = (e) => {
+    const handleMeetingChange = (e: { target: { name: any; value: any; }; }) => {
         const {name, value} = e.target;
 
         setMeeting((prev) => ({
@@ -64,7 +66,7 @@ export function MeetingFormPage() {
         }));
     }
 
-    const addOrUpdateStudentWork = (work) => {
+    const addOrUpdateStudentWork = (work: StudentWork) => {
         if (workToEditIndex !== null) {
             setMeeting((prevMeeting) => ({
                 ...prevMeeting,
@@ -89,7 +91,7 @@ export function MeetingFormPage() {
             const response = await updateMeeting(meeting);
 
             if (response.status === 200) {
-                await signalRService.current.sendNotification(Actions.Update);
+                await signalRService.current?.sendNotification(Actions.Update);
                 window.history.back();
             }
         } else {
@@ -105,7 +107,7 @@ export function MeetingFormPage() {
         if (meeting.members.length === 0 || meeting.members[meeting.members.length - 1].name !== '') {
             setMeeting((prevMeeting) => ({
                 ...prevMeeting,
-                members: [...prevMeeting.members, {id: null, name: ''}]
+                members: [...prevMeeting.members, {id: undefined, name: ''}]
             }))
         }
     }, [meeting.members]);
@@ -131,7 +133,7 @@ export function MeetingFormPage() {
         }));
     }
 
-    const handleCriteriaChange = (e) => {
+    const handleCriteriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setMeeting(prevMeeting => {
             let updatedCriteria = [...prevMeeting.criteria];
 
@@ -139,10 +141,8 @@ export function MeetingFormPage() {
 
             if (e.target.checked) {
                 if (!selectedCriteria) {
-                    const newCriteria = {
-                        id: Number(e.target.id),
-                    };
-                    updatedCriteria.push(newCriteria);
+                    const newCriteria = criteria.find(criteria => criteria.id === Number(e.target.id));
+                    updatedCriteria.push(newCriteria!);
                 }
             } else {
                 updatedCriteria = updatedCriteria.filter(criteria => criteria.id !== Number(e.target.id));
@@ -150,13 +150,13 @@ export function MeetingFormPage() {
 
             return {
                 ...prevMeeting,
-                criteria: updatedCriteria.sort((a, b) => a.id - b.id),
+                criteria: updatedCriteria.sort((a, b) => a.id! - b.id!),
             };
         });
     }
 
     useEffect(() => {
-        const handleBeforeUnload = (event) => {
+        const handleBeforeUnload = (event: { preventDefault: () => void; returnValue: string; }) => {
             event.preventDefault();
             event.returnValue = "";
         }
@@ -190,7 +190,7 @@ export function MeetingFormPage() {
                         <div className="custom-datepicker">
                             <DatePicker
                                 selected={new Date(meeting.dateAndTime)}
-                                onChange={(date) => setMeeting({...meeting, dateAndTime: new Date(date)})}
+                                onChange={(date) => date && setMeeting({...meeting, dateAndTime: new Date(date)})}
                                 dateFormat="d MMMM yyyy, HH:mm"
                                 showTimeSelect
                                 timeIntervals={60}
@@ -319,7 +319,7 @@ export function MeetingFormPage() {
                                                     work.codeLink.split(' ').map((link, linkIndex) => (
                                                         <div key={linkIndex} className="mb-2">
                                                             <a href={link} target="_blank" rel="noopener noreferrer">
-                                                                Ссылка {work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                                Ссылка {work.codeLink && work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
                                                             </a>
                                                         </div>
                                                     ))
@@ -361,9 +361,9 @@ export function MeetingFormPage() {
                                         <input className="form-check-input me-3" type="checkbox"
                                                name={`criteria-${index}`}
                                                checked={meeting.criteria.some(c => c.id === criteria.id)}
-                                               id={criteria.id} onChange={(e) => handleCriteriaChange(e)}/>
+                                               id={String(criteria.id)} onChange={(e) => handleCriteriaChange(e)}/>
                                         <label className="form-check-label stretched-link"
-                                               htmlFor={criteria.id}> {criteria.name}{criteria.comment && (
+                                               htmlFor={String(criteria.id)}> {criteria.name}{criteria.comment && (
                                             <>
                                                 <br/>
                                                 <small className=""
@@ -380,7 +380,7 @@ export function MeetingFormPage() {
             </form>
 
             <StudentWorkModal
-                studentWorkData={meeting.studentWorks[workToEditIndex]}
+                studentWorkData={workToEditIndex != null ? meeting.studentWorks[workToEditIndex] : undefined}
                 onSave={addOrUpdateStudentWork}/>
         </>
     );

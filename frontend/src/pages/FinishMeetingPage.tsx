@@ -1,29 +1,30 @@
-import React, {useEffect, useState, useRef} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import {useParams} from 'react-router-dom';
 import {getMeetings, uploadTheses, getMarkTable, getMarkTableForStudents} from '../services/ApiService';
 import {TypeOptions, CourseOptions} from '../models/ThesisOptions';
+import {StudentWork} from '../models/StudentWork';
 import {format} from 'date-fns';
 
 export function FinishMeetingPage() {
     const {id} = useParams();
-    const [works, setWorks] = useState([]);
-    const [thesisInfos, setThesisInfos] = useState([]);
-    const [files, setFiles] = useState([]);
+    const [works, setWorks] = useState<StudentWork[]>([]);
+    const [thesisInfos, setThesisInfos] = useState<any[]>([]);
+    const [files, setFiles] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [uploaded, setUploaded] = useState([]);
-    const formRef = useRef();
+    const formRef = useRef<HTMLFormElement | null>(null);
     const [filename, setFileName] = useState('');
 
     useEffect(() => {
         if (id) {
-            getMeetings(id).then(response => {
+            getMeetings(Number(id)).then(response => {
                 const meeting = response.data[0];
                 const year = new Date(meeting.dateAndTime).getFullYear();
-                const filteredWorks = meeting.studentWorks.filter(work =>
+                const filteredWorks = meeting.studentWorks.filter((work: { finalMark: string; }) =>
                     ["A", "B", "C", "D", "E", "5", "4", "3"].includes(work.finalMark)
                 );
 
-                const infos = filteredWorks.map(work => ({
+                const infos = filteredWorks.map((work: StudentWork) => ({
                     id: work.id,
                     type_id: '',
                     course_id: '',
@@ -77,7 +78,7 @@ export function FinishMeetingPage() {
     }
 
     const handleDownload = async () => {
-        const response = await getMarkTable(id);
+        const response = await getMarkTable(Number(id));
         const blob = new Blob([response.data]);
         const url = window.URL.createObjectURL(blob);
 
@@ -93,7 +94,7 @@ export function FinishMeetingPage() {
     }
 
     const handleDownloadForStudents = async () => {
-        const response = await getMarkTableForStudents(id);
+        const response = await getMarkTableForStudents(Number(id));
         const blob = new Blob([response.data]);
         const url = window.URL.createObjectURL(blob);
 
@@ -137,7 +138,7 @@ export function FinishMeetingPage() {
                            required
                            multiple
                            type="file"
-                           onChange={(e) => setFiles(e.target.files)}
+                           onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
                     />
                 </div>
                 <div className="d-flex mb-2 align-items-center">
@@ -202,7 +203,7 @@ export function FinishMeetingPage() {
                                                     <div key={linkIndex} className="mb-2">
                                                         <a href={link} target="_blank"
                                                            rel="noopener noreferrer">
-                                                            Ссылка {work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                            Ссылка {work.codeLink && work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
                                                         </a>
                                                     </div>
                                                 ))
@@ -251,7 +252,7 @@ export function FinishMeetingPage() {
 
                 {uploaded.length !== 0 ? (
                     <div className="alert alert-success alert-dismissible fade show" role="alert">
-                        <h5 class="alert-heading">Загрузка завершена!</h5>
+                        <h5 className="alert-heading">Загрузка завершена!</h5>
                         <p>Были загружены работы следующих студентов:</p>
                         <div className="ps-3">
                             <ol>
@@ -270,7 +271,7 @@ export function FinishMeetingPage() {
                             </a>.
                         </p>
                         <button type="button" className="btn-close" aria-label="Close"
-                                onClick={(e) => setUploaded([])}></button>
+                                onClick={() => setUploaded([])}></button>
                     </div>
                 ) : (<></>)}
 

@@ -1,4 +1,4 @@
-import React, {useRef, useState, useEffect} from 'react';
+import {useRef, useState, useEffect} from 'react';
 import {StudentWork} from '../models/StudentWork'
 
 /**
@@ -8,13 +8,13 @@ import {StudentWork} from '../models/StudentWork'
  * @param onSave - Save student work function
  */
 interface StudentWorkModalProps {
-    studentWorkData: StudentWork,
+    studentWorkData?: StudentWork,
     onSave: (studentWork: StudentWork) => void,
 }
 
 export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProps) {
-    const formRef = useRef();
-    const closeButtonRef = useRef();
+    const formRef = useRef<HTMLFormElement | null>(null);
+    const closeButtonRef = useRef<HTMLButtonElement | null>(null);
     const [codeLinks, setCodeLinks] = useState(['']);
 
     const initialStudentWorkState: StudentWork = {
@@ -27,11 +27,13 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
         supervisorMark: undefined,
         reviewerMark: undefined,
         codeLink: '',
+        finalMark: '',
         reportLink: '',
         supervisorReviewLink: '',
         consultantReviewLink: '',
         reviewerReviewLink: '',
-        additionalLink: ''
+        additionalLink: '',
+        averageCriteriaMarks: []
     }
 
     const [studentWork, setStudentWork] = useState(initialStudentWorkState);
@@ -48,7 +50,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
         }
     }, [studentWorkData]);
 
-    const handleChange = (e) => {
+    const handleChange = (e: { target: { name: any; value: any; }; }) => {
         const {name, value} = e.target;
 
         setStudentWork((prev) => ({
@@ -97,7 +99,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
         setCodeLinks(['']);
     }
 
-    const handleCheck = (e) => {
+    const handleCheck = (e: { target: { checked: any; }; }) => {
         setStudentWork((prev) => ({
             ...prev,
             codeLink: e.target.checked ? 'NDA' : codeLinks.join(' ')
@@ -106,7 +108,7 @@ export function StudentWorkModal({studentWorkData, onSave}: StudentWorkModalProp
 
     return (
         <div className="modal fade" id="studentWorkModal" data-bs-backdrop="static" data-bs-keyboard="false"
-             tabIndex="-1"
+             tabIndex={-1}
              aria-labelledby="staticBackdropLabel" aria-hidden="true">
             <div className="modal-dialog modal-lg">
                 <div className="modal-content">

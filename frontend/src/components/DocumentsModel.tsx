@@ -1,9 +1,14 @@
 import {useRef, useState, useEffect} from 'react';
 import {getDocuments} from '../services/ApiService';
+import {Meeting} from '../models/Meeting';
 
-export function DocumentsModel({meeting}) {
-    const formRef = useRef();
-    const closeButtonRef = useRef();
+interface DocumentsModelProps {
+    meeting: Meeting;
+}
+
+export function DocumentsModel({meeting}: DocumentsModelProps) {
+    const formRef = useRef<HTMLFormElement | null>(null);
+    const closeButtonRef = useRef<HTMLButtonElement | null>(null);
     const [coordinator, setCoordinator] = useState('');
     const [chairman, setChairman] = useState('');
 
@@ -21,7 +26,7 @@ export function DocumentsModel({meeting}) {
         }
 
         try {
-            const response = await getDocuments(meeting.id, coordinator, chairman);
+            const response = await getDocuments(meeting.id!, coordinator, chairman);
             const blob = new Blob([response.data]);
             const url = window.URL.createObjectURL(blob);
 
@@ -45,7 +50,7 @@ export function DocumentsModel({meeting}) {
     };
 
     return (
-        <div className="modal fade" id="docsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1"
+        <div className="modal fade" id="docsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1}
              aria-labelledby="staticBackdropLabel" aria-hidden="true">
             <div className="modal-dialog modal-lg">
                 <div className="modal-content">

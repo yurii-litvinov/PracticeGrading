@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {Criteria} from '../models/Criteria'
 import {Meeting} from '../models/Meeting'
+import {MemberMark} from '../models/MemberMark'
 
 const token = sessionStorage.getItem('token');
 
@@ -75,28 +76,28 @@ export const deleteCriteria = async (id: number) =>
 export const getMembers = async (id: number) =>
     await axiosService.get(`meetings/members`, {params: {id}})
 
-export const loginMember = async (userName: string, meetingId: int) =>
+export const loginMember = async (userName: string, meetingId: number) =>
     await axiosService.post(`member/login`, {userName, meetingId});
 
 export const getMemberMarks = async (workId: number, memberId?: number) =>
     await axiosService.get(`marks/`, {params: {memberId, workId}});
 
-export const createMemberMark = async (memberMark) =>
+export const createMemberMark = async (memberMark: MemberMark) =>
     await axiosService.post(`marks/new`, memberMark);
 
-export const updateMemberMark = async (memberMark) =>
+export const updateMemberMark = async (memberMark: MemberMark) =>
     await axiosService.put(`marks/update`, memberMark);
 
 export const deleteMemberMark = async (workId: number, memberId: number) =>
     await axiosService.delete(`marks/delete`, {params: {memberId, workId}});
 
-export const setFinalMark = async (meetingId: number, workId: number, mark: number) =>
+export const setFinalMark = async (meetingId: number, workId: number, mark: string) =>
     await axiosService.put(`meetings/setMark?meetingId=${meetingId}&workId=${workId}&mark=${mark}`);
 
-export const createMeetingsFromFile = async (formData) =>
+export const createMeetingsFromFile = async (formData: FormData) =>
     await axiosService.post(`meetings/fromFile`, formData);
 
-export const uploadTheses = async (formData) =>
+export const uploadTheses = async (formData: FormData) =>
     await axiosService.post(`meetings/uploadTheses`, formData);
 
 export const getMarkTable = async (id: number) =>

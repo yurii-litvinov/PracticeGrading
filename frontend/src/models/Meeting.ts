@@ -5,6 +5,7 @@ import {Criteria} from './Criteria';
 /**
  * Interface for meeting.
  *
+ * @param id - Meeting id
  * @param dateAndTime - Meeting date and time
  * @param auditorium - Meeting auditorium
  * @param info - Meeting info
@@ -15,6 +16,7 @@ import {Criteria} from './Criteria';
  * @param criteriaId - List of meeting criteria id
  */
 export interface Meeting {
+    id?: number,
     dateAndTime: Date,
     auditorium: string,
     info: string,

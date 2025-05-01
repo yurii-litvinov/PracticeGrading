@@ -1,33 +1,32 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 import {
     getMeetings,
     getMemberMarks,
     createMemberMark,
     updateMemberMark,
-    getMembers,
     deleteMemberMark
 } from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
-import {formatDate} from './MeetingsPage';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
 import {jwtDecode} from "jwt-decode";
 import {Criteria} from "../models/Criteria"
+import {StudentWork} from "../models/StudentWork"
+import {MemberMark} from "../models/MemberMark"
 import {RuleTypes} from '../models/RuleTypes'
 import {MemberMarkForm} from '../components/MemberMarkForm'
 import {MemberMarkCard} from '../components/MemberMarkCard'
 
 export function StudentWorkPage() {
     const {meetingId, workId} = useParams();
-    const navigate = useNavigate();
     const [criteria, setCriteria] = useState<Criteria[]>([]);
-    const [studentWork, setStudentWork] = useState({});
-    const [otherMarks, setOtherMarks] = useState([]);
-    const [otherMembers, setOtherMembers] = useState([]);
+    const [studentWork, setStudentWork] = useState<StudentWork>();
+    const [otherMarks, setOtherMarks] = useState<MemberMark[]>([]);
+    const [otherMembers, setOtherMembers] = useState<any[]>([]);
     const [isChanged, setIsChanged] = useState(false);
-    const closeButtonRef = useRef();
-    const typeOrder = {
+    const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+    const typeOrder: { [key: string]: number } = {
         [RuleTypes.Fixed]: 1,
         [RuleTypes.Range]: 2,
         [RuleTypes.Custom]: 3
@@ -39,15 +38,18 @@ export function StudentWorkPage() {
     let role = '';
     if (token) {
         const decoded = jwtDecode(token);
+        // @ts-ignore
         name = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
+        // @ts-ignore
         id = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
+        // @ts-ignore
         role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
     }
 
-    const initialMarkState = {
-        id: null,
-        memberId: id,
-        studentWorkId: workId,
+    const initialMarkState: MemberMark = {
+        id: undefined,
+        memberId: Number(id),
+        studentWorkId: Number(workId),
         criteriaMarks: [],
         mark: 0,
         comment: ''
@@ -57,31 +59,31 @@ export function StudentWorkPage() {
     const signalRService = useRef<SignalRService | null>(null);
 
     const fetchData = () => {
-        getMeetings(meetingId).then(response => {
+        getMeetings(Number(meetingId)).then(response => {
             const meeting = response.data[0]
             const criteriaList = meeting.criteria;
 
-            setStudentWork(meeting.studentWorks.find(student => student.id == workId));
-            setOtherMembers(meeting.members.filter(member => member.id != id));
+            setStudentWork(meeting.studentWorks.find(((student: StudentWork) => student.id == Number(workId))));
+            setOtherMembers(meeting.members.filter((member: { id: number; }) => member.id != Number(id)));
 
             setCriteria(
-                criteriaList.map((criteria) => ({
+                criteriaList.map((criteria: Criteria) => ({
                     ...criteria,
-                    scale: criteria.scale.sort((a, b) => b.value - a.value),
+                    scale: criteria.scale.sort((a, b) => b.value! - a.value!),
                     rules: criteria.rules.sort((a, b) => {
-                        if (typeOrder[a.type] !== typeOrder[b.type]) {
+                        if (a.type && b.type && typeOrder[a.type] !== typeOrder[b.type]) {
                             return typeOrder[a.type] - typeOrder[b.type];
                         }
-                        return b.value - a.value;
+                        return b.value! - a.value!;
                     })
                 }))
             );
         });
 
-        getMemberMarks(workId).then(response => {
+        getMemberMarks(Number(workId)).then(response => {
             const marks = response.data;
-            const targetMark = marks.find(mark => mark.memberId == id);
-            const otherMarks = marks.filter(mark => mark.memberId != id);
+            const targetMark = marks.find((mark: MemberMark) => mark.memberId == Number(id));
+            const otherMarks = marks.filter((mark: MemberMark) => mark.memberId != Number(id));
 
             if (targetMark) {
                 setMark(targetMark)
@@ -102,11 +104,11 @@ export function StudentWorkPage() {
             setMark((prevMark) => ({
                 ...prevMark,
                 criteriaMarks: criteria.map((element) => ({
-                    id: null,
-                    criteriaId: element.id,
-                    studentWorkId: workId,
+                    id: undefined,
+                    memberMarkId: prevMark.memberId,
+                    criteriaId: element.id!,
                     selectedRules: [],
-                    mark: null,
+                    mark: undefined,
                 }))
             }));
         }
@@ -116,7 +118,7 @@ export function StudentWorkPage() {
         if (workId) {
             fetchData();
 
-            signalRService.current = new SignalRService(meetingId, handleNotification);
+            signalRService.current = new SignalRService(meetingId!, handleNotification);
             signalRService.current.startConnection();
         }
 
@@ -134,13 +136,13 @@ export function StudentWorkPage() {
     const saveMark = () => {
         if (role === 'member') {
             if (mark?.id == null || mark.id === 0) {
-                createMemberMark(mark).then(response => signalRService.current.sendNotification(Actions.SendMark));
+                createMemberMark(mark).then(() => signalRService.current?.sendNotification(Actions.SendMark));
             } else {
-                updateMemberMark(mark).then(response => signalRService.current.sendNotification(Actions.SendMark));
+                updateMemberMark(mark).then(() => signalRService.current?.sendNotification(Actions.SendMark));
             }
         } else {
-            updateMemberMark(mark).then(response => signalRService.current.sendNotification(Actions.SendMark));
-            closeButtonRef.current.click();
+            updateMemberMark(mark).then(() => signalRService.current?.sendNotification(Actions.SendMark));
+            closeButtonRef.current?.click();
         }
     }
 
@@ -148,17 +150,17 @@ export function StudentWorkPage() {
         window.history.back();
     }
 
-    const handleDeleteMark = async (memberId) => {
+    const handleDeleteMark = async (memberId: number) => {
         const isConfirmed = window.confirm('Вы уверены, что хотите удалить эту оценку?');
         if (isConfirmed) {
-            await deleteMemberMark(workId, memberId);
-            signalRService.current.sendNotification(Actions.Update);
+            await deleteMemberMark(Number(workId), memberId);
+            signalRService.current?.sendNotification(Actions.Update);
         }
     }
 
     const handleClose = () => {
         setMark(initialMarkState);
-        signalRService.current.sendNotification(Actions.Update);
+        signalRService.current?.sendNotification(Actions.Update);
     }
 
     return (
@@ -167,57 +169,57 @@ export function StudentWorkPage() {
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">ФИО студента</label>
                     <span
-                        className="form-control-plaintext text-wrap span-custom">{studentWork.studentName}</span>
+                        className="form-control-plaintext text-wrap span-custom">{studentWork?.studentName}</span>
                 </div>
 
-                {studentWork.info ? (<div className="d-flex mb-2 align-items-center">
+                {studentWork?.info ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Курс, направление</label>
                     <span
-                        className="form-control-plaintext text-wrap span-custom">{studentWork.info}</span>
+                        className="form-control-plaintext text-wrap span-custom">{studentWork?.info}</span>
                 </div>) : (<></>)}
 
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Тема практики/ВКР</label>
-                    <span className="form-control-plaintext text-wrap span-custom">{studentWork.theme}</span>
+                    <span className="form-control-plaintext text-wrap span-custom">{studentWork?.theme}</span>
                 </div>
 
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Научный руководитель</label>
                     <span
-                        className="form-control-plaintext text-wrap span-custom">{studentWork.supervisor}</span>
+                        className="form-control-plaintext text-wrap span-custom">{studentWork?.supervisor}</span>
                 </div>
 
-                {studentWork.consultant ? (<div className="d-flex mb-2 align-items-center">
+                {studentWork?.consultant ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Консультант</label>
                     <span
-                        className="form-control-plaintext text-wrap span-custom">{studentWork.consultant}</span>
+                        className="form-control-plaintext text-wrap span-custom">{studentWork?.consultant}</span>
                 </div>) : (<></>)}
 
-                {studentWork.reviewer ? (<div className="d-flex mb-2 align-items-center">
+                {studentWork?.reviewer ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Рецензент</label>
                     <span
-                        className="form-control-plaintext text-wrap span-custom">{studentWork.reviewer || "—"}</span>
+                        className="form-control-plaintext text-wrap span-custom">{studentWork?.reviewer || "—"}</span>
                 </div>) : (<></>)}
 
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Оценка научного руководителя</label>
                     <span
-                        className="form-control-plaintext w-auto text-wrap">{studentWork.supervisorMark || "—"}</span>
+                        className="form-control-plaintext w-auto text-wrap">{studentWork?.supervisorMark || "—"}</span>
                 </div>
 
-                {studentWork.reviewerMark ? (<div className="d-flex mb-2 align-items-center">
+                {studentWork?.reviewerMark ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Оценка рецензента</label>
                     <span
-                        className="form-control-plaintext w-auto text-wrap">{studentWork.reviewerMark || "—"}</span>
+                        className="form-control-plaintext w-auto text-wrap">{studentWork?.reviewerMark || "—"}</span>
                 </div>) : (<></>)}
 
-                {studentWork.codeLink ? (<div className="d-flex mb-2 align-items-center">
+                {studentWork?.codeLink ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Код</label>
-                    <span className="form-control-plaintext w-auto text-wrap">{studentWork.codeLink !== 'NDA' ? (
+                    <span className="form-control-plaintext w-auto text-wrap">{studentWork?.codeLink !== 'NDA' ? (
                         studentWork.codeLink.split(' ').map((link, linkIndex) => (
                             <div key={linkIndex} className="mb-2">
                                 <a href={link} target="_blank" rel="noopener noreferrer">
-                                    Ссылка {studentWork.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                    Ссылка {studentWork?.codeLink && studentWork?.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
                                 </a>
                             </div>
                         ))
@@ -226,28 +228,28 @@ export function StudentWorkPage() {
                     )}</span>
                 </div>) : (<></>)}
 
-                {studentWork.reportLink ? (<div className="d-flex mb-2 align-items-center">
+                {studentWork?.reportLink ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Отчёт</label>
                     <span
                         className="form-control-plaintext w-auto text-wrap">
                         <a href={studentWork.reportLink} target="_blank" rel="noopener noreferrer">Ссылка</a></span>
                 </div>) : (<></>)}
 
-                {studentWork.supervisorReviewLink ? (<div className="d-flex mb-2 align-items-center">
+                {studentWork?.supervisorReviewLink ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Отзыв научника</label>
                     <span
                         className="form-control-plaintext w-auto text-wrap">
                         <a href={studentWork.supervisorReviewLink} target="_blank" rel="noopener noreferrer">Ссылка</a></span>
                 </div>) : (<></>)}
 
-                {studentWork.consultantReviewLink ? (<div className="d-flex mb-2 align-items-center">
+                {studentWork?.consultantReviewLink ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Отзыв консультанта</label>
                     <span
                         className="form-control-plaintext w-auto text-wrap">
-                        <a href={studentWork.consultantReviewLink} target="_blank" rel="noopener noreferrer">Ссылка</a></span>
+                        <a href={studentWork?.consultantReviewLink} target="_blank" rel="noopener noreferrer">Ссылка</a></span>
                 </div>) : (<></>)}
 
-                {studentWork.reviewerReviewLink ? (<div className="d-flex mb-2 align-items-center">
+                {studentWork?.reviewerReviewLink ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Рецензия</label>
                     <span
                         className="form-control-plaintext w-auto text-wrap">
@@ -255,13 +257,13 @@ export function StudentWorkPage() {
                            rel="noopener noreferrer">Ссылка</a></span>
                 </div>) : (<></>)}
 
-                {studentWork.additionalLink ? (<div className="d-flex mb-2 align-items-center">
+                {studentWork?.additionalLink ? (<div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">Дополнительные материалы</label>
                     <span
                         className="form-control-plaintext w-auto text-wrap">
                         <a href={studentWork.additionalLink} target="_blank" rel="noopener noreferrer">Ссылка</a></span>
                 </div>) : (<></>)}
-               
+
             </div>
 
             {role === 'member' ? (<>
@@ -305,7 +307,7 @@ export function StudentWorkPage() {
 
                         <div className="modal fade" id="markModal" data-bs-backdrop="static"
                              data-bs-keyboard="false"
-                             tabIndex="-1"
+                             tabIndex={-1}
                              aria-labelledby="staticBackdropLabel" aria-hidden="true">
                             <div className="modal-dialog modal-lg">
                                 <div className="modal-content">
@@ -324,7 +326,7 @@ export function StudentWorkPage() {
                                                             criteria={criteria} isChanged={isChanged}
                                                             setIsChanged={setIsChanged}
                                                             mark={mark}
-                                                            setMark={setMark} saveMark={handleSubmit}/>
+                                                            setMark={setMark} saveMark={saveMark}/>
                                         </div>
                                     </div>
                                     <div className="modal-footer">

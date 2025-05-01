@@ -9,6 +9,7 @@ export function NavBar() {
     let role = '';
     if (token) {
         const decoded = jwtDecode(token);
+        // @ts-ignore
         role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
     }
 

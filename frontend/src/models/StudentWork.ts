@@ -2,6 +2,7 @@
  * Interface for student work.
  *
  * @param studentName - Student name
+ * @param info - Student info
  * @param theme - Student work theme
  * @param supervisor - Student work supervisor
  * @param consultant - Student work consultant
@@ -13,6 +14,7 @@
 export interface StudentWork {
     id?: number,
     studentName: string,
+    info: string,
     theme: string,
     supervisor: string,
     consultant?: string,
@@ -20,9 +22,11 @@ export interface StudentWork {
     supervisorMark?: string,
     reviewerMark?: string,
     codeLink?: string,
+    finalMark: string,
     reportLink?: string,
     supervisorReviewLink?: string,
     consultantReviewLink?: string,
     reviewerReviewLink?: string,
     additionalLink?: string
+    averageCriteriaMarks: any[]
 }

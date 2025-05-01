@@ -1,10 +1,12 @@
-import React, {useEffect, useState, useRef} from 'react';
+import {useEffect, useState, useRef, ChangeEvent} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {getMeetings, getCriteria, setFinalMark} from '../services/ApiService';
+import {getMeetings, setFinalMark} from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
 import {formatDate} from './MeetingsPage';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
+import {Meeting} from '../models/Meeting';
+import {StudentWork} from '../models/StudentWork';
 import Tooltip from 'bootstrap/js/dist/tooltip.js';
 import copy from 'copy-to-clipboard';
 import {DocumentsModel} from '../components/DocumentsModel';
@@ -13,8 +15,8 @@ export function ViewMeetingPage() {
     const {id} = useParams();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("works");
-    const [selectedStudentId, setSelectedStudentId] = useState(null);
-    const [meeting, setMeeting] = useState({
+    const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+    const [meeting, setMeeting] = useState<Meeting>({
         dateAndTime: new Date(),
         auditorium: '',
         info: '',
@@ -24,24 +26,25 @@ export function ViewMeetingPage() {
         members: [],
         criteria: []
     });
-    const [marks, setMarks] = useState([]);
+    const [marks, setMarks] = useState<any[]>([]);
 
     const signalRService = useRef<SignalRService | null>(null);
-    const tooltipRef = useRef(null);
+    const tooltipRef = useRef<Tooltip | null>(null);
+    ;
 
     const fetchData = () => {
-        getMeetings(id).then(response => {
+        getMeetings(Number(id)).then(response => {
             const meeting = response.data[0];
             setMeeting(meeting);
 
             setMarks(
-                meeting.studentWorks.map(work => {
+                meeting.studentWorks.map((work: StudentWork) => {
                     const averageMarks = work.averageCriteriaMarks.filter(item => item.averageMark !== null);
                     const mark = Math.round(averageMarks.reduce((sum, mark) =>
                         sum + mark.averageMark, 0) / averageMarks.length * 10) / 10;
 
                     if (work.finalMark === '' && !isNaN(mark)) {
-                        setFinalMark(meeting.id, work.id, Math.round(mark));
+                        setFinalMark(meeting.id, work.id!, String(Math.round(mark)));
                     }
 
                     return {
@@ -58,14 +61,14 @@ export function ViewMeetingPage() {
         console.log(action)
         if (action.includes(Actions.Join) || action.includes(Actions.SendMark)) {
             fetchData()
-            signalRService.current.sendNotification(`${Actions.Highlight}:${selectedStudentId}`);
+            signalRService.current?.sendNotification(`${Actions.Highlight}:${selectedStudentId}`);
         }
     }
 
 
     useEffect(() => {
         const tooltipElement = document.getElementById('copy');
-        tooltipRef.current = new Tooltip(tooltipElement);
+        tooltipRef.current = new Tooltip(tooltipElement!);
 
         if (id) {
             fetchData();
@@ -98,14 +101,14 @@ export function ViewMeetingPage() {
 
     const handleRowClick = (id: number) => {
         setSelectedStudentId(id === selectedStudentId ? null : id);
-        signalRService.current.sendNotification(`${Actions.Highlight}:${id === selectedStudentId ? null : id}`);
+        signalRService.current?.sendNotification(`${Actions.Highlight}:${id === selectedStudentId ? null : id}`);
     };
 
     const handleIconClick = (workId: number) => {
         navigate(`/meetings/${id}/studentwork/${workId}`);
     };
 
-    const handleMarkEdit = (e, id) => {
+    const handleMarkEdit = (e: ChangeEvent<HTMLInputElement>, id: number) => {
         const value = e.target.value;
 
         setMarks(marks.map(mark => mark.id === id ? {
@@ -113,26 +116,28 @@ export function ViewMeetingPage() {
             finalMark: value
         } : mark));
 
-        setFinalMark(meeting.id, id, value);
+        setFinalMark(meeting.id!, id, value);
     }
 
     const handleCopyLink = () => {
         copy(`${window.location.origin}/meetings/${id}/member`);
-        tooltipRef.current.dispose();
+        tooltipRef.current?.dispose();
 
         const tooltipElement = document.getElementById('copy');
-        tooltipElement.setAttribute('title', 'Скопировано!');
-        tooltipRef.current = new Tooltip(tooltipElement);
+        tooltipElement?.setAttribute('title', 'Скопировано!');
+        tooltipRef.current = new Tooltip(tooltipElement!);
         tooltipRef.current.show();
 
         setTimeout(() => {
-            tooltipRef.current.dispose();
+            tooltipRef.current?.dispose();
             const tooltipElement = document.getElementById('copy');
-            tooltipElement.setAttribute('title', 'Копировать ссылку');
-            tooltipRef.current = new Tooltip(tooltipElement);
+            tooltipElement?.setAttribute('title', 'Копировать ссылку');
+            tooltipRef.current = new Tooltip(tooltipElement!);
         }, 700);
     }
 
+    // @ts-ignore
+    // @ts-ignore
     return (
         <>
             <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
@@ -157,7 +162,7 @@ export function ViewMeetingPage() {
                     <a href="#" id="copy" data-bs-custom-class="tooltip-light" data-bs-toggle="tooltip"
                        data-bs-trigger="hover" data-bs-placement="top" title="Копировать ссылку"
                        className="icon-link icon-link-hover form-control-plaintext text-primary text-decoration-underline w-auto"
-                       style={{'--bs-icon-link-transform': 'translate3d(0, -.125rem, 0)'}}
+                       style={{'--bs-icon-link-transform': 'translate3d(0, -.125rem, 0)'} as any}
                        onClick={(e) => {
                            e.preventDefault();
                            handleCopyLink();
@@ -214,7 +219,7 @@ export function ViewMeetingPage() {
                         data-bs-target="#docsModal">Сгенерировать документы
                 </button>
             </div>
-            
+
             <DocumentsModel meeting={meeting}/>
 
             <hr className="my-4"/>
@@ -270,13 +275,13 @@ export function ViewMeetingPage() {
                                     </thead>
                                     <tbody>
                                     {meeting.studentWorks.map((work) => (
-                                        <tr key={work.id} onClick={() => handleRowClick(work.id)}
+                                        <tr key={work.id} onClick={() => handleRowClick(work.id!)}
                                             className={selectedStudentId === work.id ? "table-info" : ""}
                                             style={{cursor: "pointer"}}>
                                             <td style={{width: '30px'}}>
                                                 <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleIconClick(work.id);
+                                                    handleIconClick(work.id!);
                                                 }}>
                                                     <i className="bi bi-arrows-angle-expand fs-5"
                                                        style={{color: '#007bff'}}></i>
@@ -301,7 +306,7 @@ export function ViewMeetingPage() {
                                                             <div key={linkIndex} className="mb-2">
                                                                 <a href={link} target="_blank"
                                                                    rel="noopener noreferrer">
-                                                                    Ссылка {work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                                    Ссылка {work.codeLink && work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
                                                                 </a>
                                                             </div>
                                                         ))
@@ -337,7 +342,7 @@ export function ViewMeetingPage() {
                                             <td style={{width: '30px'}}>
                                                 <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
                                                     e.stopPropagation();
-                                                    handleIconClick(work.id);
+                                                    handleIconClick(work.id!);
                                                 }}>
                                                     <i className="bi bi-arrows-angle-expand fs-5"
                                                        style={{color: '#007bff'}}></i>
@@ -354,7 +359,7 @@ export function ViewMeetingPage() {
                                                     type="text"
                                                     className="form-control"
                                                     value={marks.find(mark => mark.id === work.id).finalMark || ""}
-                                                    onChange={(e) => handleMarkEdit(e, work.id)}
+                                                    onChange={(e) => handleMarkEdit(e, work.id!)}
                                                 />
                                             </td>
                                         </tr>

@@ -1,14 +1,37 @@
-import React, {useEffect} from 'react';
-import {RuleTypes} from '../models/RuleTypes'
+import {ChangeEvent, useEffect} from 'react';
+import {RuleTypes} from '../models/RuleTypes';
+import {MemberMark} from '../models/MemberMark';
+import {Criteria} from '../models/Criteria';
+import {Rule} from '../models/Rule';
 
-export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, mark, setMark, saveMark}) {
+interface MemberMarkFormProps {
+    role: string;
+    name: string;
+    criteria: Criteria[];
+    isChanged: boolean;
+    setIsChanged: (value: boolean) => void;
+    mark: MemberMark
+    setMark: React.Dispatch<React.SetStateAction<MemberMark>>;
+    saveMark: () => void;
+}
+
+export function MemberMarkForm({
+                                   role,
+                                   name,
+                                   criteria,
+                                   isChanged,
+                                   setIsChanged,
+                                   mark,
+                                   setMark,
+                                   saveMark
+                               }: MemberMarkFormProps) {
     const calculateMark = () => {
         setMark((prevMark) => {
             let finalMark = prevMark.criteriaMarks[0]?.mark || 0;
 
             prevMark.criteriaMarks.forEach((criteriaMark) => {
                 if (criteriaMark.mark !== null) {
-                    finalMark = Math.min(finalMark, criteriaMark.mark);
+                    finalMark = Math.min(finalMark, criteriaMark.mark!);
                 }
             });
 
@@ -19,14 +42,14 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
         });
     }
 
-    const handleCheckboxChange = (e, criteriaId, rule) => {
+    const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>, criteriaId: any, rule: Rule) => {
         setMark((prevMark) => {
             const updatedCriteriaMarks = prevMark.criteriaMarks.map((criteriaMark) => {
                 if (criteriaMark.criteriaId === criteriaId) {
                     const updatedSelectedRules = [...criteriaMark.selectedRules];
 
                     if (e.target.checked) {
-                        updatedSelectedRules.push({ruleId: rule.id, value: rule.value});
+                        updatedSelectedRules.push({ruleId: rule.id!, value: rule.value});
                     } else {
                         updatedSelectedRules.splice(updatedSelectedRules.findIndex(r => r.ruleId === rule.id), 1);
                     }
@@ -34,7 +57,7 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
                     return {
                         ...criteriaMark,
                         selectedRules: updatedSelectedRules,
-                        mark: updatedSelectedRules.reduce((sum, selectedRule) => sum + selectedRule.value, 0)
+                        mark: updatedSelectedRules.reduce((sum, selectedRule) => sum + selectedRule.value!, 0)
                     };
                 }
                 return criteriaMark;
@@ -50,20 +73,21 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
         setIsChanged(true);
     }
 
-    const handleRadioChange = (criteriaId, rule) => {
+    const handleRadioChange = (criteriaId: any, rule: Rule) => {
         setMark((prevMark) => {
             const updatedCriteriaMarks = prevMark.criteriaMarks.map((criteriaMark) => {
                 if (criteriaMark.criteriaId === criteriaId) {
-                    const notScaleRules = criteriaMark.selectedRules.filter(selectedRule => {
-                        return criteria.find(criteria => criteria.id === criteriaId).rules.find(r => r.id === selectedRule.ruleId)
+                    const notScaleRules = criteriaMark.selectedRules.filter((selectedRule: { ruleId: any; }) => {
+                        return criteria.find(criteria => criteria.id === criteriaId)?.rules.find((rule) => rule.id === selectedRule.ruleId)
                     });
 
-                    notScaleRules.push({ruleId: rule.id, value: rule.value})
+                    notScaleRules.push({ruleId: rule.id!, value: rule.value})
 
                     return {
                         ...criteriaMark,
                         selectedRules: notScaleRules,
-                        mark: notScaleRules.reduce((sum, selectedRule) => sum + selectedRule.value, 0)
+                        mark: notScaleRules.reduce((sum: number, selectedRule: { value?: number; }) =>
+                            sum + selectedRule.value!, 0)
                     };
                 }
                 return criteriaMark;
@@ -79,7 +103,7 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
         setIsChanged(true);
     }
 
-    const handleInputChange = (value, criteriaId, rule) => {
+    const handleInputChange = (value: string | number, criteriaId: any, rule: Rule) => {
         const newValue = value === '' ? undefined : Number(value);
 
         setMark((prevMark) => {
@@ -89,9 +113,11 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
                     const selectedRule = updatedSelectedRules.find(r => r.ruleId === rule.id)
 
                     if (!selectedRule) {
-                        updatedSelectedRules.push({ruleId: rule.id, value: newValue > 0 ? 0 : newValue});
+                        updatedSelectedRules.push({
+                            ruleId: rule.id!, value: newValue !== undefined && newValue > 0 ? 0 : newValue ?? 0
+                        });
                     } else {
-                        selectedRule.value = newValue > 0 ? 0 : newValue;
+                        selectedRule.value = newValue !== undefined && newValue > 0 ? 0 : newValue;
                     }
 
                     return {
@@ -115,16 +141,16 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
         }
     }
 
-    const handleCommentChange = (e, criteriaId) => {
+    const handleCommentChange = (e: ChangeEvent<HTMLTextAreaElement>, criteriaId: number | null) => {
         const newComment = e.target.value;
 
         if (criteriaId === null) {
-            setMark(prevMark => ({
+            setMark((prevMark) => ({
                 ...prevMark,
                 comment: newComment
             }));
         } else {
-            setMark(prevMark => {
+            setMark((prevMark) => {
                 const updatedCriteriaMarks = prevMark.criteriaMarks.map(criteriaMark => {
                     if (criteriaMark.criteriaId === criteriaId) {
                         return {
@@ -145,21 +171,29 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
         setIsChanged(true);
     }
 
-    const handleMarkChange = (value) => {
-        if ((value >= 1 && value <= 5) || value === '') {
-            setMark(prevMark => ({
+    const handleMarkChange = (value: string | number) => {
+        if (value === '') {
+            setMark((prevMark) => ({
                 ...prevMark,
-                mark: value
+                mark: undefined
             }));
+        } else {
+            const mark = Number(value);
+            if (mark >= 1 && mark <= 5) {
+                setMark((prevMark) => ({
+                    ...prevMark,
+                    mark: mark
+                }));
 
-            setIsChanged(true);
+                setIsChanged(true);
+            }
         }
     }
 
-    const isRuleSelected = (criteriaId, ruleId) => {
+    const isRuleSelected = (criteriaId: any, ruleId: any) => {
         return mark.criteriaMarks.some((criteriaMark) =>
             criteriaMark.criteriaId === criteriaId &&
-            criteriaMark.selectedRules.some((selectedRule) => selectedRule.ruleId === ruleId)
+            criteriaMark.selectedRules.some((selectedRule: { ruleId: any; }) => selectedRule.ruleId === ruleId)
         );
     }
 
@@ -194,9 +228,9 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
 
                     <h6 className="w-auto">Шкала оценивания:</h6>
                     <div className="mb-2">
-                        {criteria.scale.map((rule, ruleIndex) => (
+                        {criteria.scale.map((rule) => (
                             <div key={rule.id} className="form-check">
-                                <input className="form-check-input" type="radio" name={criteria.id}
+                                <input className="form-check-input" type="radio" name={String(criteria.id)}
                                        checked={isRuleSelected(criteria.id, rule.id)}
                                        onChange={() => handleRadioChange(criteria.id, rule)}></input>
                                 <label>
@@ -222,7 +256,7 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
                                         <label>
                                             {rule.type === RuleTypes.Range ? "До " : ""}
                                             <span className="fw-semibold">{rule.value}</span>{" "}
-                                            {rule.description.split(/(https?:\/\/\S+)/g).map((part, i) =>
+                                            {rule.description.split(/(https?:\/\/\S+)/g).map((part: string, i: number) =>
                                                 part.match(/^https?:\/\//) ? (
                                                     <a key={i} href={part} target="_blank"
                                                        rel="noopener noreferrer">
@@ -234,17 +268,19 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
                                         {rule.type === RuleTypes.Range ? (
                                             <div className="mt-1 mb-2" style={{maxWidth: '500px'}}>
                                                 <input
-                                                    value={rule.value - (mark.criteriaMarks.find(c => c.criteriaId === criteria.id)
-                                                        ?.selectedRules.find(s => s.ruleId === rule.id)?.value ?? 0)}
+                                                    value={rule.value! - (mark.criteriaMarks.find(c => c.criteriaId === criteria.id)
+                                                        ?.selectedRules.find((selected: {
+                                                            ruleId: any;
+                                                        }) => selected.ruleId === rule.id)?.value ?? 0)}
                                                     type="range"
                                                     className="form-range"
                                                     min={rule.value} max={0} step={1}
                                                     onChange={(e) =>
-                                                        handleInputChange(rule.value - e.target.value, criteria.id, rule)}/>
+                                                        handleInputChange(rule.value! - Number(e.target.value), criteria.id, rule)}/>
 
                                                 <div className="d-flex justify-content-between ps-2 pe-1">
                                                     {Array.from(
-                                                        {length: Math.abs(rule.value) + 1},
+                                                        {length: Math.abs(rule.value!) + 1},
                                                         (_, i) => (
                                                             <span key={i}>{0 - i}</span>
                                                         ))}
@@ -254,7 +290,9 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
                                                    className="form-control w-auto mb-2"
                                                    value={mark.criteriaMarks.find(criteriaMark =>
                                                        criteriaMark.criteriaId === criteria.id)?.selectedRules
-                                                       .find(selected => selected.ruleId === rule.id)?.value ?? ''}
+                                                       .find((selected: {
+                                                           ruleId: any;
+                                                       }) => selected.ruleId === rule.id)?.value ?? ''}
                                                    step="1"
                                                    onChange={(e) => handleInputChange(e.target.value, criteria.id, rule)}
                                                    placeholder="0"
@@ -267,9 +305,9 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
 
                     <div className="my-2">
                         <h6>Комментарий:</h6>
-                        <textarea type="text" className="form-control" name="comment"
+                        <textarea className="form-control" name="comment"
                                   value={mark.criteriaMarks.find(criteriaMark => criteriaMark.criteriaId === criteria.id)?.comment || ''}
-                                  onChange={(e) => handleCommentChange(e, criteria.id)}/>
+                                  onChange={(e) => handleCommentChange(e, criteria.id!)}/>
                     </div>
 
                 </div>
@@ -289,7 +327,7 @@ export function MemberMarkForm({role, name, criteria, isChanged, setIsChanged, m
 
             <div className="my-2">
                 <h6>Общий комментарий:</h6>
-                <textarea type="text" className="form-control" name="comment"
+                <textarea className="form-control" name="comment"
                           value={mark.comment}
                           onChange={(e) => handleCommentChange(e, null)}/>
             </div>

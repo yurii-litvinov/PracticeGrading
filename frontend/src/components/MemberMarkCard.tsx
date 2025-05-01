@@ -1,7 +1,23 @@
-import React, {useEffect} from 'react';
-import {RuleTypes} from '../models/RuleTypes'
+import {MemberMark} from '../models/MemberMark';
+import {Criteria} from '../models/Criteria';
 
-export function MemberMarkCard({role, otherMarks, otherMembers, criteria, handleDeleteMark, setMark}) {
+interface MemberMarkCardProps {
+    role: string;
+    otherMarks: MemberMark[];
+    otherMembers: any[];
+    criteria: Criteria[];
+    handleDeleteMark?: (memberId: number) => void;
+    setMark?: (mark: MemberMark) => void;
+}
+
+export function MemberMarkCard({
+                                   role,
+                                   otherMarks,
+                                   otherMembers,
+                                   criteria,
+                                   handleDeleteMark,
+                                   setMark
+                               }: MemberMarkCardProps) {
     return (
         <>
             {otherMarks.length === 0 ? (
@@ -10,7 +26,7 @@ export function MemberMarkCard({role, otherMarks, otherMembers, criteria, handle
                 </div>
             ) : (<>
                 <div className="accordion" id="marksAccordion">
-                    {otherMarks.map((memberMark, index) =>
+                    {otherMarks.map((memberMark) =>
                         <div className="accordion-item" key={memberMark.memberId}>
 
                             <h2 className="accordion-header d-flex justify-content-between align-items-center">
@@ -28,12 +44,12 @@ export function MemberMarkCard({role, otherMarks, otherMembers, criteria, handle
                                 {role === 'admin' ? (<>
                                     <button type="button" id="delete-criteria" className="btn btn-sm btn-link"
                                             style={{height: '40px'}}
-                                            onClick={() => handleDeleteMark(memberMark.memberId)}>
+                                            onClick={() => handleDeleteMark!(memberMark.memberId)}>
                                         <i className="bi bi-x-lg fs-5" style={{color: 'red'}}></i>
                                     </button>
                                     <button type="button" className="btn btn-sm me-3 btn-link"
                                             data-bs-toggle="modal" data-bs-target="#markModal"
-                                            onClick={() => setMark(memberMark)}>
+                                            onClick={() => setMark!(memberMark)}>
                                         <i className="bi bi-pencil fs-5" style={{color: '#007bff'}}></i>
                                     </button>
                                 </>) : null}
@@ -46,7 +62,9 @@ export function MemberMarkCard({role, otherMarks, otherMembers, criteria, handle
                                  data-bs-parent="#marksAccordion">
                                 <div className="accordion-body">
                                     {criteria.map((criteria, index) => {
-                                        const criteriaMark = memberMark.criteriaMarks.find(m => m.criteriaId === criteria.id);
+                                        const criteriaMark = memberMark.criteriaMarks.find((mark: {
+                                            criteriaId: any;
+                                        }) => mark.criteriaId === criteria.id);
                                         if (criteriaMark?.mark === null) return null;
 
                                         return (
@@ -58,15 +76,15 @@ export function MemberMarkCard({role, otherMarks, otherMembers, criteria, handle
                                                 </label>
 
                                                 <ul className="list-unstyled ps-3 mb-1">
-                                                    {criteriaMark?.selectedRules.sort((a, b) => b.value - a.value).map((selected, index) => {
+                                                    {criteriaMark?.selectedRules.sort((a, b) => b.value! - a.value!).map((selected, index: number) => {
                                                             const rule = criteria.scale.concat(criteria.rules)
-                                                                .find(r => r.id === selected.ruleId);
+                                                                .find((rule) => rule.id === selected.ruleId);
 
                                                             return (<li key={index}>
-                                                                {rule.isScaleRule ? (<>{selected.value} — {rule.description}</>)
+                                                                {rule?.isScaleRule ? (<>{selected.value} — {rule.description}</>)
                                                                     : (selected.value !== 0 ?
-                                                                        (<>{selected.value} {rule.description
-                                                                            .split(/(https?:\/\/\S+)/g).map((part, i) =>
+                                                                        (<>{selected.value} {rule?.description
+                                                                            .split(/(https?:\/\/\S+)/g).map((part: string, i: number) =>
                                                                                 part.match(/^https?:\/\//) ? (
                                                                                     <a key={i} href={part} target="_blank"
                                                                                        rel="noopener noreferrer">
@@ -80,7 +98,7 @@ export function MemberMarkCard({role, otherMarks, otherMembers, criteria, handle
 
                                                 {criteriaMark?.comment ?
                                                     (<p
-                                                        className="w-auto fst-italic ms-3">Комментарий: {memberMark.criteriaMarks.find(mark => mark.criteriaId === criteria.id).comment}</p>)
+                                                        className="w-auto fst-italic ms-3">Комментарий: {memberMark.criteriaMarks.find((mark) => mark.criteriaId === criteria.id)?.comment}</p>)
                                                     : null}
                                             </div>
                                         );

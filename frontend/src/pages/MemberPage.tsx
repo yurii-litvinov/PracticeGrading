@@ -1,44 +1,46 @@
-import React, {useEffect, useState, useRef} from 'react';
+import {useEffect, useState, useRef, ChangeEvent} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {getMeetings, getCriteria, setFinalMark} from '../services/ApiService';
+import {getMeetings, setFinalMark} from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
 import {formatDate} from './MeetingsPage';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
+import {Meeting} from '../models/Meeting';
+import {StudentWork} from '../models/StudentWork';
 
 export function MemberPage() {
     const {id} = useParams();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("works");
-    const [selectedStudentId, setSelectedStudentId] = useState(null);
-    const [criteria, setCriteria] = useState([]);
-    const [meeting, setMeeting] = useState({
+    const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+    const [meeting, setMeeting] = useState<Meeting>({
+        id: undefined,
         dateAndTime: new Date(),
         auditorium: '',
         info: '',
         callLink: '',
         materialsLink: '',
         studentWorks: [],
-        members: [''],
-        criteriaId: []
+        members: [],
+        criteria: []
     });
-    const [marks, setMarks] = useState([]);
+    const [marks, setMarks] = useState<any[]>([]);
 
     const signalRService = useRef<SignalRService | null>(null);
 
     const fetchData = () => {
-        getMeetings(id).then(response => {
+        getMeetings(Number(id)).then(response => {
             const meeting = response.data[0]
             setMeeting(meeting);
 
             setMarks(
-                meeting.studentWorks.map(work => {
+                meeting.studentWorks.map((work: StudentWork) => {
                     const averageMarks = work.averageCriteriaMarks.filter(item => item.averageMark !== null);
                     const mark = Math.round(averageMarks.reduce((sum, mark) =>
                         sum + mark.averageMark, 0) / averageMarks.length * 10) / 10;
 
                     if (work.finalMark === '' && !isNaN(mark)) {
-                        setFinalMark(meeting.id, work.id, Math.round(mark));
+                        setFinalMark(meeting.id, work.id!, String(Math.round(mark)));
                     }
 
                     return {
@@ -81,7 +83,7 @@ export function MemberPage() {
         navigate(`/meetings/${id}/studentwork/${workId}`);
     };
 
-    const handleMarkEdit = (e, id) => {
+    const handleMarkEdit = (e: ChangeEvent<HTMLInputElement>, id: number) => {
         const value = e.target.value;
 
         setMarks(marks.map(mark => mark.id === id ? {
@@ -89,7 +91,7 @@ export function MemberPage() {
             finalMark: value
         } : mark));
 
-        setFinalMark(meeting.id, id, value);
+        setFinalMark(Number(meeting.id), id, value);
     }
 
     return (
@@ -192,7 +194,7 @@ export function MemberPage() {
                                 </thead>
                                 <tbody>
                                 {meeting.studentWorks.map((work) => (
-                                    <tr key={work.id} onClick={() => handleRowClick(work.id)}
+                                    <tr key={work.id} onClick={() => handleRowClick(work.id!)}
                                         className={selectedStudentId === work.id ? "table-info" : ""}
                                         style={{cursor: "pointer"}}>
                                         <td>{work.studentName}</td>
@@ -214,7 +216,7 @@ export function MemberPage() {
                                                         <div key={linkIndex} className="mb-2">
                                                             <a href={link} target="_blank"
                                                                rel="noopener noreferrer">
-                                                                Ссылка {work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                                Ссылка {work.codeLink && work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
                                                             </a>
                                                         </div>
                                                     ))
@@ -259,7 +261,7 @@ export function MemberPage() {
                                                 type="text"
                                                 className="form-control"
                                                 value={marks.find(mark => mark.id === work.id).finalMark || ""}
-                                                onChange={(e) => handleMarkEdit(e, work.id)}
+                                                onChange={(e) => handleMarkEdit(e, work.id!)}
                                             />
                                         </td>
                                     </tr>

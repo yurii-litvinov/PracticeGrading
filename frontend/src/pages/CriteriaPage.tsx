@@ -1,16 +1,17 @@
-import React, {useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {getCriteria, deleteCriteria, createCriteria, updateCriteria} from '../services/ApiService';
 import {CriteriaModal} from '../components/CriteriaModal'
 import {RuleTypes} from '../models/RuleTypes'
+import {Criteria} from '../models/Criteria'
 
 export function CriteriaPage() {
-    const [criteria, setCriteria] = useState([]);
-    const [criteriaToEditId, setCriteriaToEditId] = useState();
+    const [criteria, setCriteria] = useState<Criteria[]>([]);
+    const [criteriaToEditId, setCriteriaToEditId] = useState<number | null>();
 
     const fetchCriteria = () => {
         getCriteria().then(response =>
             setCriteria(
-                response.data.map(criteria => ({
+                response.data.map((criteria: Criteria) => ({
                     ...criteria,
                     scale: filterAndSort(criteria.scale),
                     rules: filterAndSort(criteria.rules),
@@ -23,7 +24,7 @@ export function CriteriaPage() {
         fetchCriteria();
     }, []);
 
-    const handleDeleteCriteria = async (id) => {
+    const handleDeleteCriteria = async (id: number) => {
         const isConfirmed = window.confirm('Вы уверены, что хотите удалить этот критерий?');
         if (isConfirmed) {
             await deleteCriteria(id);
@@ -31,13 +32,13 @@ export function CriteriaPage() {
         }
     }
 
-    const filterAndSort = (array) => {
+    const filterAndSort = (array: any[]) => {
         return array
             .filter(rule => rule.description !== '')
             .sort((a, b) => b.value - a.value);
     };
 
-    const addOrUpdateCriteria = async (newCriteria) => {
+    const addOrUpdateCriteria = async (newCriteria: Criteria) => {
         newCriteria.scale = filterAndSort(newCriteria.scale);
         newCriteria.rules = filterAndSort(newCriteria.rules);
 
@@ -88,7 +89,7 @@ export function CriteriaPage() {
                                 </button>
                                 <button type="button" id="delete-criteria" className="btn btn-sm btn-link"
                                         style={{height: '40px'}}
-                                        onClick={() => handleDeleteCriteria(criteria.id)}>
+                                        onClick={() => handleDeleteCriteria(Number(criteria.id))}>
                                     <i className="bi bi-x-lg fs-5" style={{color: '#dc3545'}}></i>
                                 </button>
                                 <button type="button" className="btn btn-sm me-3 btn-link"
@@ -114,7 +115,7 @@ export function CriteriaPage() {
                                         {criteria.rules.map((rule, index) => (
                                             <li key={index}>
                                                 {rule.type === RuleTypes.Range ? "До " : ""}
-                                                {rule.value > 0 ? `+${rule.value}` : rule.value}{" "}
+                                                {rule.value !== undefined && rule.value > 0 ? `+${rule.value}` : rule.value}{" "}
                                                 {rule.description.split(/(https?:\/\/\S+)/g).map((part, i) =>
                                                     part.match(/^https?:\/\//) ? (
                                                         <a key={i} href={part} target="_blank"

@@ -1,20 +1,24 @@
-import {useRef, useState, useEffect} from 'react';
+import {useRef, useState} from 'react';
 import {FormatTable} from './FormatTable'
 import {DataFields} from '../models/DataFields'
 import {createMeetingsFromFile} from '../services/ApiService';
 
-export function FileModal({onSubmit}) {
-    const formRef = useRef();
-    const closeButtonRef = useRef();
-    const [file, setFile] = useState(null);
-    const [separator, setSeparator] = useState(null);
+interface FileModalProps {
+    onSubmit: () => void;
+}
+
+export function FileModal({onSubmit}: FileModalProps) {
+    const formRef = useRef<HTMLFormElement | null>(null);
+    const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+    const [file, setFile] = useState<any | null>(null);
+    const [separator, setSeparator] = useState<any[] | null>(null);
     const [headers, setHeaders] = useState(null);
     const [membersColumn, setMembersColumn] = useState('A');
     const [type, setType] = useState("practice");
 
-    const formatRows = (rows) => {
+    const formatRows = (rows: any[]) => {
         const filteredRows = rows.filter((row) =>
-            !row.every((cell) => JSON.stringify(cell) === JSON.stringify([DataFields.Empty])));
+            !row.every((cell: any) => JSON.stringify(cell) === JSON.stringify([DataFields.Empty])));
         const filteredCells = filteredRows.map((row) => {
             let lastNonEmptyIndex = row.length - 1;
             while (lastNonEmptyIndex >= 0 && JSON.stringify(row[lastNonEmptyIndex]) === JSON.stringify([DataFields.Empty])) {
@@ -23,18 +27,18 @@ export function FileModal({onSubmit}) {
 
             return row.slice(0, lastNonEmptyIndex + 1);
         });
-        return filteredCells.map((row) => row.map((cell) => cell.map((item) => item[1]).join(", ")))
+        return filteredCells.map((row) => row.map((cell: any[]) => cell.map((item) => item[1]).join(", ")))
     }
 
-    const handleSeparatorChange = (rows) => {
+    const handleSeparatorChange = (rows: any[]) => {
         setSeparator(formatRows(rows));
     }
 
-    const handleHeadersChange = (rows) => {
+    const handleHeadersChange = (rows: any[]) => {
         setHeaders(formatRows(rows)[0]);
     }
 
-    const processMembersColumn = (letter) => {
+    const processMembersColumn = (letter: string) => {
         const charCode = letter.toUpperCase().charCodeAt(0) - 65;
         if (letter === '' || charCode < 0 || charCode > 25) {
             throw new Error("Invalid column letter");
@@ -55,7 +59,7 @@ export function FileModal({onSubmit}) {
             formData.append('file', file);
             formData.append('headers', JSON.stringify(headers));
             formData.append('separator', JSON.stringify(separator));
-            formData.append('membersColumn', type === "practice" ? -1 : columnIndex);
+            formData.append('membersColumn', String(type === "practice" ? -1 : columnIndex));
             await createMeetingsFromFile(formData);
             onSubmit();
 
@@ -68,7 +72,7 @@ export function FileModal({onSubmit}) {
     };
 
     return (
-        <div className="modal fade" id="fileModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1"
+        <div className="modal fade" id="fileModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1}
              aria-labelledby="staticBackdropLabel" aria-hidden="true">
             <div className="modal-dialog modal-xl">
                 <div className="modal-content">
@@ -86,7 +90,7 @@ export function FileModal({onSubmit}) {
                                 <input className="form-control"
                                        required
                                        type="file" accept=".xlsx"
-                                       onChange={(e) => setFile(e.target.files[0])}
+                                       onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                                 />
                             </form>
 
@@ -153,7 +157,7 @@ export function FileModal({onSubmit}) {
                                     <div className="d-flex align-items-center mb-4">
                                         <h6 className="form-label mb-0 me-2">Колонка с членами комиссии:</h6>
                                         <input
-                                            type="text" maxLength="1"
+                                            type="text" maxLength={1}
                                             className="form-control"
                                             style={{maxWidth: '65px', textTransform: "uppercase"}}
                                             value={membersColumn}
@@ -201,6 +205,6 @@ export function FileModal({onSubmit}) {
                 </div>
             </div>
         </div>
-    )
-        ;
+    );
 }
+
