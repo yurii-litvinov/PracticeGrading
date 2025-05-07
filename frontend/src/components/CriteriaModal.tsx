@@ -176,27 +176,27 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
                                         <div className="form-check form-check-inline">
                                             <input className="form-check-input" type="radio"
                                                    checked={rule.type === RuleTypes.Fixed}
-                                                   id="fixed"
+                                                   id={`fixed-${index}`}
                                                    onChange={() =>
                                                        handleRuleChange(index, 'type', RuleTypes.Fixed, 'rules')}/>
-                                            <label className="form-check-label" htmlFor="fixed">Фиксированное
+                                            <label className="form-check-label" htmlFor={`fixed-${index}`}>Фиксированное
                                                 число</label>
                                         </div>
                                         <div className="form-check form-check-inline">
                                             <input className="form-check-input" type="radio"
                                                    checked={rule.type === RuleTypes.Range}
-                                                   id="range"
+                                                   id={`range-${index}`}
                                                    onChange={() =>
                                                        handleRuleChange(index, 'type', RuleTypes.Range, 'rules')}/>
-                                            <label className="form-check-label" htmlFor="range">Диапазон</label>
+                                            <label className="form-check-label" htmlFor={`range-${index}`}>Диапазон</label>
                                         </div>
                                         <div className="form-check form-check-inline">
                                             <input className="form-check-input" type="radio"
                                                    checked={rule.type === RuleTypes.Custom}
-                                                   id="custom"
+                                                   id={`custom-${index}`}
                                                    onChange={() =>
                                                        handleRuleChange(index, 'type', RuleTypes.Custom, 'rules')}/>
-                                            <label className="form-check-label" htmlFor="custom">Произвольное
+                                            <label className="form-check-label" htmlFor={`custom-${index}`}>Произвольное
                                                 число</label>
                                         </div>
 
