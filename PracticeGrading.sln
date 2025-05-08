@@ -7,6 +7,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9EECBF7D-D6B1-4E27-B01A-4F007E8E6982}"
 	ProjectSection(SolutionItems) = preProject
 		docker-compose.yml = docker-compose.yml
+		docker-compose.prod.yml = docker-compose.prod.yml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PracticeGrading.Tests", "PracticeGrading.Tests\PracticeGrading.Tests.csproj", "{AE58B052-4AC8-4A96-A2EC-CCFDEDBF8F1A}"

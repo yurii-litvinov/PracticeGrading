@@ -62,7 +62,13 @@ builder.Services.AddCustomAuth(builder.Configuration.GetSection("JwtOptions").Bi
 
 Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
 
-var host = Environment.GetEnvironmentVariable("HOST");
+
+var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
+var host = Environment.GetEnvironmentVariable("HOST") ?? "localhost";
+
+var origin = env == "Development"
+    ? $"http://{host}:3000"
+    : $"https://{host}";
 
 builder.Services.AddCors(
     options =>
@@ -70,7 +76,7 @@ builder.Services.AddCors(
         options.AddPolicy(
             "CorsPolicy",
             policyBuilder => policyBuilder
-                .WithOrigins($"http://{host}:3000")
+                .WithOrigins(origin)
                 .AllowAnyMethod()
                 .AllowCredentials()
                 .AllowAnyHeader());
