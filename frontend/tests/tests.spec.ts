@@ -1,7 +1,7 @@
 import {test, expect} from '@playwright/test';
 
 const login = async (page) => {
-    await page.goto("/");
+    await page.goto("/practice-grading");
     await expect(page).toHaveURL("/login")
 
     await page.fill('#username', 'admin');
@@ -68,7 +68,7 @@ test('create meeting', async ({page}) => {
 
     await page.click('#meetings-link');
     await expect(page).toHaveURL('/meetings');
-    
+
     await createMeeting(page, 'заседание');
 
     await expect(page).toHaveURL('/meetings');
