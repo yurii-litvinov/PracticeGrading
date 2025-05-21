@@ -3,7 +3,7 @@ import {test, expect} from '@playwright/test'
 const BASENAME = "/practice-grading"
 
 const login = async (page) => {
-    await page.goto(BASENAME);
+    await page.goto(`${BASENAME}/`);
     await expect(page).toHaveURL(`${BASENAME}/login`)
 
     await page.fill('#username', 'admin');
