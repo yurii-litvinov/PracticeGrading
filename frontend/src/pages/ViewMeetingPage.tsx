@@ -10,6 +10,7 @@ import {StudentWork} from '../models/StudentWork';
 import Tooltip from 'bootstrap/js/dist/tooltip.js';
 import copy from 'copy-to-clipboard';
 import {DocumentsModel} from '../components/DocumentsModel';
+import {BASENAME} from "../App"
 
 export function ViewMeetingPage() {
     const {id} = useParams();
@@ -120,7 +121,7 @@ export function ViewMeetingPage() {
     }
 
     const handleCopyLink = () => {
-        copy(`${window.location.origin}/meetings/${id}/member`);
+        copy(`${window.location.origin}${BASENAME}/meetings/${id}/member`);
         tooltipRef.current?.dispose();
 
         const tooltipElement = document.getElementById('copy');
@@ -167,7 +168,7 @@ export function ViewMeetingPage() {
                            e.preventDefault();
                            handleCopyLink();
                        }}>
-                        {`${window.location.origin}/meetings/${id}/member`}
+                        {`${window.location.origin}${BASENAME}/meetings/${id}/member`}
                         <i className="bi bi-clipboard mb-2"/>
                     </a>
                 </div>

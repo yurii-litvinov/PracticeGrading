@@ -1,5 +1,6 @@
 import {test, expect} from '@playwright/test'
-import {BASENAME} from "../src/App"
+
+const BASENAME = "/practice-grading"
 
 const login = async (page) => {
     await page.goto(BASENAME);
