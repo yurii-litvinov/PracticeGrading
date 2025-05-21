@@ -11,6 +11,8 @@ import {MemberPage} from './pages/MemberPage';
 import {StudentWorkPage} from './pages/StudentWorkPage';
 import {FinishMeetingPage} from './pages/FinishMeetingPage';
 
+export const BASENAME = "/practice-grading";
+
 export function App() {
     const router = createBrowserRouter([
             {
@@ -69,7 +71,7 @@ export function App() {
             },
         ],
         {
-            basename: "/practice-grading",
+            basename: BASENAME,
         });
 
     return <RouterProvider router={router}/>;

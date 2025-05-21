@@ -1,19 +1,20 @@
-import {test, expect} from '@playwright/test';
+import {test, expect} from '@playwright/test'
+import {BASENAME} from "../src/App"
 
 const login = async (page) => {
-    await page.goto("/practice-grading");
-    await expect(page).toHaveURL("/login")
+    await page.goto(BASENAME);
+    await expect(page).toHaveURL(`${BASENAME}/login`)
 
     await page.fill('#username', 'admin');
     await page.fill('#password', 'admin');
     await page.click('button[type="submit"]');
 
-    await expect(page).toHaveURL('/meetings');
+    await expect(page).toHaveURL(`${BASENAME}/meetings`);
 }
 
 const createCriteria = async (page, name, comment) => {
     await page.click('#criteria-link');
-    await expect(page).toHaveURL('/criteria');
+    await expect(page).toHaveURL(`${BASENAME}/criteria`);
 
     await page.click('#add-criteria');
     await page.waitForSelector('#criteriaModal', {state: 'visible'});
@@ -24,7 +25,7 @@ const createCriteria = async (page, name, comment) => {
 
 const createMeeting = async (page, info) => {
     await page.click('#create-meeting');
-    await expect(page).toHaveURL('/meetings/new');
+    await expect(page).toHaveURL(`${BASENAME}/meetings/new`);
 
     await page.fill('input[name="auditorium"]', '3389');
     await page.fill('input[name="info"]', info);
@@ -51,10 +52,10 @@ test('admin logout', async ({page}) => {
     await login(page);
 
     await page.click('#profile-link');
-    await expect(page).toHaveURL('/profile');
+    await expect(page).toHaveURL(`${BASENAME}/profile`);
     await page.click('#exit');
 
-    await expect(page).toHaveURL('/login');
+    await expect(page).toHaveURL(`${BASENAME}/login`);
     const sessionStorageValue = await page.evaluate(() => {
         return sessionStorage.getItem('token');
     });
@@ -67,18 +68,18 @@ test('create meeting', async ({page}) => {
     await createCriteria(page, 'критерий', 'комментарий');
 
     await page.click('#meetings-link');
-    await expect(page).toHaveURL('/meetings');
+    await expect(page).toHaveURL(`${BASENAME}/meetings`);
 
     await createMeeting(page, 'заседание');
 
-    await expect(page).toHaveURL('/meetings');
+    await expect(page).toHaveURL(`${BASENAME}/meetings`);
     await expect(page.locator('#info')).toHaveText('заседание');
 
     page.on('dialog', dialog => dialog.accept());
     await page.click('#delete-meeting');
 
     await page.click('#criteria-link');
-    await expect(page).toHaveURL('/criteria');
+    await expect(page).toHaveURL(`${BASENAME}/criteria`);
 
     await page.click('#delete-criteria');
 });

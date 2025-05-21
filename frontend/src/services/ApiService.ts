@@ -2,6 +2,7 @@ import axios from 'axios';
 import {Criteria} from '../models/Criteria'
 import {Meeting} from '../models/Meeting'
 import {MemberMark} from '../models/MemberMark'
+import {BASENAME} from "../App"
 
 const token = sessionStorage.getItem('token');
 
@@ -25,9 +26,9 @@ axiosService.interceptors.response.use(
             const meetingId = match ? match[1] : null;
 
             if (meetingId) {
-                window.location.replace(`/meetings/${meetingId}/member/login`);
+                window.location.replace(`${BASENAME}/meetings/${meetingId}/member/login`);
             } else {
-                window.location.replace("/login");
+                window.location.replace(`${BASENAME}/login`);
             }
         }
         return Promise.reject(error);
