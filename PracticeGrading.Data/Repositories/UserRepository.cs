@@ -28,10 +28,11 @@ public class UserRepository(AppDbContext context)
     /// Gets user by username.
     /// </summary>
     /// <param name="userName">Username.</param>
+    /// <param name="meetingId">Meeting Id.</param>
     /// <returns>User.</returns>
-    public async Task<User?> GetByUserName(string userName) =>
+    public async Task<User?> GetByUserName(string userName, int? meetingId = null) =>
         await context.Users.Include(user => user.Role)
-            .FirstOrDefaultAsync(user => user.UserName == userName);
+            .FirstOrDefaultAsync(user => user.UserName == userName && user.MeetingId == meetingId);
 
     /// <summary>
     /// Updates user.

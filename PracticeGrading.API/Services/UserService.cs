@@ -42,7 +42,7 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
     /// <returns>JWT token.</returns>
     public async Task<string> LoginMember(LoginMemberRequest request)
     {
-        var user = await userRepository.GetByUserName(request.UserName);
+        var user = await userRepository.GetByUserName(request.UserName, request.MeetingId);
 
         if (user == null)
         {
