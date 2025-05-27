@@ -49,7 +49,7 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
             await userRepository.Create(
                 new User
                     { UserName = request.UserName, MeetingId = request.MeetingId, RoleId = (int)RolesEnum.Member });
-            user = await userRepository.GetByUserName(request.UserName) ??
+            user = await userRepository.GetByUserName(request.UserName, request.MeetingId) ??
                    throw new InvalidOperationException($"User with UserName {request.UserName} was not found.");
         }
 

@@ -38,7 +38,7 @@ public class UserRepositoryTests : TestBase
 
         await UserRepository.Create(user);
 
-        var newUser = await UserRepository.GetByUserName(user.UserName);
+        var newUser = await UserRepository.GetByUserName(user.UserName, meeting.Id);
 
         newUser.Should().NotBeNull();
         newUser.Role.Should().NotBeNull();
