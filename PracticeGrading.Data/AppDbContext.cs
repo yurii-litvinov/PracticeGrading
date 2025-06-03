@@ -34,6 +34,11 @@ public class AppDbContext : DbContext
     public DbSet<Meeting> Meetings { get; set; }
 
     /// <summary>
+    /// Gets or sets CriteriaGroups table.
+    /// </summary>
+    public DbSet<CriteriaGroup> CriteriaGroup { get; set; }
+
+    /// <summary>
     /// Gets or sets Criteria table.
     /// </summary>
     public DbSet<Criteria> Criteria { get; set; }
@@ -56,9 +61,19 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new MemberMarkConfiguration());
         modelBuilder.ApplyConfiguration(new AverageCriteriaMarkConfiguration());
 
+        modelBuilder.ApplyConfiguration(new CriteriaGroupConfiguration());
+        modelBuilder.ApplyConfiguration(new MarkScaleConfiguration());
+
         modelBuilder.ApplyConfiguration(new CriteriaConfiguration());
         modelBuilder.ApplyConfiguration(new RuleConfiguration());
         modelBuilder.ApplyConfiguration(new CriteriaMarkConfiguration());
         modelBuilder.ApplyConfiguration(new SelectedRuleConfiguration());
+
+        modelBuilder.Entity("CriteriaCriteriaGroup").HasData(
+            new { CriteriaGroupsId = 1, CriteriaId = 1 },
+            new { CriteriaGroupsId = 1, CriteriaId = 2 },
+            new { CriteriaGroupsId = 1, CriteriaId = 3 },
+            new { CriteriaGroupsId = 1, CriteriaId = 4 },
+            new { CriteriaGroupsId = 1, CriteriaId = 5 });
     }
 }

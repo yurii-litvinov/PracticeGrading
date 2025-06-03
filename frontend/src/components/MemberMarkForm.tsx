@@ -1,13 +1,14 @@
 import {ChangeEvent, useEffect} from 'react';
 import {RuleTypes} from '../models/RuleTypes';
 import {MemberMark} from '../models/MemberMark';
-import {Criteria} from '../models/Criteria';
+import {CriteriaGroup} from '../models/CriteriaGroup';
 import {Rule} from '../models/Rule';
+import {MetricTypes} from '../models/MetricTypes';
 
 interface MemberMarkFormProps {
     role: string;
     name: string;
-    criteria: Criteria[];
+    criteriaGroup: CriteriaGroup;
     isChanged: boolean;
     setIsChanged: (value: boolean) => void;
     mark: MemberMark
@@ -18,7 +19,7 @@ interface MemberMarkFormProps {
 export function MemberMarkForm({
                                    role,
                                    name,
-                                   criteria,
+                                   criteriaGroup,
                                    isChanged,
                                    setIsChanged,
                                    mark,
@@ -26,15 +27,25 @@ export function MemberMarkForm({
                                    saveMark
                                }: MemberMarkFormProps) {
     const calculateMark = () => {
+        console.log(mark)
         setMark((prevMark) => {
-            let finalMark = prevMark.criteriaMarks[0]?.mark || 0;
+            let finalMark = 0;
+            if (criteriaGroup.metricType === MetricTypes[0].value) {
+                finalMark = Infinity;
+            }
 
             prevMark.criteriaMarks.forEach((criteriaMark) => {
-                if (criteriaMark.mark !== null) {
-                    finalMark = Math.min(finalMark, criteriaMark.mark!);
+                if (criteriaMark.mark != null) {
+                    if (criteriaGroup.metricType === MetricTypes[0].value) {
+                        finalMark = Math.min(finalMark, criteriaMark.mark!);
+                    } else if (criteriaGroup.metricType === MetricTypes[1].value) {
+                        finalMark += criteriaMark.mark!;
+                    }
                 }
             });
 
+            console.log(finalMark)
+            
             return {
                 ...prevMark,
                 mark: finalMark
@@ -78,7 +89,7 @@ export function MemberMarkForm({
             const updatedCriteriaMarks = prevMark.criteriaMarks.map((criteriaMark) => {
                 if (criteriaMark.criteriaId === criteriaId) {
                     const notScaleRules = criteriaMark.selectedRules.filter((selectedRule: { ruleId: any; }) => {
-                        return criteria.find(criteria => criteria.id === criteriaId)?.rules.find((rule) => rule.id === selectedRule.ruleId)
+                        return criteriaGroup.criteria.find(criteria => criteria.id === criteriaId)?.rules.find((rule) => rule.id === selectedRule.ruleId)
                     });
 
                     notScaleRules.push({ruleId: rule.id!, value: rule.value})
@@ -179,7 +190,7 @@ export function MemberMarkForm({
             }));
         } else {
             const mark = Number(value);
-            if (mark >= 1 && mark <= 5) {
+            if (mark >= 1) {
                 setMark((prevMark) => ({
                     ...prevMark,
                     mark: mark
@@ -191,7 +202,7 @@ export function MemberMarkForm({
     }
 
     const isRuleSelected = (criteriaId: any, ruleId: any) => {
-        return mark.criteriaMarks.some((criteriaMark) =>
+        return mark.criteriaMarks?.some((criteriaMark) =>
             criteriaMark.criteriaId === criteriaId &&
             criteriaMark.selectedRules.some((selectedRule: { ruleId: any; }) => selectedRule.ruleId === ruleId)
         );
@@ -215,7 +226,7 @@ export function MemberMarkForm({
         </div>
 
         <form>
-            {criteria.map((criteria, index) => (
+            {criteriaGroup?.criteria.map((criteria, index) => (
                 <div key={criteria.id} className="mb-4">
                     <label
                         className="mb-2 fw-semibold w-auto">{index + 1}. {criteria.name} {criteria.comment && (
@@ -306,23 +317,66 @@ export function MemberMarkForm({
                     <div className="my-2">
                         <h6>Комментарий:</h6>
                         <textarea className="form-control" name="comment"
-                                  value={mark.criteriaMarks.find(criteriaMark => criteriaMark.criteriaId === criteria.id)?.comment || ''}
+                                  value={mark.criteriaMarks?.find(criteriaMark => criteriaMark.criteriaId === criteria.id)?.comment || ''}
                                   onChange={(e) => handleCommentChange(e, criteria.id!)}/>
                     </div>
 
                 </div>
             ))}
 
-            <div className="d-flex mb-2 align-items-center">
-                <label className="me-2 fw-semibold fs-5 w-auto">Итоговая оценка:</label>
-                <input type="number"
-                       className="form-control fs-5 w-auto"
-                       value={mark?.mark ?? ''}
-                       min={1} max={5}
-                       step="1"
-                       onChange={(e) => handleMarkChange(e.target.value)}
-                       placeholder="0"
-                />
+            <div className="d-flex flex-column flex-md-row mb-2 align-items-start justify-content-between">
+                <div className="d-flex align-items-center">
+                    <label className="me-2 fw-semibold fs-5 w-auto">Итоговая оценка:</label>
+                    <input
+                        type="number"
+                        className="form-control fs-5 w-auto"
+                        value={mark?.mark ?? ''}
+                        min={1}
+                        step="1"
+                        onChange={(e) => handleMarkChange(e.target.value)}
+                        placeholder="0"
+                    />
+                </div>
+
+                {criteriaGroup?.markScales.length ?
+                    (<div className="position-relative pt-1" style={{maxWidth: '320px'}}>
+                        <button
+                            className="btn btn-link"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#collapseScaleTable"
+                            aria-expanded="false"
+                            aria-controls="collapseScaleTable"
+                        >
+                            <h5>Таблица перевода оценок</h5>
+                        </button>
+
+                        <div className="collapse mt-2" id="collapseScaleTable">
+
+                            <div className="table-responsive">
+                                <table className="table table-light table-striped-columns mb-0">
+                                    <thead>
+                                    <tr>
+                                        <th className="text-center">Сумма баллов</th>
+                                        <th className="text-center">Оценка</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {criteriaGroup.markScales
+                                        .sort((a, b) => (b.min ?? 0) - (a.min ?? 0))
+                                        .map((scale, index) => (
+                                            <tr key={index}>
+                                                <td className="text-center">
+                                                    {scale.min}-{scale.max}
+                                                </td>
+                                                <td className="text-center">{scale.mark}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>) : (<></>)}
             </div>
 
             <div className="my-2">
@@ -332,5 +386,6 @@ export function MemberMarkForm({
                           onChange={(e) => handleCommentChange(e, null)}/>
             </div>
         </form>
-    </>);
+    </>)
+        ;
 }

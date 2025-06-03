@@ -11,12 +11,6 @@ public class MeetingServiceTests : TestBase
     [Test]
     public async Task TestAddMeeting()
     {
-        var criteriaList = new List<Criteria>
-        {
-            new() { Id = 10, Name = "criteria1" },
-            new() { Id = 20, Name = "criteria2" }
-        };
-
         var works = new List<StudentWorkRequest>
         {
             new(null,
@@ -36,11 +30,6 @@ public class MeetingServiceTests : TestBase
                 null),
         };
 
-        foreach (var criteria in criteriaList)
-        {
-            await CriteriaRepository.Create(criteria);
-        }
-
         var request = new MeetingRequest(
             null,
             DateTime.UtcNow,
@@ -54,7 +43,7 @@ public class MeetingServiceTests : TestBase
                 new MemberRequest(null, "member2"),
                 new MemberRequest(null, "member3")
             ],
-            [1, 2]);
+            1);
 
         await MeetingService.AddMeeting(request);
 
@@ -64,14 +53,13 @@ public class MeetingServiceTests : TestBase
         meetings.First().Auditorium.Should().BeEquivalentTo(request.Auditorium);
         meetings.First().StudentWorks.Should().HaveCount(works.Count);
         meetings.First().Members.Should().HaveCount(request.Members.Count);
-        meetings.First().Criteria.Should().HaveCount(criteriaList.Count);
     }
 
     [Test]
     public async Task TestGetAllMeetings()
     {
-        await MeetingRepository.Create(new Meeting { Criteria = [TestCriteria], StudentWorks = [TestWork] });
-        await MeetingRepository.Create(new Meeting { Criteria = [TestCriteria], StudentWorks = [TestWork] });
+        await MeetingRepository.Create(new Meeting { CriteriaGroup = TestCriteriaGroup, StudentWorks = [TestWork] });
+        await MeetingRepository.Create(new Meeting { CriteriaGroup = TestCriteriaGroup, StudentWorks = [TestWork] });
 
         MeetingService.GetMeeting().Result.Should().HaveCount(2);
     }
@@ -79,7 +67,7 @@ public class MeetingServiceTests : TestBase
     [Test]
     public async Task TestGetMeetingById()
     {
-        var meeting = new Meeting { Id = 10, Info = "info", Criteria = [TestCriteria], StudentWorks = [TestWork] };
+        var meeting = new Meeting { Id = 10, Info = "info", CriteriaGroup = TestCriteriaGroup, StudentWorks = [TestWork] };
         await MeetingRepository.Create(meeting);
 
         var meetings = await MeetingService.GetMeeting(meeting.Id);
@@ -100,7 +88,7 @@ public class MeetingServiceTests : TestBase
     [Test]
     public async Task TestUpdateMeeting()
     {
-        var meeting = new Meeting { Id = 100, Info = "info", Criteria = [TestCriteria], StudentWorks = [TestWork] };
+        var meeting = new Meeting { Id = 100, Info = "info", CriteriaGroup = TestCriteriaGroup, StudentWorks = [TestWork] };
         await MeetingRepository.Create(meeting);
 
         var workRequest = new StudentWorkRequest(1,
@@ -128,7 +116,7 @@ public class MeetingServiceTests : TestBase
             null,
             [workRequest],
             [],
-            []);
+            1);
         await MeetingService.UpdateMeeting(request);
 
         var meetings = await MeetingService.GetMeeting(request.Id);
@@ -149,7 +137,7 @@ public class MeetingServiceTests : TestBase
             null,
             [],
             [],
-            []);
+            1);
         var action = async () => await MeetingService.UpdateMeeting(request);
 
         await action.Should().ThrowAsync<InvalidOperationException>()
@@ -159,7 +147,7 @@ public class MeetingServiceTests : TestBase
     [Test]
     public async Task TestDeleteMeeting()
     {
-        var meeting = new Meeting { Id = 10, Criteria = [TestCriteria], StudentWorks = [TestWork] };
+        var meeting = new Meeting { Id = 10, CriteriaGroup = TestCriteriaGroup, StudentWorks = [TestWork] };
         await MeetingRepository.Create(meeting);
 
         await MeetingService.DeleteMeeting(meeting.Id);
@@ -183,7 +171,7 @@ public class MeetingServiceTests : TestBase
     public async Task TestGetMembers()
     {
         var members = new List<User> { new() { UserName = "member1" }, new() { UserName = "member2" } };
-        var meeting = new Meeting { Id = 111, Criteria = [TestCriteria], StudentWorks = [TestWork], Members = members };
+        var meeting = new Meeting { Id = 111, CriteriaGroup = TestCriteriaGroup, StudentWorks = [TestWork], Members = members };
         await MeetingRepository.Create(meeting);
 
         var memberDtos = await MeetingService.GetMembers(meeting.Id);
@@ -205,7 +193,7 @@ public class MeetingServiceTests : TestBase
     public async Task TestSetFinalMark()
     {
         TestWork.Id = 15;
-        var meeting = new Meeting { Id = 101, Criteria = [TestCriteria], StudentWorks = [TestWork] };
+        var meeting = new Meeting { Id = 101, CriteriaGroup = TestCriteriaGroup, StudentWorks = [TestWork] };
         await MeetingRepository.Create(meeting);
 
         await MeetingService.SetFinalMark(meeting.Id, TestWork.Id, "B");

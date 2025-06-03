@@ -14,7 +14,7 @@ public class MeetingRepositoryTests : TestBase
             Auditorium = "3389",
             DateAndTime = DateTime.Now,
             Info = "some_info",
-            Criteria = [TestCriteria],
+            CriteriaGroup = TestCriteriaGroup,
             StudentWorks = [TestWork]
         };
 
@@ -29,12 +29,6 @@ public class MeetingRepositoryTests : TestBase
     [Test]
     public async Task TestMeetingGetting()
     {
-        var criteriaList = new List<Criteria>
-        {
-            new() { Id = 12, Name = "criteria1" },
-            new() { Id = 22, Name = "criteria2" }
-        };
-
         var members = new List<User>
         {
             new() { UserName = "member1" },
@@ -48,15 +42,10 @@ public class MeetingRepositoryTests : TestBase
             new() { StudentName = "student3", Supervisor = "supervisor3", Theme = "theme3", AverageCriteriaMarks = []}
         };
 
-        foreach (var criteria in criteriaList)
-        {
-            await CriteriaRepository.Create(criteria);
-        }
-
         var meeting = new Meeting
         {
             Id = 10,
-            Criteria = criteriaList,
+            CriteriaGroup = TestCriteriaGroup,
             Members = members,
             StudentWorks = works
         };
@@ -66,11 +55,10 @@ public class MeetingRepositoryTests : TestBase
         var newMeeting = await MeetingRepository.GetById(meeting.Id);
 
         newMeeting.Should().NotBeNull();
-        newMeeting.Criteria.Should().NotBeNull();
+        newMeeting.CriteriaGroup.Should().NotBeNull();
         newMeeting.Members.Should().NotBeNull();
         newMeeting.StudentWorks.Should().NotBeNull();
 
-        newMeeting.Criteria.Should().BeEquivalentTo(criteriaList);
         newMeeting.Members.Should().BeEquivalentTo(members);
         newMeeting.StudentWorks.Should().BeEquivalentTo(works);
     }
@@ -82,8 +70,8 @@ public class MeetingRepositoryTests : TestBase
         {
             Id = 3,
             Info = "some_info",
-            Criteria = [TestCriteria],
-            StudentWorks = [TestWork]
+            CriteriaGroup = TestCriteriaGroup,
+            StudentWorks = []
         };
 
         await MeetingRepository.Create(meeting);
@@ -104,7 +92,7 @@ public class MeetingRepositoryTests : TestBase
         {
             Id = 2,
             Info = "delete_this",
-            Criteria = [TestCriteria],
+            CriteriaGroup = TestCriteriaGroup,
             StudentWorks = [TestWork]
         };
 

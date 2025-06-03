@@ -1,6 +1,6 @@
 import {StudentWork} from './StudentWork';
 import {Member} from './Member';
-import {Criteria} from './Criteria';
+import {CriteriaGroup} from './CriteriaGroup';
 
 /**
  * Interface for meeting.
@@ -13,7 +13,7 @@ import {Criteria} from './Criteria';
  * @param materialsLink - Meeting materialsLink
  * @param studentWorks - List of meeting student works
  * @param members - List of meeting memebers
- * @param criteriaId - List of meeting criteria id
+ * @param criteriaGroup - Meeting criteria group
  */
 export interface Meeting {
     id?: number,
@@ -24,5 +24,5 @@ export interface Meeting {
     materialsLink: string,
     studentWorks: StudentWork[],
     members: Member[],
-    criteria: Criteria[]
+    criteriaGroup?: CriteriaGroup
 }

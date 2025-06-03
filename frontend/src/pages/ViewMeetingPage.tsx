@@ -1,16 +1,29 @@
 import {useEffect, useState, useRef, ChangeEvent} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {getMeetings, setFinalMark} from '../services/ApiService';
+import {getMeetings, setFinalMark, getCriteriaGroup} from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
 import {formatDate} from './MeetingsPage';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
 import {Meeting} from '../models/Meeting';
+import {CriteriaGroup} from '../models/CriteriaGroup';
 import {StudentWork} from '../models/StudentWork';
+import {MetricTypes} from '../models/MetricTypes'
+import {MarkScale} from '../models/MarkScale'
 import Tooltip from 'bootstrap/js/dist/tooltip.js';
 import copy from 'copy-to-clipboard';
 import {DocumentsModel} from '../components/DocumentsModel';
 import {BASENAME} from "../App"
+
+export const calculateFinalMark = (mark: number, scales: MarkScale[] | undefined) => {
+    const matchedScale = scales?.find(scale =>
+        scale.min !== undefined &&
+        scale.max !== undefined &&
+        scale.min <= mark && mark <= scale.max
+    );
+
+    return matchedScale?.mark ?? String(Math.round(mark));
+};
 
 export function ViewMeetingPage() {
     const {id} = useParams();
@@ -25,36 +38,48 @@ export function ViewMeetingPage() {
         materialsLink: '',
         studentWorks: [],
         members: [],
-        criteria: []
+        criteriaGroup: undefined
     });
     const [marks, setMarks] = useState<any[]>([]);
+    const [criteriaGroup, setCriteriaGroup] = useState<CriteriaGroup>();
 
     const signalRService = useRef<SignalRService | null>(null);
     const tooltipRef = useRef<Tooltip | null>(null);
-    ;
 
     const fetchData = () => {
         getMeetings(Number(id)).then(response => {
             const meeting = response.data[0];
             setMeeting(meeting);
 
-            setMarks(
-                meeting.studentWorks.map((work: StudentWork) => {
-                    const averageMarks = work.averageCriteriaMarks.filter(item => item.averageMark !== null);
-                    const mark = Math.round(averageMarks.reduce((sum, mark) =>
-                        sum + mark.averageMark, 0) / averageMarks.length * 10) / 10;
+            getCriteriaGroup(meeting.criteriaGroup.id).then(response => {
+                const group = response.data[0];
+                setCriteriaGroup(group);
 
-                    if (work.finalMark === '' && !isNaN(mark)) {
-                        setFinalMark(meeting.id, work.id!, String(Math.round(mark)));
-                    }
+                setMarks(
+                    meeting.studentWorks.map((work: StudentWork) => {
+                        const averageMarks = work.averageCriteriaMarks.filter(item => item.averageMark !== null);
 
-                    return {
-                        id: work.id,
-                        averageMark: mark,
-                        finalMark: work.finalMark
-                    };
-                })
-            );
+                        let average = 0;
+                        if (group.metricType === MetricTypes[0].value) {
+                            average = Math.round(averageMarks.reduce((sum, mark) =>
+                                sum + mark.averageMark, 0) / averageMarks.length * 10) / 10;
+                        } else if (group.metricType === MetricTypes[1].value) {
+                            average = averageMarks.reduce((sum, mark) =>
+                                sum + mark.averageMark, 0);
+                        }
+
+                        if (work.finalMark === '' && !isNaN(average)) {
+                            setFinalMark(meeting.id, work.id!, calculateFinalMark(average, group.markScales));
+                        }
+
+                        return {
+                            id: work.id,
+                            averageMark: average,
+                            finalMark: work.finalMark
+                        };
+                    })
+                );
+            });
         });
     }
 
@@ -137,8 +162,6 @@ export function ViewMeetingPage() {
         }, 700);
     }
 
-    // @ts-ignore
-    // @ts-ignore
     return (
         <>
             <div className="d-flex flex-column flex-sm-row align-items-start justify-content-end w-100">
@@ -329,7 +352,7 @@ export function ViewMeetingPage() {
                                     <tr>
                                         <th></th>
                                         <th>ФИО</th>
-                                        {meeting.criteria.map((criteria) => (
+                                        {criteriaGroup?.criteria?.map((criteria) => (
                                             <th key={criteria.id}>{criteria.name}</th>
                                         ))}
                                         <th>Средняя оценка</th>
@@ -352,7 +375,7 @@ export function ViewMeetingPage() {
                                             <td>{work.studentName}</td>
                                             {work.averageCriteriaMarks.map((mark) => (
                                                 <td key={mark.criteriaId}
-                                                    className="text-center">{mark.averageMark || "—"}</td>
+                                                    className="text-center">{mark.averageMark ?? "—"}</td>
                                             ))}
                                             <td className="text-center">{marks.find(mark => mark.id === work.id).averageMark || "—"}</td>
                                             <td>
@@ -378,7 +401,7 @@ export function ViewMeetingPage() {
                     <div className="flex-grow-1 pe-4 mb-2" style={{minWidth: '20em'}}>
                         <h4 className="p-2">Список членов комиссии</h4>
                         {meeting.members.map((member, index) => (
-                            <div key={index} className=" px-3">
+                            <div key={index} className="px-3">
                                 <input type="text" readOnly className="form-control-plaintext"
                                        value={member.name}/>
                             </div>
@@ -386,21 +409,41 @@ export function ViewMeetingPage() {
                     </div>
 
                     <div className="flex-grow-1">
-                        <h4 className="p-2">Критерии</h4>
-                        <ul className="list-group p-2">
-                            {meeting.criteria.map((criteria) => (
-                                <li className="list-group-item d-flex align-items-center" key={criteria.id}>
-                                    <label> {criteria.name}{criteria.comment && (
-                                        <>
-                                            <br/>
-                                            <small className=""
-                                                   style={{color: '#9a9d9f'}}>{criteria.comment}</small>
-                                        </>
-                                    )}
-                                    </label>
-                                </li>
-                            ))}
-                        </ul>
+                        <div className="card">
+                            <div className="card-body">
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <h4 className="card-title mb-0">{criteriaGroup?.name}</h4>
+                                </div>
+                                <p className="card-text p-2 pb-0">
+                                    <strong>Метрика:</strong> {MetricTypes.find(type => type.value === criteriaGroup?.metricType)?.label}
+                                </p>
+
+                                {criteriaGroup?.markScales.length !== 0 ? (<>
+                                    <strong className="card-text p-2 pt-0">Таблица перевода оценок</strong>
+
+                                    <div className="table-responsive" style={{maxWidth: '300px'}}>
+                                        <table className="table table-light table-striped-columns m-2">
+                                            <thead>
+                                            <tr>
+                                                <th className="text-center">Сумма баллов</th>
+                                                <th className="text-center">Оценка</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {criteriaGroup?.markScales.sort((a, b) =>
+                                                (b.min ?? 0) - (a.min ?? 0)).map((scale, index) => (
+                                                <tr key={index}>
+                                                    <td className="text-center">{scale.min}-{scale.max}</td>
+                                                    <td className="text-center">{scale.mark}</td>
+                                                </tr>
+                                            ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </>) : (<></>)}
+                            </div>
+
+                        </div>
                     </div>
                 </div>
             </div>

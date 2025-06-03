@@ -26,7 +26,7 @@ public class MeetingEndpointsTests : TestBase
             null,
             [],
             [],
-            []);
+            1);
 
         var response = await Client.PostAsJsonAsync("/meetings/new", meeting);
 
@@ -44,8 +44,8 @@ public class MeetingEndpointsTests : TestBase
             null,
             null,
             [],
-            [],
-            []);
+            [], 
+            1);
 
         await Client.PostAsJsonAsync("/meetings/new", meeting);
         var response = await Client.GetAsync("/meetings?id=1");
@@ -73,7 +73,7 @@ public class MeetingEndpointsTests : TestBase
             null,
             [],
             [],
-            []);
+            1);
 
         await Client.PostAsJsonAsync("/meetings/new", meeting);
 
@@ -86,7 +86,7 @@ public class MeetingEndpointsTests : TestBase
             null,
             [],
             [],
-            []);
+            1);
 
         var response = await Client.PutAsJsonAsync("/meetings/update", updatedMeeting);
 
@@ -105,7 +105,7 @@ public class MeetingEndpointsTests : TestBase
             null,
             [],
             [],
-            []);
+            1);
 
         await Client.PostAsJsonAsync("/meetings/new", meeting);
         var response = await Client.DeleteAsync("/meetings/delete?id=1");
@@ -125,7 +125,7 @@ public class MeetingEndpointsTests : TestBase
             null,
             [],
             [],
-            []);
+            1);
 
         await Client.PostAsJsonAsync("/meetings/new", meeting);
         var response = await Client.GetAsync("/meetings/members?id=1");
@@ -162,14 +162,14 @@ public class MeetingEndpointsTests : TestBase
                     null)
             ],
             [],
-            []);
+            1);
 
         await Client.PostAsJsonAsync("/meetings/new", meeting);
         var response = await Client.PutAsync("/meetings/setMark?meetingId=1&workId=10&mark=5", null);
 
         response.EnsureSuccessStatusCode();
     }
-    
+
     [Test]
     public async Task TestCreateMeetingsFromFile()
     {
@@ -184,7 +184,8 @@ public class MeetingEndpointsTests : TestBase
         using var content = new MultipartFormDataContent();
         content.Add(new StreamContent(file.OpenReadStream()), "file", file.FileName);
         content.Add(new StringContent(JsonSerializer.Serialize(headers), Encoding.UTF8, "application/json"), "headers");
-        content.Add(new StringContent(JsonSerializer.Serialize(separator), Encoding.UTF8, "application/json"), "separator");
+        content.Add(new StringContent(JsonSerializer.Serialize(separator), Encoding.UTF8, "application/json"),
+            "separator");
         content.Add(new StringContent(membersColumn.ToString()), "membersColumn");
 
         var response = await Client.PostAsync("/meetings/fromFile", content);

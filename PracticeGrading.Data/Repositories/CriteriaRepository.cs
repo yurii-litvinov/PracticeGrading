@@ -40,14 +40,16 @@ public class CriteriaRepository(AppDbContext context)
     /// <param name="id">Criteria id.</param>
     /// <returns>Criteria.</returns>
     public async Task<Criteria?> GetById(int id) =>
-        await context.Criteria.Include(criteria => criteria.Rules).FirstOrDefaultAsync(criteria => criteria.Id == id);
+        await context.Criteria.Include(criteria => criteria.Rules).Include(criteria => criteria.CriteriaGroups)
+            .FirstOrDefaultAsync(criteria => criteria.Id == id);
 
     /// <summary>
     /// Gets all criteria.
     /// </summary>
     /// <returns>List of criteria.</returns>
     public async Task<List<Criteria>> GetAll() =>
-        await context.Criteria.Include(criteria => criteria.Rules).ToListAsync();
+        await context.Criteria.Include(criteria => criteria.Rules).Include(criteria => criteria.CriteriaGroups)
+            .ToListAsync();
 
     /// <summary>
     /// Deletes criteria.

@@ -1,4 +1,4 @@
-// <copyright file="Criteria.cs" company="Maria Myasnikova">
+// <copyright file="MarkScale.cs" company="Maria Myasnikova">
 // Copyright (c) Maria Myasnikova. All rights reserved.
 // Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
 // </copyright>
@@ -8,7 +8,7 @@ namespace PracticeGrading.Data.Entities;
 /// <summary>
 /// Criteria entity.
 /// </summary>
-public class Criteria
+public class MarkScale
 {
     /// <summary>
     /// Gets or sets id.
@@ -16,22 +16,27 @@ public class Criteria
     public int Id { get; set; }
 
     /// <summary>
-    /// Gets or sets name.
+    /// Gets or sets minimum.
     /// </summary>
-    public required string Name { get; set; }
+    public required double Min { get; set; }
 
     /// <summary>
-    /// Gets or sets comment.
+    /// Gets or sets maximum.
     /// </summary>
-    public string? Comment { get; set; }
+    public required double Max { get; set; }
 
     /// <summary>
-    /// Gets or sets rules.
+    /// Gets or sets mark.
     /// </summary>
-    public ICollection<Rule>? Rules { get; set; }
+    public required string Mark { get; set; }
 
     /// <summary>
-    /// Gets or sets criteria groups.
+    /// Gets or sets criteria group id.
     /// </summary>
-    public ICollection<CriteriaGroup>? CriteriaGroups { get; set; }
+    public int CriteriaGroupId { get; set; }
+
+    /// <summary>
+    /// Gets or sets criteria group.
+    /// </summary>
+    public CriteriaGroup? CriteriaGroup { get; set; }
 }

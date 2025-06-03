@@ -1,4 +1,4 @@
-// <copyright file="CriteriaRequest.cs" company="Maria Myasnikova">
+// <copyright file="CriteriaGroupRequest.cs" company="Maria Myasnikova">
 // Copyright (c) Maria Myasnikova. All rights reserved.
 // Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
 // </copyright>
@@ -6,12 +6,11 @@
 namespace PracticeGrading.API.Models.Requests;
 
 /// <summary>
-/// Class for criteria creation or updating request.
+/// Class for criteria group creation or updating request.
 /// </summary>
-public record CriteriaRequest(
+public record CriteriaGroupRequest(
     int? Id,
     string Name,
-    string? Comment,
-    List<int> CriteriaGroupsId,
-    List<RuleRequest> Scale,
-    List<RuleRequest> Rules);
+    int MetricType,
+    List<int> CriteriaId,
+    List<MarkScaleRequest> MarkScales);

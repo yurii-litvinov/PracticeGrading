@@ -43,7 +43,7 @@ public class MeetingRepository(AppDbContext context)
         await context.Meetings
             .Include(meeting => meeting.Members)
             .Include(meeting => meeting.StudentWorks).ThenInclude(work => work.AverageCriteriaMarks)
-            .Include(meeting => meeting.Criteria)
+            .Include(meeting => meeting.CriteriaGroup).ThenInclude(group => group.MarkScales)
             .FirstOrDefaultAsync(meeting => meeting.Id == id);
 
     /// <summary>
@@ -52,7 +52,7 @@ public class MeetingRepository(AppDbContext context)
     /// <returns>List of meetings.</returns>
     public async Task<List<Meeting>> GetAll() => await context.Meetings.Include(meeting => meeting.StudentWorks)
         .ThenInclude(work => work.AverageCriteriaMarks)
-        .Include(meeting => meeting.Criteria).ToListAsync();
+        .Include(meeting => meeting.CriteriaGroup).ToListAsync();
 
     /// <summary>
     /// Deletes meeting.

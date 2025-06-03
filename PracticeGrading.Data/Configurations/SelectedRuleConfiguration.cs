@@ -17,8 +17,6 @@ public class SelectedRuleConfiguration : IEntityTypeConfiguration<SelectedRule>
     /// <summary>
     /// Configures selected rule entity.
     /// </summary>
-    public void Configure(EntityTypeBuilder<SelectedRule> builder)
-    {
+    public void Configure(EntityTypeBuilder<SelectedRule> builder) =>
         builder.HasKey(rule => new { rule.RuleId, rule.CriteriaMarkId });
-    }
 }

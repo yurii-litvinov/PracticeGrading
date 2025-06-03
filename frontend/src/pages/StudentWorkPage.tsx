@@ -5,13 +5,15 @@ import {
     getMemberMarks,
     createMemberMark,
     updateMemberMark,
-    deleteMemberMark
+    deleteMemberMark,
+    getCriteriaGroup
 } from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
 import {jwtDecode} from "jwt-decode";
 import {Criteria} from "../models/Criteria"
+import {CriteriaGroup} from "../models/CriteriaGroup"
 import {StudentWork} from "../models/StudentWork"
 import {MemberMark} from "../models/MemberMark"
 import {RuleTypes} from '../models/RuleTypes'
@@ -20,7 +22,7 @@ import {MemberMarkCard} from '../components/MemberMarkCard'
 
 export function StudentWorkPage() {
     const {meetingId, workId} = useParams();
-    const [criteria, setCriteria] = useState<Criteria[]>([]);
+    const [criteriaGroup, setCriteriaGroup] = useState<CriteriaGroup>();
     const [studentWork, setStudentWork] = useState<StudentWork>();
     const [otherMarks, setOtherMarks] = useState<MemberMark[]>([]);
     const [otherMembers, setOtherMembers] = useState<any[]>([]);
@@ -61,13 +63,14 @@ export function StudentWorkPage() {
     const fetchData = () => {
         getMeetings(Number(meetingId)).then(response => {
             const meeting = response.data[0]
-            const criteriaList = meeting.criteria;
 
             setStudentWork(meeting.studentWorks.find(((student: StudentWork) => student.id == Number(workId))));
             setOtherMembers(meeting.members.filter((member: { id: number; }) => member.id != Number(id)));
 
-            setCriteria(
-                criteriaList.map((criteria: Criteria) => ({
+            getCriteriaGroup(meeting.criteriaGroup.id).then(response => {
+                const group = response.data[0];
+
+                const sortedCriteria = group.criteria.map((criteria: Criteria) => ({
                     ...criteria,
                     scale: criteria.scale.sort((a, b) => b.value! - a.value!),
                     rules: criteria.rules.sort((a, b) => {
@@ -75,9 +78,14 @@ export function StudentWorkPage() {
                             return typeOrder[a.type] - typeOrder[b.type];
                         }
                         return b.value! - a.value!;
-                    })
-                }))
-            );
+                    }),
+                }));
+
+                setCriteriaGroup({
+                    ...group,
+                    criteria: sortedCriteria,
+                });
+            });
         });
 
         getMemberMarks(Number(workId)).then(response => {
@@ -103,7 +111,7 @@ export function StudentWorkPage() {
         if (mark.id == null) {
             setMark((prevMark) => ({
                 ...prevMark,
-                criteriaMarks: criteria.map((element) => ({
+                criteriaMarks: (criteriaGroup?.criteria ?? []).map((element) => ({
                     id: undefined,
                     memberMarkId: prevMark.memberId,
                     criteriaId: element.id!,
@@ -112,7 +120,7 @@ export function StudentWorkPage() {
                 }))
             }));
         }
-    }, [criteria, mark.id]);
+    }, [criteriaGroup, mark.id]);
 
     useEffect(() => {
         if (workId) {
@@ -272,7 +280,7 @@ export function StudentWorkPage() {
                             <h4 className="card-title text-center mb-2">Моя оценка</h4>
                             <hr className="my-4"/>
                             <MemberMarkForm role={role} name={name}
-                                            criteria={criteria} isChanged={isChanged} setIsChanged={setIsChanged}
+                                            criteriaGroup={criteriaGroup!} isChanged={isChanged} setIsChanged={setIsChanged}
                                             mark={mark}
                                             setMark={setMark} saveMark={saveMark}/>
                         </div>
@@ -287,7 +295,7 @@ export function StudentWorkPage() {
                     </div>
 
                     <h4 className="mb-4">Оценки других членов комиссии</h4>
-                    <MemberMarkCard role={role} otherMarks={otherMarks} otherMembers={otherMembers} criteria={criteria}/>
+                    <MemberMarkCard role={role} otherMarks={otherMarks} otherMembers={otherMembers} criteria={criteriaGroup?.criteria ?? []}/>
                 </>)
 
                 : (<>
@@ -303,7 +311,7 @@ export function StudentWorkPage() {
 
                         <h4 className="mb-4">Оценки членов комиссии</h4>
                         <MemberMarkCard role={role} otherMarks={otherMarks} otherMembers={otherMembers}
-                                        criteria={criteria} handleDeleteMark={handleDeleteMark} setMark={setMark}/>
+                                        criteria={criteriaGroup?.criteria ?? []} handleDeleteMark={handleDeleteMark} setMark={setMark}/>
 
                         <div className="modal fade" id="markModal" data-bs-backdrop="static"
                              data-bs-keyboard="false"
@@ -323,7 +331,7 @@ export function StudentWorkPage() {
                                         <div className="px-4">
                                             <MemberMarkForm role={role}
                                                             name={otherMembers?.find(member => member.id === mark.memberId)?.name}
-                                                            criteria={criteria} isChanged={isChanged}
+                                                            criteriaGroup={criteriaGroup!} isChanged={isChanged}
                                                             setIsChanged={setIsChanged}
                                                             mark={mark}
                                                             setMark={setMark} saveMark={saveMark}/>

@@ -14,7 +14,7 @@ using PracticeGrading.Data.Repositories;
 /// Service for working with criteria.
 /// </summary>
 /// <param name="criteriaRepository">Repository for criteria.</param>
-public class CriteriaService(CriteriaRepository criteriaRepository)
+public class CriteriaService(CriteriaRepository criteriaRepository, CriteriaGroupRepository criteriaGroupRepository)
 {
     /// <summary>
     /// Adds new criteria.
@@ -33,6 +33,7 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
                     Value = ruleRequest.Value,
                     IsScaleRule = true,
                 }).ToList(),
+            CriteriaGroups = await this.GetCriteriaGroups(request.CriteriaGroupsId),
         };
 
         foreach (var ruleRequest in request.Rules)
@@ -81,7 +82,8 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
                     .ToList(),
                     (criteria.Rules ?? []).Where(rule => !rule.IsScaleRule).Select(
                         rule => new RuleDto(rule.Id, rule.Type, rule.Description, rule.Value, rule.IsScaleRule))
-                    .ToList()))
+                    .ToList(),
+                    (criteria.CriteriaGroups ?? []).Select(criteriaGroup => criteriaGroup.Id).ToList()))
             .ToList();
 
         return dtoList;
@@ -100,6 +102,7 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
 
             criteria.Name = request.Name;
             criteria.Comment = request.Comment;
+            criteria.CriteriaGroups = await this.GetCriteriaGroups(request.CriteriaGroupsId);
 
             foreach (var scaleRequest in request.Scale)
             {
@@ -183,5 +186,19 @@ public class CriteriaService(CriteriaRepository criteriaRepository)
                        throw new InvalidOperationException($"Criteria with ID {id} was not found.");
 
         await criteriaRepository.Delete(criteria);
+    }
+
+    private async Task<List<CriteriaGroup>> GetCriteriaGroups(List<int> idList)
+    {
+        var groups = new List<CriteriaGroup>();
+
+        foreach (var id in idList)
+        {
+            groups.Add(
+                await criteriaGroupRepository.GetById(id) ??
+                throw new InvalidOperationException($"Criteria group with ID {id} was not found."));
+        }
+
+        return groups;
     }
 }

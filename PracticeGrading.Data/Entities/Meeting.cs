@@ -51,7 +51,7 @@ public class Meeting
     public ICollection<User>? Members { get; set; }
 
     /// <summary>
-    /// Gets or sets criteria.
+    /// Gets or sets criteria group.
     /// </summary>
-    public required ICollection<Criteria> Criteria { get; set; }
+    public required CriteriaGroup CriteriaGroup { get; set; }
 }

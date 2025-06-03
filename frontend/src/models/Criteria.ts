@@ -13,6 +13,7 @@ export interface Criteria {
     id?: number,
     name: string,
     comment: string,
+    criteriaGroupsId: number[],
     scale: Rule[],
     rules: Rule[]
 }

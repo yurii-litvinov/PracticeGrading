@@ -25,7 +25,7 @@ public class MarkTableGenerator
         var sheet = generator.CreateSheet();
 
         var header = new List<CellInfo> { new("ФИО студента") };
-        header.AddRange(meeting.Criteria.Select(criteria => new CellInfo(criteria.Name)));
+        header.AddRange(meeting.CriteriaGroup.Criteria.Select(criteria => new CellInfo(criteria.Name)));
         header.Add(new CellInfo("Итоговая оценка"));
 
         sheet.WriteRow(header, true, false, HorizontalAlignment.Center);
@@ -61,9 +61,9 @@ public class MarkTableGenerator
 
                 var memberRow = new List<CellInfo>();
                 memberRow.AddRange(
-                    (memberMark.CriteriaMarks ?? []).Select(
+                    memberMark.CriteriaMarks.Select(
                         mark => new CellInfo(mark.Mark.ToString() ?? string.Empty)));
-                memberRow.Add(new CellInfo(memberMark.Mark.ToString() ?? string.Empty));
+                memberRow.Add(new CellInfo(memberMark.Mark.ToString()));
 
                 sheet.WriteRow(
                     memberRow,
@@ -95,7 +95,7 @@ public class MarkTableGenerator
         var sheet = generator.CreateSheet();
 
         var header = new List<CellInfo> { new("ФИО студента") };
-        header.AddRange(meeting.Criteria.Select(criteria => new CellInfo(criteria.Name)));
+        header.AddRange(meeting.CriteriaGroup.Criteria.Select(criteria => new CellInfo(criteria.Name)));
         header.Add(new CellInfo("Итоговая оценка"));
 
         sheet.WriteRow(header, true, false, HorizontalAlignment.Center);

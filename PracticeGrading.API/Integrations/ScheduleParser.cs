@@ -163,7 +163,7 @@ public class ScheduleParser
             { DataFields.CallLink, string.Empty },
         };
 
-        var meeting = new Meeting { StudentWorks = [], Criteria = [] };
+        var meeting = new Meeting { StudentWorks = [], CriteriaGroup = null };
 
         foreach (var (row, index) in cells.Select((row, index) => (row, index)))
         {

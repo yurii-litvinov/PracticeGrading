@@ -4,20 +4,19 @@ import DatePicker, {registerLocale} from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import {ru} from 'date-fns/locale/ru';
 import {StudentWorkModal} from '../components/StudentWorkModal';
-import {createMeeting, getCriteria, getMeetings, updateMeeting} from '../services/ApiService';
+import {createMeeting, getCriteriaGroup, getMeetings, updateMeeting} from '../services/ApiService';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
 import {StudentWork} from '../models/StudentWork';
 import {Meeting} from '../models/Meeting';
-import {Criteria} from '../models/Criteria';
+import {CriteriaGroup} from '../models/CriteriaGroup';
 
 registerLocale('ru', ru);
 
 export function MeetingFormPage() {
     const {id} = useParams();
     const [workToEditIndex, setWorkToEditIndex] = useState<number | null>();
-    const [criteria, setCriteria] = useState<Criteria[]>([]);
-
+    const [criteriaGroups, setCriteriaGroups] = useState<CriteriaGroup[]>();
     const signalRService = useRef<SignalRService | null>(null);
 
     const [meeting, setMeeting] = useState<Meeting>({
@@ -29,7 +28,7 @@ export function MeetingFormPage() {
         materialsLink: '',
         studentWorks: [],
         members: [{id: undefined, name: ''}],
-        criteria: []
+        criteriaGroup: undefined
     });
 
     const handleNotification = (message: string) => {
@@ -39,13 +38,12 @@ export function MeetingFormPage() {
     useEffect(() => {
         if (id) {
             getMeetings(Number(id)).then(response => setMeeting(response.data[0]));
-            console.log(meeting.criteria)
 
             signalRService.current = new SignalRService(id, handleNotification);
             signalRService.current.startConnection();
         }
 
-        getCriteria().then(response => setCriteria(response.data));
+        getCriteriaGroup().then(response => setCriteriaGroups(response.data));
 
         return () => {
             if (signalRService.current) signalRService.current.stopConnection();
@@ -133,28 +131,6 @@ export function MeetingFormPage() {
         }));
     }
 
-    const handleCriteriaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setMeeting(prevMeeting => {
-            let updatedCriteria = [...prevMeeting.criteria];
-
-            const selectedCriteria = prevMeeting.criteria.find(criteria => criteria.id === Number(e.target.id));
-
-            if (e.target.checked) {
-                if (!selectedCriteria) {
-                    const newCriteria = criteria.find(criteria => criteria.id === Number(e.target.id));
-                    updatedCriteria.push(newCriteria!);
-                }
-            } else {
-                updatedCriteria = updatedCriteria.filter(criteria => criteria.id !== Number(e.target.id));
-            }
-
-            return {
-                ...prevMeeting,
-                criteria: updatedCriteria.sort((a, b) => a.id! - b.id!),
-            };
-        });
-    }
-
     useEffect(() => {
         const handleBeforeUnload = (event: { preventDefault: () => void; returnValue: string; }) => {
             event.preventDefault();
@@ -176,7 +152,7 @@ export function MeetingFormPage() {
                         {id ? "Редактирование заседания" : "Новое заседание"}</h2>
                     <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
                         <button type="submit" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2" id="save-meeting"
-                                disabled={meeting.studentWorks.length === 0 || meeting.criteria.length === 0}>Сохранить
+                                disabled={meeting.studentWorks.length === 0}>Сохранить
                         </button>
                         <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
                                 onClick={handleBack}>Назад
@@ -354,22 +330,17 @@ export function MeetingFormPage() {
                         </div>
 
                         <div className="flex-grow-1">
-                            <h4 className="p-2">Критерии</h4>
+                            <h4 className="p-2">Группа критериев</h4>
                             <ul className="list-group p-2">
-                                {criteria.map((criteria, index) => (
-                                    <li className="list-group-item d-flex align-items-center" key={criteria.id}>
-                                        <input className="form-check-input me-3" type="checkbox"
+                                {criteriaGroups?.map((group, index) => (
+                                    <li className="list-group-item d-flex align-items-center" key={group.id}>
+                                        <input className="form-check-input me-3" type="radio"
                                                name={`criteria-${index}`}
-                                               checked={meeting.criteria.some(c => c.id === criteria.id)}
-                                               id={String(criteria.id)} onChange={(e) => handleCriteriaChange(e)}/>
+                                               checked={meeting.criteriaGroup?.id === group.id}
+                                               id={String(group.id)}
+                                               onChange={() => setMeeting({...meeting, criteriaGroup: group})}/>
                                         <label className="form-check-label stretched-link"
-                                               htmlFor={String(criteria.id)}> {criteria.name}{criteria.comment && (
-                                            <>
-                                                <br/>
-                                                <small className=""
-                                                       style={{color: '#9a9d9f'}}>{criteria.comment}</small>
-                                            </>
-                                        )}
+                                               htmlFor={String(group.id)}> {group.name}
                                         </label>
                                     </li>
                                 ))}

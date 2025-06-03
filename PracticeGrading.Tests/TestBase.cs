@@ -23,6 +23,7 @@ public class TestBase
 
     protected UserRepository UserRepository;
     protected MeetingRepository MeetingRepository;
+    protected CriteriaGroupRepository CriteriaGroupRepository;
     protected CriteriaRepository CriteriaRepository;
     protected MarkRepository MarkRepository;
 
@@ -31,6 +32,7 @@ public class TestBase
     protected JwtService JwtService;
     protected UserService UserService;
     protected MeetingService MeetingService;
+    protected CriteriaGroupService CriteriaGroupService;
     protected CriteriaService CriteriaService;
     protected MarkService MarkService;
 
@@ -38,6 +40,8 @@ public class TestBase
         { StudentName = string.Empty, Theme = string.Empty, Supervisor = string.Empty, AverageCriteriaMarks = [] };
 
     protected Criteria TestCriteria = new() { Name = string.Empty };
+    
+    protected CriteriaGroup TestCriteriaGroup = new() { Name = string.Empty };
 
     [SetUp]
     public void SetUp()
@@ -69,6 +73,7 @@ public class TestBase
 
         UserRepository = new UserRepository(dbContext);
         MeetingRepository = new MeetingRepository(dbContext);
+        CriteriaGroupRepository = new CriteriaGroupRepository(dbContext);
         CriteriaRepository = new CriteriaRepository(dbContext);
         MarkRepository = new MarkRepository(dbContext);
 
@@ -82,8 +87,9 @@ public class TestBase
 
         JwtService = new JwtService(JwtOptions);
         UserService = new UserService(UserRepository, JwtService);
-        MeetingService = new MeetingService(MeetingRepository, CriteriaRepository, UserRepository, MarkRepository);
-        CriteriaService = new CriteriaService(CriteriaRepository);
+        MeetingService = new MeetingService(MeetingRepository, CriteriaGroupRepository, UserRepository, MarkRepository);
+        CriteriaGroupService = new CriteriaGroupService(CriteriaGroupRepository, CriteriaRepository);
+        CriteriaService = new CriteriaService(CriteriaRepository, CriteriaGroupRepository);
         MarkService = new MarkService(MarkRepository);
 
         if (!Directory.GetCurrentDirectory().Contains("Debug")) return;
@@ -106,7 +112,7 @@ public class TestBase
         {
             Id = 1,
             DateAndTime = DateTime.Now,
-            Criteria = [new Criteria { Id = 12, Name = string.Empty }],
+            CriteriaGroup = new CriteriaGroup{Id = 12, Name = string.Empty},
             StudentWorks =
             [
                 new StudentWork

@@ -1,12 +1,15 @@
 import {useEffect, useState, useRef, ChangeEvent} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {getMeetings, setFinalMark} from '../services/ApiService';
+import {getMeetings, setFinalMark, getCriteriaGroup} from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
 import {formatDate} from './MeetingsPage';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
 import {Meeting} from '../models/Meeting';
+import {CriteriaGroup} from '../models/CriteriaGroup';
 import {StudentWork} from '../models/StudentWork';
+import {MetricTypes} from '../models/MetricTypes'
+import {calculateFinalMark} from "./ViewMeetingPage"
 
 export function MemberPage() {
     const {id} = useParams();
@@ -22,9 +25,10 @@ export function MemberPage() {
         materialsLink: '',
         studentWorks: [],
         members: [],
-        criteria: []
+        criteriaGroup: undefined
     });
     const [marks, setMarks] = useState<any[]>([]);
+    const [criteriaGroup, setCriteriaGroup] = useState<CriteriaGroup>();
 
     const signalRService = useRef<SignalRService | null>(null);
 
@@ -32,24 +36,36 @@ export function MemberPage() {
         getMeetings(Number(id)).then(response => {
             const meeting = response.data[0]
             setMeeting(meeting);
+            
+            getCriteriaGroup(meeting.criteriaGroup.id).then(response => {
+                const group = response.data[0];
+                setCriteriaGroup(group);
 
-            setMarks(
-                meeting.studentWorks.map((work: StudentWork) => {
-                    const averageMarks = work.averageCriteriaMarks.filter(item => item.averageMark !== null);
-                    const mark = Math.round(averageMarks.reduce((sum, mark) =>
-                        sum + mark.averageMark, 0) / averageMarks.length * 10) / 10;
+                setMarks(
+                    meeting.studentWorks.map((work: StudentWork) => {
+                        const averageMarks = work.averageCriteriaMarks.filter(item => item.averageMark !== null);
 
-                    if (work.finalMark === '' && !isNaN(mark)) {
-                        setFinalMark(meeting.id, work.id!, String(Math.round(mark)));
-                    }
+                        let average = 0;
+                        if (group.metricType === MetricTypes[0].value) {
+                            average = Math.round(averageMarks.reduce((sum, mark) =>
+                                sum + mark.averageMark, 0) / averageMarks.length * 10) / 10;
+                        } else if (group.metricType === MetricTypes[1].value) {
+                            average = averageMarks.reduce((sum, mark) =>
+                                sum + mark.averageMark, 0);
+                        }
 
-                    return {
-                        id: work.id,
-                        averageMark: mark,
-                        finalMark: work.finalMark
-                    };
-                })
-            );
+                        if (work.finalMark === '' && !isNaN(average)) {
+                            setFinalMark(meeting.id, work.id!, calculateFinalMark(average, group.markScales));
+                        }
+
+                        return {
+                            id: work.id,
+                            averageMark: average,
+                            finalMark: work.finalMark
+                        };
+                    })
+                );
+            });
         });
     }
 
@@ -93,6 +109,8 @@ export function MemberPage() {
 
         setFinalMark(Number(meeting.id), id, value);
     }
+
+    console.log(meeting.studentWorks)
 
     return (
         <>
@@ -239,7 +257,7 @@ export function MemberPage() {
                                 <thead>
                                 <tr>
                                     <th>ФИО</th>
-                                    {meeting.criteria.map((criteria) => (
+                                    {criteriaGroup?.criteria.map((criteria) => (
                                         <th key={criteria.id}>{criteria.name}</th>
                                     ))}
                                     <th>Средняя оценка</th>
@@ -253,7 +271,7 @@ export function MemberPage() {
                                         <td>{work.studentName}</td>
                                         {work.averageCriteriaMarks.map((mark) => (
                                             <td key={mark.criteriaId}
-                                                className="text-center">{mark.averageMark || "—"}</td>
+                                                className="text-center">{mark.averageMark ?? "—"}</td>
                                         ))}
                                         <td className="text-center">{marks.find(mark => mark.id === work.id).averageMark || "—"}</td>
                                         <td>
@@ -272,6 +290,30 @@ export function MemberPage() {
                     </div>
                 )}
             </div>
+
+            {criteriaGroup?.markScales.length !== 0 ? (<>
+                <h4 className="p-2">Таблица перевода оценок</h4>
+
+                <div className="table-responsive" style={{maxWidth: '300px'}}>
+                    <table className="table table-light table-striped-columns">
+                        <thead>
+                        <tr>
+                            <th className="text-center">Сумма баллов</th>
+                            <th className="text-center">Оценка</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {criteriaGroup?.markScales.sort((a, b) =>
+                            (b.min ?? 0) - (a.min ?? 0)).map((scale, index) => (
+                            <tr key={index}>
+                                <td className="text-center">{scale.min}-{scale.max}</td>
+                                <td className="text-center">{scale.mark}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
+            </>) : (<></>)}
         </>
     );
 }

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {Criteria} from '../models/Criteria'
 import {Meeting} from '../models/Meeting'
+import {CriteriaGroup} from '../models/CriteriaGroup'
 import {MemberMark} from '../models/MemberMark'
 import {BASENAME} from "../App"
 
@@ -49,18 +50,38 @@ export const createMeeting = async (meeting: Meeting) =>
     await axiosService.post(`meetings/new`, {
         ...meeting,
         members: meeting.members.filter(member => member.name !== ''),
-        criteriaId: meeting.criteria.map(criteria => criteria.id)
+        CriteriaGroupId: meeting.criteriaGroup?.id
     });
 
 export const updateMeeting = async (meeting: Meeting) =>
     await axiosService.put(`meetings/update`, {
         ...meeting,
         members: meeting.members.filter(member => member.name !== ''),
-        criteriaId: meeting.criteria.map(criteria => criteria.id)
+        CriteriaGroupId: meeting.criteriaGroup?.id
     });
 
 export const deleteMeeting = async (id: number) =>
     await axiosService.delete(`meetings/delete`, {params: {id}})
+
+export const getCriteriaGroup = async (id?: number) =>
+    await axiosService.get(`criteriaGroup`, {params: {id}});
+
+export const createCriteriaGroup = async (group: CriteriaGroup) =>
+    await axiosService.post(`criteriaGroup/new`, {
+        ...group,
+        criteriaId: group.criteria.map(criteria => criteria.id),
+        markScales: group.markScales.filter(scale => scale.min !== undefined && scale.max !== undefined && scale.min < scale.max && scale.mark !== '')
+    });
+
+export const updateCriteriaGroup = async (group: CriteriaGroup) =>
+    await axiosService.put(`criteriaGroup/update`, {
+        ...group,
+        criteriaId: group.criteria.map(criteria => criteria.id),
+        markScales: group.markScales.filter(scale => scale.min !== undefined && scale.max !== undefined && scale.min < scale.max && scale.mark !== '')
+    });
+
+export const deleteCriteriaGroup = async (id: number) =>
+    await axiosService.delete(`criteriaGroup/delete`, {params: {id}})
 
 export const getCriteria = async (id?: number) =>
     await axiosService.get(`criteria`, {params: {id}});

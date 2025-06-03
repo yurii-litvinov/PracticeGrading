@@ -16,7 +16,7 @@ public class CriteriaServiceTests : TestBase
             new(103, "type3", "desc3", 3),
         };
 
-        var request = new CriteriaRequest(null, "name", null, rules, rules);
+        var request = new CriteriaRequest(null, "name", null, [], rules, rules);
 
         await CriteriaService.AddCriteria(request);
 
@@ -68,6 +68,7 @@ public class CriteriaServiceTests : TestBase
             "new_name",
             null,
             [],
+            [],
             []);
 
         await CriteriaService.UpdateCriteria(request);
@@ -84,6 +85,7 @@ public class CriteriaServiceTests : TestBase
             321,
             "name",
             null,
+            [],
             [],
             []);
 

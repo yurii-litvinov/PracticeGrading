@@ -102,6 +102,8 @@ app.MapHub<MeetingHub>("/meetingHub");
 
 app.MapMeetingEndpoints();
 
+app.MapCriteriaGroupEndpoints();
+
 app.MapCriteriaEndpoints();
 
 app.MapUserEndpoints();
