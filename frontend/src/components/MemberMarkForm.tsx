@@ -27,7 +27,6 @@ export function MemberMarkForm({
                                    saveMark
                                }: MemberMarkFormProps) {
     const calculateMark = () => {
-        console.log(mark)
         setMark((prevMark) => {
             let finalMark = 0;
             if (criteriaGroup.metricType === MetricTypes[0].value) {
@@ -44,8 +43,6 @@ export function MemberMarkForm({
                 }
             });
 
-            console.log(finalMark)
-            
             return {
                 ...prevMark,
                 mark: finalMark
@@ -125,10 +122,10 @@ export function MemberMarkForm({
 
                     if (!selectedRule) {
                         updatedSelectedRules.push({
-                            ruleId: rule.id!, value: newValue !== undefined && newValue > 0 ? 0 : newValue ?? 0
+                            ruleId: rule.id!, value: newValue 
                         });
                     } else {
-                        selectedRule.value = newValue !== undefined && newValue > 0 ? 0 : newValue;
+                        selectedRule.value = newValue;
                     }
 
                     return {

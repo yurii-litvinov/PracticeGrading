@@ -130,8 +130,6 @@ export function CriteriaGroupModal({groupData, criteria, onSave}: CriteriaGroupM
         setGroup(groupData ?? initialGroupState);
     }
 
-    console.log(group.markScales)
-
     return (
         <div className="modal fade" id="groupModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1}
              aria-labelledby="staticBackdropLabel" aria-hidden="true">

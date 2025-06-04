@@ -19,7 +19,6 @@ export function DocumentsModel({meeting}: DocumentsModelProps) {
     }, [meeting]);
 
     const handleDownload = async () => {
-        console.log(coordinator)
         if (formRef.current && coordinator === '') {
             formRef.current.reportValidity();
             return;

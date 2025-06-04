@@ -154,6 +154,9 @@ export function FileModal({onSubmit}: FileModalProps) {
                                     ]} onChange={handleHeadersChange}/>
                                 </>) : (
                                 <>
+                                    <p>Обратите внимание, что у таблицы расписания защит ВКР должен быть заголовок в
+                                        первой строке. Если заголовка нет, сдвиньте всю таблицу вниз на одну строку.</p>
+
                                     <div className="d-flex align-items-center mb-4">
                                         <h6 className="form-label mb-0 me-2">Колонка с членами комиссии:</h6>
                                         <input

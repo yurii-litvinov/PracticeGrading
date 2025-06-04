@@ -110,8 +110,6 @@ export function MemberPage() {
         setFinalMark(Number(meeting.id), id, value);
     }
 
-    console.log(meeting.studentWorks)
-
     return (
         <>
             <div className="d-flex flex-column p-2">
