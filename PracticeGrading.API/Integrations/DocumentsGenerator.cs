@@ -67,8 +67,7 @@ public class DocumentsGenerator
                 "[members]",
                 string.Join(
                     "\n",
-                    this.meeting.Members.Where(member => member.Name != chairman)
-                        .Select((member, index) => $"{index + 1}. {member.Name}"))
+                    this.meeting.Members.Select((member, index) => $"{index + 1}. {member.Name}"))
             },
             { "[coordinator]", coordinator },
             { "[chairman]", chairman },
@@ -85,7 +84,7 @@ public class DocumentsGenerator
                 ?.ReplaceText(placeholder.Key, placeholder.Value);
         }
 
-        var colCount = this.meeting.Members.Count + 1;
+        var colCount = this.meeting.Members.Count + 2;
         var table = doc.Tables[0];
 
         CreateStatementTableHeader(table, colCount);

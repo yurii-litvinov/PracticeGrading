@@ -22,7 +22,7 @@ export const calculateFinalMark = (mark: number, scales: MarkScale[] | undefined
         scale.min <= mark && mark <= scale.max
     );
 
-    return matchedScale?.mark ?? String(Math.round(mark));
+    return matchedScale?.mark ?? String(mark);
 };
 
 export function ViewMeetingPage() {
@@ -69,7 +69,7 @@ export function ViewMeetingPage() {
                         }
 
                         if (work.finalMark === '' && !isNaN(average)) {
-                            setFinalMark(meeting.id, work.id!, calculateFinalMark(average, group.markScales));
+                            setFinalMark(meeting.id, work.id!, calculateFinalMark(Math.round(average), group.markScales));
                         }
 
                         return {
