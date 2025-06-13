@@ -9,7 +9,7 @@ namespace PracticeGrading.API.Models.Requests;
 /// Class for schedule parsing request.
 /// </summary>
 public record ParseScheduleRequest(
-    string File,
-    List<string> Headers,
-    List<List<string>> Separator,
+    IFormFile File,
+    string Headers,
+    string Separator,
     int MembersColumn);

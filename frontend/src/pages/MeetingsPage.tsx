@@ -1,21 +1,22 @@
-import React, {useEffect, useState} from 'react';
+import {useEffect, useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {getMeetings, deleteMeeting, createMeetingsFromFile} from '../services/ApiService';
+import {getMeetings, deleteMeeting} from '../services/ApiService';
 import {format} from 'date-fns';
 import {ru} from 'date-fns/locale';
 import {FileModal} from '../components/FileModal'
+import {Meeting} from '../models/Meeting'
 
-export const formatDate = (date) => {
+export const formatDate = (date: Date) => {
     return format(new Date(date), 'd MMMM yyyy, HH:mm', {locale: ru});
 }
 
 export function MeetingsPage() {
-    const [meetings, setMeetings] = useState([]);
+    const [meetings, setMeetings] = useState<Meeting[]>([]);
     const navigate = useNavigate();
 
     const fetchMeetings = () => {
-        getMeetings().then(response => setMeetings(response.data.sort((a, b) =>
-            new Date(a.dateAndTime) - new Date(b.dateAndTime))));
+        getMeetings().then(response => setMeetings(response.data.sort((a: Meeting, b: Meeting) =>
+            new Date(a.dateAndTime).getTime() - new Date(b.dateAndTime).getTime())));
     }
 
     useEffect(() => {
@@ -23,19 +24,19 @@ export function MeetingsPage() {
     }, []);
 
     const handleNewMeeting = () => {
-        navigate("/meetings/new", {replace: true});
+        navigate("/meetings/new");
     }
 
-    const handleDeleteMeeting = async (id) => {
+    const handleDeleteMeeting = async (id: number) => {
         const isConfirmed = window.confirm('Вы уверены, что хотите удалить это заседание?');
         if (isConfirmed) {
             await deleteMeeting(id);
-            getMeetings().then(response => setMeetings(response.data));
+            fetchMeetings();
         }
     }
 
-    const handleViewMeeting = async (id) => {
-        navigate(`/meetings/${id}`, {replace: true});
+    const handleViewMeeting = async (id: number) => {
+        navigate(`/meetings/${id}`);
     }
 
     return (
@@ -64,11 +65,11 @@ export function MeetingsPage() {
                                     <strong>Аудитория:</strong> {meeting.auditorium || "—"}
                                 </p>
                                 <button className="btn btn-outline-primary me-2" id="view_meeting"
-                                        onClick={() => handleViewMeeting(meeting.id)}>
+                                        onClick={() => handleViewMeeting(Number(meeting.id))}>
                                     Перейти
                                 </button>
                                 <button className="btn btn-outline-danger" id="delete-meeting"
-                                        onClick={() => handleDeleteMeeting(meeting.id)}>
+                                        onClick={() => handleDeleteMeeting(Number(meeting.id))}>
                                     Удалить
                                 </button>
                             </div>

@@ -10,7 +10,7 @@ public class CriteriaRepositoryTests : TestBase
     {
         var criteria = new Criteria
         {
-            Id = 1,
+            Id = 10,
             Name = "name"
         };
 
@@ -34,7 +34,7 @@ public class CriteriaRepositoryTests : TestBase
 
         var criteria = new Criteria
         {
-            Id = 10,
+            Id = 11,
             Name = "name",
             Rules = rules,
         };
@@ -53,7 +53,7 @@ public class CriteriaRepositoryTests : TestBase
     {
         var criteria = new Criteria
         {
-            Id = 3,
+            Id = 13,
             Name = "some_name"
         };
 
@@ -73,7 +73,7 @@ public class CriteriaRepositoryTests : TestBase
     {
         var criteria = new Criteria
         {
-            Id = 2,
+            Id = 12,
             Name = "delete_this"
         };
 

@@ -42,14 +42,14 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
     /// <returns>JWT token.</returns>
     public async Task<string> LoginMember(LoginMemberRequest request)
     {
-        var user = await userRepository.GetByUserName(request.UserName);
+        var user = await userRepository.GetByUserName(request.UserName, request.MeetingId);
 
         if (user == null)
         {
             await userRepository.Create(
                 new User
                     { UserName = request.UserName, MeetingId = request.MeetingId, RoleId = (int)RolesEnum.Member });
-            user = await userRepository.GetByUserName(request.UserName) ??
+            user = await userRepository.GetByUserName(request.UserName, request.MeetingId) ??
                    throw new InvalidOperationException($"User with UserName {request.UserName} was not found.");
         }
 

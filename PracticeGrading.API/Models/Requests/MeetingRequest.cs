@@ -17,4 +17,4 @@ public record MeetingRequest(
     string? MaterialsLink,
     List<StudentWorkRequest> StudentWorks,
     List<MemberRequest> Members,
-    List<int> CriteriaId);
+    int CriteriaGroupId);

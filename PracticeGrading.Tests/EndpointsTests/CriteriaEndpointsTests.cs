@@ -14,7 +14,7 @@ public class CriteriaEndpointsTests : TestBase
     [Test]
     public async Task TestCreateCriteria()
     {
-        var criteria = new CriteriaRequest(null, "name", null, [], []);
+        var criteria = new CriteriaRequest(null, "name", null, [], [], []);
 
         var response = await Client.PostAsJsonAsync("/criteria/new", criteria);
 
@@ -24,7 +24,7 @@ public class CriteriaEndpointsTests : TestBase
     [Test]
     public async Task TestGetCriteriaById()
     {
-        var criteria = new CriteriaRequest(null, "name", null, [], []);
+        var criteria = new CriteriaRequest(null, "name", null, [], [], []);
 
         await Client.PostAsJsonAsync("/criteria/new", criteria);
         var response = await Client.GetAsync("/criteria?id=1");
@@ -43,11 +43,11 @@ public class CriteriaEndpointsTests : TestBase
     [Test]
     public async Task TestUpdateCriteria()
     {
-        var criteria = new CriteriaRequest(null, "name", null, [], []);
+        var criteria = new CriteriaRequest(null, "name", null, [], [], []);
 
         await Client.PostAsJsonAsync("/criteria/new", criteria);
 
-        var updatedCriteria = new CriteriaRequest(1, "name", "comment", [], []);
+        var updatedCriteria = new CriteriaRequest(1, "name", "comment", [], [], []);
 
         var response = await Client.PutAsJsonAsync("/criteria/update", updatedCriteria);
 
@@ -57,7 +57,7 @@ public class CriteriaEndpointsTests : TestBase
     [Test]
     public async Task TestDeleteCriteria()
     {
-        var criteria = new CriteriaRequest(null, "name", null, [], []);
+        var criteria = new CriteriaRequest(null, "name", null, [], [], []);
 
         await Client.PostAsJsonAsync("/criteria/new", criteria);
         var response = await Client.DeleteAsync("/criteria/delete?id=1");

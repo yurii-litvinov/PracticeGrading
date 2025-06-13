@@ -5,6 +5,12 @@
 
 namespace PracticeGrading.API.Endpoints;
 
+using System.IO.Compression;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using PracticeGrading.API.Integrations;
+using PracticeGrading.API.Integrations.ThesisUploader;
+using PracticeGrading.API.Integrations.XlsxGenerator;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 
@@ -23,7 +29,13 @@ public static class MeetingEndpoints
         meetingGroup.MapPost("/new", CreateMeeting).RequireAuthorization("RequireAdminRole");
         meetingGroup.MapPut("/update", UpdateMeeting).RequireAuthorization("RequireAdminRole");
         meetingGroup.MapDelete("/delete", DeleteMeeting).RequireAuthorization("RequireAdminRole");
-        meetingGroup.MapPost("/fromFile", CreateMeetingsFromFile).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapPost("/fromFile", CreateMeetingsFromFile).RequireAuthorization("RequireAdminRole")
+            .DisableAntiforgery();
+        meetingGroup.MapPost("/uploadTheses", UploadTheses).RequireAuthorization("RequireAdminRole")
+            .DisableAntiforgery();
+        meetingGroup.MapGet("/getMarkTable", GetMarkTable).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapGet("/getMarkTableForStudents", GetMarkTableForStudents).RequireAuthorization("RequireAdminRole");
+        meetingGroup.MapGet("/getDocuments", GetDocuments).RequireAuthorization("RequireAdminRole");
 
         meetingGroup.MapGet(string.Empty, GetMeeting).RequireAuthorization("RequireAdminOrMemberRole");
         meetingGroup.MapPut("/setMark", SetFinalMark).RequireAuthorization("RequireAdminOrMemberRole");
@@ -61,17 +73,107 @@ public static class MeetingEndpoints
         return Results.Ok(members);
     }
 
-    private static async Task<IResult> SetFinalMark(int meetingId, int workId, int mark, MeetingService meetingService)
+    private static async Task<IResult> SetFinalMark(
+        int meetingId,
+        int workId,
+        string mark,
+        MeetingService meetingService)
     {
         await meetingService.SetFinalMark(meetingId, workId, mark);
         return Results.Ok();
     }
 
     private static async Task<IResult> CreateMeetingsFromFile(
-        ParseScheduleRequest request,
+        [FromForm] ParseScheduleRequest request,
         MeetingService meetingService)
     {
         await meetingService.CreateMeetingsFromFile(request);
         return Results.Ok();
+    }
+
+    private static async Task<IResult> UploadTheses(
+        [FromForm] IFormFileCollection fileCollection,
+        [FromForm] string thesisInfosString)
+    {
+        var files = new Dictionary<string, StreamContent>();
+        foreach (var file in fileCollection)
+        {
+            var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            var fileContent = new StreamContent(memoryStream);
+            fileContent.Headers.ContentType =
+                new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+
+            files[file.FileName] = fileContent;
+        }
+
+        var thesisInfos = JsonSerializer.Deserialize<List<ThesisInfo>>(thesisInfosString) ?? [];
+
+        var uploader = new ThesisUploader(files, thesisInfos);
+        var uploaded = await uploader.Upload();
+
+        return Results.Ok(uploaded);
+    }
+
+    private static async Task<IResult> GetMarkTable(int id, MeetingService meetingService, MarkService markService)
+    {
+        var meetings = await meetingService.GetMeeting(id);
+        var meeting = meetings.First();
+        var memberMarks = await markService.GetMemberMarks();
+
+        var table = new MarkTableGenerator().Generate(meeting, memberMarks);
+
+        return Results.File(table, "application/octet-stream", "table.xlsx");
+    }
+
+    private static async Task<IResult> GetMarkTableForStudents(int id, MeetingService meetingService)
+    {
+        var meetings = await meetingService.GetMeeting(id);
+        var meeting = meetings.First();
+
+        var table = new MarkTableGenerator().GenerateForStudents(meeting);
+
+        return Results.File(table, "application/octet-stream", "table.xlsx");
+    }
+
+    private static async Task<IResult> GetDocuments(
+        int id,
+        string coordinator,
+        string chairman,
+        MeetingService meetingService)
+    {
+        var meetings = await meetingService.GetMeeting(id);
+        var meeting = meetings.First();
+
+        var zipStream = new MemoryStream();
+        var generator = new DocumentsGenerator(meeting);
+
+        using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            var (file, fileName) = generator.GenerateStatement(coordinator, chairman);
+            var entry = archive.CreateEntry(fileName, CompressionLevel.Optimal);
+
+            await using (var entryStream = entry.Open())
+            {
+                await file.CopyToAsync(entryStream);
+            }
+
+            await file.DisposeAsync();
+
+            foreach (var member in meeting.Members)
+            {
+                (file, fileName) = generator.GenerateGradingSheet(member.Name);
+                entry = archive.CreateEntry(fileName, CompressionLevel.Optimal);
+
+                await using var entryStream = entry.Open();
+                await file.CopyToAsync(entryStream);
+            }
+        }
+
+        zipStream.Position = 0;
+
+        return Results.File(zipStream, "application/zip", "documents.zip");
     }
 }

@@ -13,4 +13,5 @@ public record MemberMarkDto(
     int MemberId,
     int StudentWorkId,
     List<CriteriaMarkDto> CriteriaMarks,
-    int Mark);
+    int Mark,
+    string Comment);

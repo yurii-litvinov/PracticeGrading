@@ -1,7 +1,13 @@
-import React, {useState, useEffect} from 'react';
+import {useState, useEffect} from 'react';
 import {DataFields} from '../models/DataFields'
 
-export function FormatTable({dataFields, initialRowsState, onChange}) {
+interface FormatTableProps {
+    dataFields: any[];
+    initialRowsState: any[];
+    onChange: (updated: any[]) => void;
+}
+
+export function FormatTable({dataFields, initialRowsState, onChange}: FormatTableProps) {
     const [rows, setRows] = useState(initialRowsState);
 
     useEffect(() => {
@@ -28,13 +34,13 @@ export function FormatTable({dataFields, initialRowsState, onChange}) {
                 : prevRows
         );
 
-    const handleSelectedItemsChange = (rowIndex, cellIndex, selectedItems) => {
+    const handleSelectedItemsChange = (rowIndex: number, cellIndex: number, selectedItems: any[]) => {
         const updatedRows = [...rows];
         let filteredItems = selectedItems;
         if (selectedItems.length > 1) {
             filteredItems = selectedItems.filter((item) => !(item[0] === "" && item[1] === ""));
         }
-        updatedRows[rowIndex][cellIndex] = selectedItems;
+        updatedRows[rowIndex][cellIndex] = filteredItems;
         setRows(updatedRows);
     };
 
@@ -47,11 +53,11 @@ export function FormatTable({dataFields, initialRowsState, onChange}) {
                             <tbody>
                             {rows.map((row, rowIndex) => (
                                 <tr key={rowIndex}>
-                                    {row.map((cell, cellIndex) => (
+                                    {row.map((cell: any, cellIndex: number) => (
                                         <td key={cellIndex}>
                                             <Cell items={[DataFields.Delete, ...dataFields]}
                                                   initialSelecteditems={cell}
-                                                  onChange={(selectedItems) => handleSelectedItemsChange(rowIndex, cellIndex, selectedItems)}/>
+                                                  onChange={(selectedItems: any[]) => handleSelectedItemsChange(rowIndex, cellIndex, selectedItems)}/>
                                         </td>
                                     ))}
                                 </tr>
@@ -90,7 +96,13 @@ export function FormatTable({dataFields, initialRowsState, onChange}) {
     );
 }
 
-const Cell = ({items, initialSelecteditems, onChange}) => {
+interface CellProps {
+    items: any[];
+    initialSelecteditems: any[];
+    onChange: (updated: any[]) => void;
+}
+
+const Cell = ({items, initialSelecteditems, onChange}: CellProps) => {
     const [selectedItems, setSelectedItems] = useState(initialSelecteditems.filter((item) =>
         !(item[0] === "" && item[1] === "")));
 
@@ -102,11 +114,11 @@ const Cell = ({items, initialSelecteditems, onChange}) => {
         }
     }, [selectedItems]);
 
-    const addItem = (newItem) => {
+    const addItem = (newItem: any) => {
         setSelectedItems((prevItems) => [...prevItems, newItem]);
     }
 
-    const replaceItem = (index, newItem) => {
+    const replaceItem = (index: number, newItem: string[]) => {
         setSelectedItems((prevItems) => {
             if (newItem[0] === DataFields.Delete[0]) {
                 return prevItems.filter((_, itemIndex) => itemIndex !== index);

@@ -3,7 +3,7 @@
 // Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
 // </copyright>
 
-namespace ScheduleParser;
+namespace PracticeGrading.API.Integrations;
 
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -163,7 +163,7 @@ public class ScheduleParser
             { DataFields.CallLink, string.Empty },
         };
 
-        var meeting = new Meeting { StudentWorks = [], Criteria = [] };
+        var meeting = new Meeting { StudentWorks = [], CriteriaGroup = null };
 
         foreach (var (row, index) in cells.Select((row, index) => (row, index)))
         {

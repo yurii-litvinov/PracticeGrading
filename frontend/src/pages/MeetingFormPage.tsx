@@ -1,34 +1,34 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {useNavigate, useParams, useLocation} from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 import DatePicker, {registerLocale} from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import ru from 'date-fns/locale/ru';
+import {ru} from 'date-fns/locale/ru';
 import {StudentWorkModal} from '../components/StudentWorkModal';
-import {createMeeting, getCriteria, getMeetings, updateMeeting} from '../services/ApiService';
+import {createMeeting, getCriteriaGroup, getMeetings, updateMeeting} from '../services/ApiService';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
+import {StudentWork} from '../models/StudentWork';
+import {Meeting} from '../models/Meeting';
+import {CriteriaGroup} from '../models/CriteriaGroup';
 
 registerLocale('ru', ru);
 
 export function MeetingFormPage() {
     const {id} = useParams();
-    const navigate = useNavigate();
-    const location = useLocation();
-    const [workToEditIndex, setWorkToEditIndex] = useState();
-    const [criteria, setCriteria] = useState([]);
-
+    const [workToEditIndex, setWorkToEditIndex] = useState<number | null>();
+    const [criteriaGroups, setCriteriaGroups] = useState<CriteriaGroup[]>();
     const signalRService = useRef<SignalRService | null>(null);
 
-    const [meeting, setMeeting] = useState({
-        id: null,
+    const [meeting, setMeeting] = useState<Meeting>({
+        id: undefined,
         dateAndTime: new Date(),
         auditorium: '',
         info: '',
         callLink: '',
         materialsLink: '',
         studentWorks: [],
-        members: [{id: null, name: ''}],
-        criteria: []
+        members: [{id: undefined, name: ''}],
+        criteriaGroup: undefined
     });
 
     const handleNotification = (message: string) => {
@@ -37,14 +37,13 @@ export function MeetingFormPage() {
 
     useEffect(() => {
         if (id) {
-            getMeetings(id).then(response => setMeeting(response.data[0]));
-            console.log(meeting.criteria)
+            getMeetings(Number(id)).then(response => setMeeting(response.data[0]));
 
             signalRService.current = new SignalRService(id, handleNotification);
             signalRService.current.startConnection();
         }
 
-        getCriteria().then(response => setCriteria(response.data));
+        getCriteriaGroup().then(response => setCriteriaGroups(response.data));
 
         return () => {
             if (signalRService.current) signalRService.current.stopConnection();
@@ -53,14 +52,10 @@ export function MeetingFormPage() {
     }, [id]);
 
     const handleBack = () => {
-        if (id) {
-            navigate(`/meetings/${id}`, {replace: true});
-        } else {
-            navigate("/meetings", {replace: true});
-        }
+        window.history.back();
     }
 
-    const handleMeetingChange = (e) => {
+    const handleMeetingChange = (e: { target: { name: any; value: any; }; }) => {
         const {name, value} = e.target;
 
         setMeeting((prev) => ({
@@ -69,7 +64,7 @@ export function MeetingFormPage() {
         }));
     }
 
-    const addOrUpdateStudentWork = (work) => {
+    const addOrUpdateStudentWork = (work: StudentWork) => {
         if (workToEditIndex !== null) {
             setMeeting((prevMeeting) => ({
                 ...prevMeeting,
@@ -94,23 +89,23 @@ export function MeetingFormPage() {
             const response = await updateMeeting(meeting);
 
             if (response.status === 200) {
-                await signalRService.current.sendNotification(Actions.Update);
-                navigate(`/meetings/${id}`, {replace: true});
+                await signalRService.current?.sendNotification(Actions.Update);
+                window.history.back();
             }
         } else {
             const response = await createMeeting(meeting);
 
             if (response.status === 200) {
-                navigate("/meetings", {replace: true});
+                window.history.back();
             }
         }
     }
 
     useEffect(() => {
-        if (meeting.members.length > 0 && meeting.members[meeting.members.length - 1].name !== '') {
+        if (meeting.members.length === 0 || meeting.members[meeting.members.length - 1].name !== '') {
             setMeeting((prevMeeting) => ({
                 ...prevMeeting,
-                members: [...prevMeeting.members, {id: null, name: ''}]
+                members: [...prevMeeting.members, {id: undefined, name: ''}]
             }))
         }
     }, [meeting.members]);
@@ -136,29 +131,18 @@ export function MeetingFormPage() {
         }));
     }
 
-    const handleCriteriaChange = (e) => {
-        setMeeting(prevMeeting => {
-            let updatedCriteria = [...prevMeeting.criteria];
+    useEffect(() => {
+        const handleBeforeUnload = (event: { preventDefault: () => void; returnValue: string; }) => {
+            event.preventDefault();
+            event.returnValue = "";
+        }
 
-            const selectedCriteria = prevMeeting.criteria.find(criteria => criteria.id === Number(e.target.id));
+        window.addEventListener('beforeunload', handleBeforeUnload);
 
-            if (e.target.checked) {
-                if (!selectedCriteria) {
-                    const newCriteria = {
-                        id: Number(e.target.id),
-                    };
-                    updatedCriteria.push(newCriteria);
-                }
-            } else {
-                updatedCriteria = updatedCriteria.filter(criteria => criteria.id !== Number(e.target.id));
-            }
-
-            return {
-                ...prevMeeting,
-                criteria: updatedCriteria.sort((a, b) => a.id - b.id),
-            };
-        });
-    }
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        }
+    });
 
     return (
         <>
@@ -168,7 +152,7 @@ export function MeetingFormPage() {
                         {id ? "Редактирование заседания" : "Новое заседание"}</h2>
                     <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
                         <button type="submit" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2" id="save-meeting"
-                                disabled={meeting.studentWorks.length === 0 || meeting.criteria.length === 0}>Сохранить
+                                disabled={meeting.studentWorks.length === 0}>Сохранить
                         </button>
                         <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
                                 onClick={handleBack}>Назад
@@ -182,7 +166,7 @@ export function MeetingFormPage() {
                         <div className="custom-datepicker">
                             <DatePicker
                                 selected={new Date(meeting.dateAndTime)}
-                                onChange={(date) => setMeeting({...meeting, dateAndTime: new Date(date)})}
+                                onChange={(date) => date && setMeeting({...meeting, dateAndTime: new Date(date)})}
                                 dateFormat="d MMMM yyyy, HH:mm"
                                 showTimeSelect
                                 timeIntervals={60}
@@ -264,7 +248,8 @@ export function MeetingFormPage() {
                                     (<th>Курс, направление</th>) : (<></>)}
                                 <th>Тема</th>
                                 <th>Научник</th>
-                                <th>Консультант</th>
+                                {meeting.studentWorks.some((work) => work.consultant) ? (
+                                    <th>Консультант</th>) : (<></>)}
                                 {meeting.studentWorks.some((work) => work.reviewer) ? (<th>Рецензент</th>) : (<></>)}
                                 <th>Оценка научника</th>
                                 {meeting.studentWorks.some((work) => work.reviewerMark) ?
@@ -297,17 +282,24 @@ export function MeetingFormPage() {
                                             (<td>{work.info || "—"}</td>) : (<></>)}
                                         <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                         <td>{work.supervisor}</td>
-                                        <td>{work.consultant || "—"}</td>
+                                        {meeting.studentWorks.some((work) => work.consultant) ? (
+                                            <td>{work.consultant || "—"}</td>) : (<></>)}
                                         {meeting.studentWorks.some((work) => work.reviewer) ?
                                             (<td>{work.reviewer || "—"}</td>) : (<></>)}
                                         <td>{work.supervisorMark || "—"}</td>
                                         {meeting.studentWorks.some((work) => work.reviewerMark) ?
                                             (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
                                         {meeting.studentWorks.some((work) => work.codeLink) ?
-                                            (<td style={{minWidth: '85px'}}>{work.codeLink ? (
-                                                <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
-                                                    Ссылка
-                                                </a>
+                                            (<td style={{minWidth: '87px'}}>{work.codeLink ? (
+                                                work.codeLink !== 'NDA' ? (
+                                                    work.codeLink.split(' ').map((link, linkIndex) => (
+                                                        <div key={linkIndex} className="mb-2">
+                                                            <a href={link} target="_blank" rel="noopener noreferrer">
+                                                                Ссылка {work.codeLink && work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                            </a>
+                                                        </div>
+                                                    ))
+                                                ) : (<span className="fst-italic">NDA</span>)
                                             ) : (
                                                 <span>—</span>
                                             )}</td>) : (<></>)}
@@ -338,22 +330,17 @@ export function MeetingFormPage() {
                         </div>
 
                         <div className="flex-grow-1">
-                            <h4 className="p-2">Критерии</h4>
+                            <h4 className="p-2">Группа критериев</h4>
                             <ul className="list-group p-2">
-                                {criteria.map((criteria, index) => (
-                                    <li className="list-group-item d-flex align-items-center" key={criteria.id}>
-                                        <input className="form-check-input me-3" type="checkbox"
+                                {criteriaGroups?.map((group, index) => (
+                                    <li className="list-group-item d-flex align-items-center" key={group.id}>
+                                        <input className="form-check-input me-3" type="radio"
                                                name={`criteria-${index}`}
-                                               checked={meeting.criteria.some(c => c.id === criteria.id)}
-                                               id={criteria.id} onChange={(e) => handleCriteriaChange(e)}/>
+                                               checked={meeting.criteriaGroup?.id === group.id}
+                                               id={String(group.id)}
+                                               onChange={() => setMeeting({...meeting, criteriaGroup: group})}/>
                                         <label className="form-check-label stretched-link"
-                                               htmlFor={criteria.id}> {criteria.name}{criteria.comment && (
-                                            <>
-                                                <br/>
-                                                <small className=""
-                                                       style={{color: '#9a9d9f'}}>{criteria.comment}</small>
-                                            </>
-                                        )}
+                                               htmlFor={String(group.id)}> {group.name}
                                         </label>
                                     </li>
                                 ))}
@@ -364,7 +351,7 @@ export function MeetingFormPage() {
             </form>
 
             <StudentWorkModal
-                studentWorkData={meeting.studentWorks[workToEditIndex]}
+                studentWorkData={workToEditIndex != null ? meeting.studentWorks[workToEditIndex] : undefined}
                 onSave={addOrUpdateStudentWork}/>
         </>
     );

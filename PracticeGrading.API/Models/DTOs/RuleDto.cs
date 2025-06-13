@@ -8,4 +8,4 @@ namespace PracticeGrading.API.Models.DTOs;
 /// <summary>
 /// Rule DTO.
 /// </summary>
-public record RuleDto(int Id, string Description, int Value, bool IsScaleRule);
+public record RuleDto(int Id, string? Type, string Description, int Value, bool IsScaleRule);

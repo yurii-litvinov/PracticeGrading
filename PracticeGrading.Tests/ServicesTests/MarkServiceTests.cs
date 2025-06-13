@@ -15,7 +15,7 @@ public class MarkServiceTests : TestBase
     [Test]
     public async Task TestAddMark()
     {
-        var request = new MemberMarkRequest(null, 4, 3, [], 5);
+        var request = new MemberMarkRequest(null, 4, 3, [], 5, string.Empty);
         await MarkService.AddMemberMark(request);
 
         var marks = await MarkService.GetMemberMarks(request.StudentWorkId);
@@ -56,7 +56,7 @@ public class MarkServiceTests : TestBase
         var mark = new MemberMark { MemberId = 4, StudentWorkId = 3, CriteriaMarks = [], Mark = 5 };
         await MarkRepository.Create(mark);
 
-        var request = new MemberMarkRequest(null, mark.MemberId, mark.StudentWorkId, [], 4);
+        var request = new MemberMarkRequest(null, mark.MemberId, mark.StudentWorkId, [], 4, string.Empty);
         await MarkService.UpdateMemberMark(request);
 
         MarkService.GetMemberMarks(3, 4).Result.First().Mark.Should().Be(request.Mark);
@@ -65,7 +65,7 @@ public class MarkServiceTests : TestBase
     [Test]
     public async Task TestUpdateNonexistentMark()
     {
-        var request = new MemberMarkRequest(null, 123, 321, [], 4);
+        var request = new MemberMarkRequest(null, 123, 321, [], 4, string.Empty);
         var action = async () => await MarkService.UpdateMemberMark(request);
 
         await action.Should().ThrowAsync<InvalidOperationException>()

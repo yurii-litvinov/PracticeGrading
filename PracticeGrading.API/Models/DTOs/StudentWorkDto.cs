@@ -16,8 +16,13 @@ public record StudentWorkDto(
     string Supervisor,
     string? Consultant,
     string? Reviewer,
-    int? SupervisorMark,
-    int? ReviewerMark,
+    string? SupervisorMark,
+    string? ReviewerMark,
     string? CodeLink,
+    string? ReportLink,
+    string? SupervisorReviewLink,
+    string? ConsultantReviewLink,
+    string? ReviewerReviewLink,
+    string? AdditionalLink,
     List<AverageCriteriaMarkDto> AverageCriteriaMarks,
-    int? FinalMark);
+    string? FinalMark);

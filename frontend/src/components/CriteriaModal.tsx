@@ -1,27 +1,27 @@
 import {useRef, useState, useEffect} from 'react';
 import {Criteria} from '../models/Criteria'
+import {CriteriaGroup} from '../models/CriteriaGroup'
+import {Rule} from '../models/Rule'
+import {RuleTypes} from '../models/RuleTypes'
 
-/**
- * Interface for criteria modal props.
- *
- * @param criteriaData - Criteria to edit
- * @param onSave - Save criteria function
- */
 interface CriteriaModalProps {
-    criteriaData: Criteria,
+    criteriaData?: Criteria,
+    groups: CriteriaGroup[],
     onSave: (criteria: Criteria) => void,
 }
 
-export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
-    const formRef = useRef();
-    const closeButtonRef = useRef();
+export function CriteriaModal({criteriaData, groups, onSave}: CriteriaModalProps) {
+    const formRef = useRef<HTMLFormElement | null>(null);
+    const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+    const [typeChange, setTypeChange] = useState(false);
 
     const initialCriteriaState: Criteria = {
-        id: null,
+        id: undefined,
         name: '',
         comment: '',
-        scale: [{description: '', value: undefined}],
-        rules: [{description: '', value: undefined}]
+        criteriaGroupsId: [],
+        scale: [{type: undefined, description: '', value: undefined, isScaleRule: true}],
+        rules: [{type: RuleTypes.Fixed, description: '', value: undefined, isScaleRule: false}]
     }
     const [criteria, setCriteria] = useState(initialCriteriaState);
 
@@ -33,7 +33,7 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
         }
     }, [criteriaData]);
 
-    const handleChange = (e) => {
+    const handleChange = (e: { target: { name: any; value: any; }; }) => {
         const {name, value} = e.target;
 
         setCriteria((prev) => ({
@@ -42,19 +42,36 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
         }));
     }
 
+    const handleGroupChange = (id: number) => {
+        setCriteria(prev => {
+            const selected = prev.criteriaGroupsId.includes(id);
+
+            return {
+                ...prev,
+                criteriaGroupsId: selected
+                    ? prev.criteriaGroupsId.filter(groupId => groupId !== id)
+                    : [...prev.criteriaGroupsId, id],
+            };
+        });
+    };
+
     const handleRuleChange = (
         index: number,
-        field: 'description' | 'value',
-        value: string | number,
+        field: 'type' | 'description' | 'value',
+        value: undefined | string | number,
         type: 'scale' | 'rules'
     ) => {
+        if (field === 'type') {
+            setTypeChange(true)
+        }
+
         const updatedItems = [...criteria[type]];
         updatedItems[index] = {
             ...updatedItems[index],
             [field]: value
         }
 
-        if (!updatedItems[index].description && !updatedItems[index].value) {
+        if (field !== 'type' && !updatedItems[index].description && !updatedItems[index].value) {
             updatedItems.splice(index, 1);
         }
 
@@ -65,18 +82,22 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
     }
 
     useEffect(() => {
-        const addEmptyRuleIfNeeded = (array) => {
-            if (array.length === 0 || array[array.length - 1].description !== '' || array[array.length - 1].value !== undefined) {
-                return [...array, {description: '', value: undefined}];
-            }
-            return array;
-        }
+        if (typeChange) {
+            setTypeChange(false)
+        } else {
+            const addEmptyRuleIfNeeded = (array: Rule[], isScale: boolean) =>
+                (array.length === 0 || array[array.length - 1].description || array[array.length - 1].value !== undefined)
+                    ? [...array, isScale
+                        ? {description: '', value: undefined, isScaleRule: isScale}
+                        : {type: RuleTypes.Fixed, description: '', value: undefined, isScaleRule: isScale}]
+                    : array;
 
-        setCriteria((prevCriteria) => ({
-            ...prevCriteria,
-            scale: addEmptyRuleIfNeeded(prevCriteria.scale),
-            rules: addEmptyRuleIfNeeded(prevCriteria.rules),
-        }));
+            setCriteria((prevCriteria) => ({
+                ...prevCriteria,
+                scale: addEmptyRuleIfNeeded(prevCriteria.scale, true),
+                rules: addEmptyRuleIfNeeded(prevCriteria.rules, false),
+            }));
+        }
     }, [criteria.scale, criteria.rules]);
 
 
@@ -99,7 +120,7 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
     }
 
     return (
-        <div className="modal fade" id="criteriaModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1"
+        <div className="modal fade" id="criteriaModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1}
              aria-labelledby="staticBackdropLabel" aria-hidden="true">
             <div className="modal-dialog modal-lg">
                 <div className="modal-content">
@@ -119,12 +140,37 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
                             </div>
                             <div className="mb-2">
                                 <label className="form-label">Комментарий</label>
-                                <textarea type="text" className="form-control" name="comment"
-                                       value={criteria.comment} onChange={handleChange}/>
+                                <textarea className="form-control" name="comment"
+                                          value={criteria.comment} onChange={handleChange}/>
                             </div>
 
                             <div className="mb-2">
-                                <label className="form-label">Шкала оценивания</label>
+                                <label className="form-label">Группы критериев</label>
+
+                                {groups.length === 0 ? (
+                                    <div className="alert alert-danger" role="alert">
+                                        Добавьте группы критериев
+                                    </div>
+                                ) : (
+                                    groups.map((group) => (
+                                        <div key={group.id} className="form-check">
+                                            <input
+                                                className="form-check-input"
+                                                type="checkbox"
+                                                id={`group-${group.id}`}
+                                                checked={criteria.criteriaGroupsId.includes(group.id!)}
+                                                onChange={() => handleGroupChange(group.id!)}
+                                            />
+                                            <label className="form-check-label" htmlFor={`group-${group.id}`}>
+                                                {group.name}
+                                            </label>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="mb-2">
+                                <h6 className="form-label">Шкала оценивания</h6>
 
                                 {criteria.scale.map((rule, index) => (
                                     <div key={index} className="">
@@ -134,16 +180,20 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
                                                 className="form-control me-2"
                                                 style={{maxWidth: '65px'}}
                                                 value={rule.value ?? ''}
-                                                min="0" max="5" step="1"
-                                                onChange={(e) => handleRuleChange(index, 'value', Number(e.target.value), 'scale')}
+                                                min="0" step="1"
+                                                onChange={(e) => handleRuleChange(
+                                                    index,
+                                                    'value',
+                                                    e.target.value === '' ? undefined : Number(e.target.value),
+                                                    'scale')}
                                                 placeholder="0"
                                             />
                                             <span className="me-2">—</span>
                                             <textarea
-                                                type="text"
                                                 className="form-control"
                                                 value={rule.description}
-                                                onChange={(e) => handleRuleChange(index, 'description', e.target.value, 'scale')}
+                                                onChange={(e) =>
+                                                    handleRuleChange(index, 'description', e.target.value, 'scale')}
                                                 placeholder="Оставьте пустым, если не хотите добавлять это правило"
                                             />
                                         </div>
@@ -152,25 +202,61 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
                             </div>
 
                             <div className="mb-2">
-                                <label className="form-label">Дополнительные правила</label>
+                                <h6 className="form-label">Дополнительные правила</h6>
 
                                 {criteria.rules.map((rule, index) => (
                                     <div key={index} className="">
+
+                                        <label className="form-label me-3">Тип правила:</label>
+                                        <div className="form-check form-check-inline">
+                                            <input className="form-check-input" type="radio"
+                                                   checked={rule.type === RuleTypes.Fixed}
+                                                   id={`fixed-${index}`}
+                                                   onChange={() =>
+                                                       handleRuleChange(index, 'type', RuleTypes.Fixed, 'rules')}/>
+                                            <label className="form-check-label" htmlFor={`fixed-${index}`}>Фиксированное
+                                                число</label>
+                                        </div>
+                                        <div className="form-check form-check-inline">
+                                            <input className="form-check-input" type="radio"
+                                                   checked={rule.type === RuleTypes.Range}
+                                                   id={`range-${index}`}
+                                                   onChange={() =>
+                                                       handleRuleChange(index, 'type', RuleTypes.Range, 'rules')}/>
+                                            <label className="form-check-label"
+                                                   htmlFor={`range-${index}`}>Диапазон</label>
+                                        </div>
+                                        <div className="form-check form-check-inline">
+                                            <input className="form-check-input" type="radio"
+                                                   checked={rule.type === RuleTypes.Custom}
+                                                   id={`custom-${index}`}
+                                                   onChange={() =>
+                                                       handleRuleChange(index, 'type', RuleTypes.Custom, 'rules')}/>
+                                            <label className="form-check-label" htmlFor={`custom-${index}`}>Произвольное
+                                                число</label>
+                                        </div>
+
                                         <div className="d-flex align-items-center pb-3">
+                                            {rule.type !== RuleTypes.Range ? (<></>) : (
+                                                <label className="me-2">До</label>)}
                                             <input
                                                 type="number"
                                                 className="form-control me-2"
                                                 style={{maxWidth: '65px'}}
                                                 value={rule.value ?? ''}
                                                 step="1"
-                                                onChange={(e) => handleRuleChange(index, 'value', Number(e.target.value), 'rules')}
+                                                onChange={(e) => handleRuleChange(
+                                                    index,
+                                                    'value',
+                                                    e.target.value === '' ? undefined : Number(e.target.value),
+                                                    'rules')}
                                                 placeholder="0"
                                             />
                                             <textarea
-                                                type="text"
                                                 className="form-control"
                                                 value={rule.description}
-                                                onChange={(e) => handleRuleChange(index, 'description', e.target.value, 'rules')}
+                                                onChange={(e) =>
+                                                    handleRuleChange(index, 'description', e.target.value, 'rules')}
                                                 placeholder="Оставьте пустым, если не хотите добавлять это правило"
                                             />
                                         </div>
@@ -184,7 +270,10 @@ export function CriteriaModal({criteriaData, onSave}: CriteriaModalProps) {
                         <button type="button" className="btn btn-light" data-bs-dismiss="modal"
                                 onClick={handleClose}>Отмена
                         </button>
-                        <button type="button" id="save-criteria" className="btn btn-primary" onClick={handleSave}>Сохранить</button>
+                        <button type="button" id="save-criteria" className="btn btn-primary" onClick={handleSave}
+                                disabled={groups.length === 0}>
+                            Сохранить
+                        </button>
                     </div>
                 </div>
             </div>

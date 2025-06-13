@@ -9,9 +9,9 @@ export function MemberLoginPage() {
     const [selectedMember, setSelectedMember] = useState('');
 
     useEffect(() => {
-        getMembers(id).then(response => {
+        getMembers(Number(id)).then(response => {
             const membersList = response.data;
-            const namesList = membersList.map(member => member.name);
+            const namesList = membersList.map((member: { name: string; }) => member.name);
             setMembers(namesList);
 
             if (namesList.length > 0) {
@@ -24,7 +24,7 @@ export function MemberLoginPage() {
         if (selectedMember === '') {
             alert('Выберите себя из списка или введите ФИО');
         } else {
-            const response = await loginMember(selectedMember, id);
+            const response = await loginMember(selectedMember, Number(id));
             const token = response.data.token;
             sessionStorage.setItem('token', token);
             setAuthHeader(token);

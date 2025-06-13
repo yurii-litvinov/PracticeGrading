@@ -12,5 +12,6 @@ public record CriteriaRequest(
     int? Id,
     string Name,
     string? Comment,
+    List<int> CriteriaGroupsId,
     List<RuleRequest> Scale,
     List<RuleRequest> Rules);

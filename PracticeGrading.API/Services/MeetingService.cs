@@ -5,6 +5,8 @@
 
 namespace PracticeGrading.API.Services;
 
+using System.Text.Json;
+using PracticeGrading.API.Integrations;
 using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.DTOs;
 using PracticeGrading.API.Models.Requests;
@@ -17,8 +19,9 @@ using PracticeGrading.Data.Repositories;
 /// <param name="meetingRepository">Repository for meetings.</param>
 public class MeetingService(
     MeetingRepository meetingRepository,
-    CriteriaRepository criteriaRepository,
-    UserRepository userRepository)
+    CriteriaGroupRepository criteriaGroupRepository,
+    UserRepository userRepository,
+    MarkRepository markRepository)
 {
     /// <summary>
     /// Adds new meeting.
@@ -26,6 +29,10 @@ public class MeetingService(
     /// <param name="request">Meeting creation request.</param>
     public async Task AddMeeting(MeetingRequest request)
     {
+        var group = await criteriaGroupRepository.GetById(request.CriteriaGroupId) ??
+                    throw new InvalidOperationException(
+                        $"Criteria group with ID {request.CriteriaGroupId} was not found.");
+
         var meeting = new Meeting
         {
             DateAndTime = request.DateAndTime,
@@ -45,7 +52,13 @@ public class MeetingService(
                     SupervisorMark = workRequest.SupervisorMark,
                     ReviewerMark = workRequest.ReviewerMark,
                     CodeLink = workRequest.CodeLink,
-                    AverageCriteriaMarks = request.CriteriaId.Select(id => new AverageCriteriaMark { CriteriaId = id })
+                    ReportLink = workRequest.ReportLink,
+                    SupervisorReviewLink = workRequest.SupervisorReviewLink,
+                    ConsultantReviewLink = workRequest.ConsultantReviewLink,
+                    ReviewerReviewLink = workRequest.ReviewerReviewLink,
+                    AdditionalLink = workRequest.AdditionalLink,
+                    AverageCriteriaMarks = (group.Criteria ?? [])
+                        .Select(criteria => new AverageCriteriaMark { CriteriaId = criteria.Id })
                         .ToList(),
                 }).ToList(),
             Members = request.Members.Select(
@@ -55,7 +68,7 @@ public class MeetingService(
                     PasswordHash = string.Empty,
                     RoleId = (int)RolesEnum.Member,
                 }).ToList(),
-            Criteria = await this.GetCriteria(request.CriteriaId),
+            CriteriaGroup = group,
         };
 
         await meetingRepository.Create(meeting);
@@ -98,6 +111,11 @@ public class MeetingService(
                     work.SupervisorMark,
                     work.ReviewerMark,
                     work.CodeLink,
+                    work.ReportLink,
+                    work.SupervisorReviewLink,
+                    work.ConsultantReviewLink,
+                    work.ReviewerReviewLink,
+                    work.AdditionalLink,
                     work.AverageCriteriaMarks
                         .Select(mark => new AverageCriteriaMarkDto(mark.CriteriaId, mark.AverageMark)).ToList(),
                     work.FinalMark)).ToList();
@@ -106,18 +124,12 @@ public class MeetingService(
                 member =>
                     new MemberDto(member.Id, member.UserName)).ToList();
 
-            var criteriaList = await this.GetCriteria(meeting.Criteria.Select(element => element.Id).ToList());
+            var group = meeting.CriteriaGroup;
 
-            var criteriaDto = criteriaList.Select(
-                    criteria => new CriteriaDto(
-                        criteria.Id,
-                        criteria.Name,
-                        criteria.Comment,
-                        (criteria.Rules ?? []).Where(rule => rule.IsScaleRule).Select(
-                            rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)).ToList(),
-                        (criteria.Rules ?? []).Where(rule => !rule.IsScaleRule).Select(
-                            rule => new RuleDto(rule.Id, rule.Description, rule.Value, rule.IsScaleRule)).ToList()))
-                .ToList();
+            var scaleDto = (group?.MarkScales ?? [])
+                .Select(scale => new MarkScaleDto(scale.Id, scale.Min, scale.Max, scale.Mark)).ToList();
+
+            var groupDto = new CriteriaGroupDto(group.Id, group.Name, group.MetricType, [], scaleDto);
 
             meetingsDto.Add(
                 new MeetingDto(
@@ -129,7 +141,7 @@ public class MeetingService(
                     meeting.MaterialsLink,
                     studentWorks,
                     members,
-                    criteriaDto));
+                    groupDto));
         }
 
         return meetingsDto;
@@ -143,6 +155,10 @@ public class MeetingService(
     {
         if (request.Id != null)
         {
+            var group = await criteriaGroupRepository.GetById(request.CriteriaGroupId) ??
+                        throw new InvalidOperationException(
+                            $"Criteria group with ID {request.CriteriaGroupId} was not found.");
+
             var meeting = await meetingRepository.GetById((int)request.Id) ??
                           throw new InvalidOperationException($"Meeting with ID {request.Id} was not found.");
 
@@ -151,7 +167,7 @@ public class MeetingService(
             meeting.Info = request.Info;
             meeting.CallLink = request.CallLink;
             meeting.MaterialsLink = request.MaterialsLink;
-            meeting.Criteria = await this.GetCriteria(request.CriteriaId);
+            meeting.CriteriaGroup = group;
 
             foreach (var work in request.StudentWorks)
             {
@@ -169,16 +185,21 @@ public class MeetingService(
                     existingWork.SupervisorMark = work.SupervisorMark;
                     existingWork.ReviewerMark = work.ReviewerMark;
                     existingWork.CodeLink = work.CodeLink;
+                    existingWork.ReportLink = work.ReportLink;
+                    existingWork.SupervisorReviewLink = work.SupervisorReviewLink;
+                    existingWork.ConsultantReviewLink = work.ConsultantReviewLink;
+                    existingWork.ReviewerReviewLink = work.ReviewerReviewLink;
+                    existingWork.AdditionalLink = work.AdditionalLink;
 
-                    foreach (var id in request.CriteriaId.Where(
-                                 id => existingWork.AverageCriteriaMarks.FirstOrDefault(
-                                     mark => mark.CriteriaId == id) == null))
+                    foreach (var criteria in (group.Criteria ?? []).Where(
+                                 criteria => existingWork.AverageCriteriaMarks.FirstOrDefault(
+                                     mark => mark.CriteriaId == criteria.Id) == null))
                     {
-                        existingWork.AverageCriteriaMarks?.Add(new AverageCriteriaMark { CriteriaId = id });
+                        existingWork.AverageCriteriaMarks?.Add(new AverageCriteriaMark { CriteriaId = criteria.Id });
                     }
 
                     var marksToRemove = (existingWork.AverageCriteriaMarks ?? []).Where(
-                        mark => request.CriteriaId.All(id => mark.CriteriaId != id));
+                        mark => (group.Criteria ?? []).All(criteria => mark.CriteriaId != criteria.Id));
 
                     foreach (var mark in marksToRemove)
                     {
@@ -199,8 +220,14 @@ public class MeetingService(
                             SupervisorMark = work.SupervisorMark,
                             ReviewerMark = work.ReviewerMark,
                             CodeLink = work.CodeLink,
+                            ReportLink = work.ReportLink,
+                            SupervisorReviewLink = work.SupervisorReviewLink,
+                            ConsultantReviewLink = work.ConsultantReviewLink,
+                            ReviewerReviewLink = work.ReviewerReviewLink,
+                            AdditionalLink = work.AdditionalLink,
                             AverageCriteriaMarks =
-                                request.CriteriaId.Select(id => new AverageCriteriaMark { CriteriaId = id }).ToList(),
+                                (group.Criteria ?? []).Select(
+                                    criteria => new AverageCriteriaMark { CriteriaId = criteria.Id }).ToList(),
                         });
                 }
             }
@@ -243,6 +270,12 @@ public class MeetingService(
 
             foreach (var member in membersToRemove)
             {
+                var marks = await markRepository.GetAll();
+                foreach (var mark in marks.Where(mark => mark.MemberId == member.Id))
+                {
+                    await markRepository.Delete(mark);
+                }
+
                 await userRepository.Delete(member);
             }
 
@@ -280,7 +313,7 @@ public class MeetingService(
     /// <param name="meetingId">Meeting id.</param>
     /// <param name="workId">Student work id.</param>
     /// <param name="mark">Final mark.</param>
-    public async Task SetFinalMark(int meetingId, int workId, int mark)
+    public async Task SetFinalMark(int meetingId, int workId, string mark)
     {
         var meeting = await meetingRepository.GetById(meetingId) ??
                       throw new InvalidOperationException($"Meeting with ID {meetingId} was not found.");
@@ -299,30 +332,19 @@ public class MeetingService(
     /// <param name="request">Schedule parsing request.</param>
     public async Task CreateMeetingsFromFile(ParseScheduleRequest request)
     {
-        var parser = new ScheduleParser.ScheduleParser(
-            new MemoryStream(Convert.FromBase64String(request.File)),
-            request.Headers,
-            request.Separator,
+        var parser = new ScheduleParser(
+            request.File.OpenReadStream(),
+            JsonSerializer.Deserialize<List<string>>(request.Headers) ?? [],
+            JsonSerializer.Deserialize<List<List<string>>>(request.Separator) ?? [],
             request.MembersColumn);
 
         var meetings = parser.Parse();
+
         foreach (var meeting in meetings)
         {
+            meeting.CriteriaGroup = await criteriaGroupRepository.GetById(1) ??
+                                    throw new InvalidOperationException($"Criteria group with ID 1 was not found.");
             await meetingRepository.Create(meeting);
         }
-    }
-
-    private async Task<List<Criteria>> GetCriteria(List<int> idList)
-    {
-        var criteria = new List<Criteria>();
-
-        foreach (var id in idList)
-        {
-            criteria.Add(
-                await criteriaRepository.GetById(id) ??
-                throw new InvalidOperationException($"Criteria with ID {id} was not found."));
-        }
-
-        return criteria;
     }
 }

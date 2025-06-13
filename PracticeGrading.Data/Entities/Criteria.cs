@@ -31,7 +31,7 @@ public class Criteria
     public ICollection<Rule>? Rules { get; set; }
 
     /// <summary>
-    /// Gets or sets meetings.
+    /// Gets or sets criteria groups.
     /// </summary>
-    public ICollection<Meeting>? Meetings { get; set; }
+    public ICollection<CriteriaGroup>? CriteriaGroups { get; set; }
 }

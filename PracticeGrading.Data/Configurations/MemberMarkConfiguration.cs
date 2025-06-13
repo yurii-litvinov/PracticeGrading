@@ -17,6 +17,11 @@ public class MemberMarkConfiguration : IEntityTypeConfiguration<MemberMark>
     /// <summary>
     /// Configures member mark entity.
     /// </summary>
-    public void Configure(EntityTypeBuilder<MemberMark> builder) =>
+    public void Configure(EntityTypeBuilder<MemberMark> builder)
+    {
         builder.HasKey(mark => mark.Id);
+
+        builder.HasIndex(mark => new { mark.MemberId, mark.StudentWorkId })
+            .IsUnique();
+    }
 }

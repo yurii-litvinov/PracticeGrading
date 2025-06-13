@@ -11,6 +11,7 @@ export function ProfilePage() {
         const token = sessionStorage.getItem('token');
         if (token) {
             const decoded = jwtDecode(token);
+            // @ts-ignore
             const name = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
             setUsername(name);
         }

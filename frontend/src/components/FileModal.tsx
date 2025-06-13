@@ -1,27 +1,24 @@
-import {useRef, useState, useEffect} from 'react';
+import {useRef, useState} from 'react';
 import {FormatTable} from './FormatTable'
 import {DataFields} from '../models/DataFields'
 import {createMeetingsFromFile} from '../services/ApiService';
 
+interface FileModalProps {
+    onSubmit: () => void;
+}
 
-export function FileModal({onSubmit}) {
-    const formRef = useRef();
-    const closeButtonRef = useRef();
-    const [file, setFile] = useState(null);
-    const [separator, setSeparator] = useState(null);
+export function FileModal({onSubmit}: FileModalProps) {
+    const formRef = useRef<HTMLFormElement | null>(null);
+    const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+    const [file, setFile] = useState<any | null>(null);
+    const [separator, setSeparator] = useState<any[] | null>(null);
     const [headers, setHeaders] = useState(null);
-    const [membersColumn, setMembersColumn] = useState(null);
+    const [membersColumn, setMembersColumn] = useState('A');
     const [type, setType] = useState("practice");
 
-    const handleFileChange = (e) => {
-        if (e.target.files) {
-            setFile(e.target.files[0]);
-        }
-    };
-
-    const formatRows = (rows) => {
+    const formatRows = (rows: any[]) => {
         const filteredRows = rows.filter((row) =>
-            !row.every((cell) => JSON.stringify(cell) === JSON.stringify([DataFields.Empty])));
+            !row.every((cell: any) => JSON.stringify(cell) === JSON.stringify([DataFields.Empty])));
         const filteredCells = filteredRows.map((row) => {
             let lastNonEmptyIndex = row.length - 1;
             while (lastNonEmptyIndex >= 0 && JSON.stringify(row[lastNonEmptyIndex]) === JSON.stringify([DataFields.Empty])) {
@@ -30,39 +27,40 @@ export function FileModal({onSubmit}) {
 
             return row.slice(0, lastNonEmptyIndex + 1);
         });
-        return filteredCells.map((row) => row.map((cell) => cell.map((item) => item[1]).join(", ")))
+        return filteredCells.map((row) => row.map((cell: any[]) => cell.map((item) => item[1]).join(", ")))
     }
 
-    const handleSeparatorChange = (rows) => {
+    const handleSeparatorChange = (rows: any[]) => {
         setSeparator(formatRows(rows));
     }
 
-    const handleHeadersChange = (rows) => {
+    const handleHeadersChange = (rows: any[]) => {
         setHeaders(formatRows(rows)[0]);
     }
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const processMembersColumn = (letter: string) => {
+        const charCode = letter.toUpperCase().charCodeAt(0) - 65;
+        if (letter === '' || charCode < 0 || charCode > 25) {
+            throw new Error("Invalid column letter");
+        }
 
+        return charCode;
+    }
+
+    const handleSubmit = async () => {
         if (formRef.current && !formRef.current.checkValidity()) {
             formRef.current.reportValidity();
             return;
         }
 
-        const fileData = await file.arrayBuffer();
-        const base64File = btoa(
-            new Uint8Array(fileData).reduce((data, byte) => data + String.fromCharCode(byte), '')
-        );
-
-        const request = {
-            file: base64File,
-            headers: headers,
-            separator: separator,
-            membersColumn: membersColumn - 1,
-        };
-
         try {
-            await createMeetingsFromFile(request);
+            const columnIndex = processMembersColumn(membersColumn);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('headers', JSON.stringify(headers));
+            formData.append('separator', JSON.stringify(separator));
+            formData.append('membersColumn', String(type === "practice" ? -1 : columnIndex));
+            await createMeetingsFromFile(formData);
             onSubmit();
 
             if (closeButtonRef.current) {
@@ -74,7 +72,7 @@ export function FileModal({onSubmit}) {
     };
 
     return (
-        <div className="modal fade" id="fileModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex="-1"
+        <div className="modal fade" id="fileModal" data-bs-backdrop="static" data-bs-keyboard="false" tabIndex={-1}
              aria-labelledby="staticBackdropLabel" aria-hidden="true">
             <div className="modal-dialog modal-xl">
                 <div className="modal-content">
@@ -85,113 +83,119 @@ export function FileModal({onSubmit}) {
                                 aria-label="Close"></button>
                     </div>
 
-                    <div className="modal-body px-4">
-                        <form ref={formRef}>
-                            <h5 className="form-label">Файл с расписанием заседаний</h5>
-                            <input className="form-control"
-                                   required
-                                   type="file" accept=".xlsx"
-                                   onChange={handleFileChange}
-                            />
-                        </form>
+                    <div className="modal-body">
+                        <div className="px-4">
+                            <form ref={formRef}>
+                                <h5 className="form-label">Файл с расписанием заседаний</h5>
+                                <input className="form-control"
+                                       required
+                                       type="file" accept=".xlsx"
+                                       onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                                />
+                            </form>
 
-                        <hr className="my-4"/>
-                        <h5 className="form-label">Тип защит</h5>
-                        <div className="form-check form-check-inline">
-                            <input className="form-check-input" type="radio" checked={type === "practice"}
-                                   id="inlineRadio1"
-                                   onChange={() => {
-                                       setType("practice");
-                                       setMembersColumn(null);
-                                   }}/>
-                            <label className="form-check-label" htmlFor="inlineRadio1">Защиты практик</label>
+                            <hr className="my-4"/>
+                            <h5 className="form-label">Тип защит</h5>
+                            <div className="form-check form-check-inline">
+                                <input className="form-check-input" type="radio" checked={type === "practice"}
+                                       id="inlineRadio1"
+                                       onChange={() => {
+                                           setType("practice");
+                                           setMembersColumn('A');
+                                       }}/>
+                                <label className="form-check-label" htmlFor="inlineRadio1">Защиты практик</label>
+                            </div>
+                            <div className="form-check form-check-inline">
+                                <input className="form-check-input" type="radio" checked={type === "vkr"}
+                                       id="inlineRadio2"
+                                       onChange={() => {
+                                           setType("vkr");
+                                           setMembersColumn('G');
+                                       }}/>
+                                <label className="form-check-label" htmlFor="inlineRadio2">Защиты ВКР</label>
+                            </div>
+
+                            <hr className="my-4"/>
+
+                            <h5 className="form-label">Формат таблицы</h5>
+                            <p>Укажите формат разделителя заседаний и данных о работах студентов. В каждой ячейке
+                                выберите
+                                из
+                                выпадающего меню необходимые поля. Если ячейка должна быть пустой — ничего не
+                                выбирайте.
+                                Поля, содержащиеся в одной ячейке, должны быть разделены запятой. Для удаления поля
+                                нажмите
+                                на него и выберите вариант «Удалить». Пустые строки будут проигнорированы.</p>
+
+                            {type === "practice" ? (
+                                <>
+                                    <h6 className="form-label mb-4">Разделитель заседаний</h6>
+                                    <FormatTable dataFields={[
+                                        DataFields.Date,
+                                        DataFields.Time,
+                                        DataFields.Auditorium,
+                                        DataFields.Info,
+                                        DataFields.CallLink
+                                    ]} initialRowsState={[
+                                        [[DataFields.Empty], [DataFields.Empty], [DataFields.Date, DataFields.Time, DataFields.Auditorium], [DataFields.CallLink]],
+                                        [[DataFields.Empty], [DataFields.Empty], [DataFields.Info], [DataFields.Empty]]
+                                    ]} onChange={handleSeparatorChange}/>
+
+                                    <h6 className="form-label pt-3 mb-4">Данные о работах студентов</h6>
+                                    <FormatTable dataFields={[
+                                        DataFields.StudentName,
+                                        DataFields.StudentInfo,
+                                        DataFields.Theme,
+                                        DataFields.Supervisor,
+                                        DataFields.Consultant,
+                                        DataFields.Reviewer
+                                    ]} initialRowsState={[
+                                        [[DataFields.Empty], [DataFields.Empty], [DataFields.StudentName], [DataFields.StudentInfo], [DataFields.Theme], [DataFields.Supervisor]]
+                                    ]} onChange={handleHeadersChange}/>
+                                </>) : (
+                                <>
+                                    <p>Обратите внимание, что у таблицы расписания защит ВКР должен быть заголовок в
+                                        первой строке. Если заголовка нет, сдвиньте всю таблицу вниз на одну строку.</p>
+
+                                    <div className="d-flex align-items-center mb-4">
+                                        <h6 className="form-label mb-0 me-2">Колонка с членами комиссии:</h6>
+                                        <input
+                                            type="text" maxLength={1}
+                                            className="form-control"
+                                            style={{maxWidth: '65px', textTransform: "uppercase"}}
+                                            value={membersColumn}
+                                            onChange={(e) => setMembersColumn(e.target.value)}
+                                            placeholder="A"
+                                        />
+                                    </div>
+
+
+                                    <h6 className="form-label mb-4">Разделитель заседаний</h6>
+                                    <FormatTable dataFields={[
+                                        DataFields.Date,
+                                        DataFields.Time,
+                                        DataFields.Auditorium,
+                                        DataFields.Info,
+                                        DataFields.CallLink
+                                    ]} initialRowsState={[
+                                        [[DataFields.Empty], [DataFields.Date], [DataFields.Empty]],
+                                        [[DataFields.Empty], [DataFields.Time, DataFields.Auditorium], [DataFields.Info]]
+                                    ]} onChange={handleSeparatorChange}/>
+
+                                    <h6 className="form-label pt-3 mb-4">Данные о работах студентов</h6>
+                                    <FormatTable dataFields={[
+                                        DataFields.StudentName,
+                                        DataFields.StudentInfo,
+                                        DataFields.Theme,
+                                        DataFields.Supervisor,
+                                        DataFields.Consultant,
+                                        DataFields.Reviewer
+                                    ]} initialRowsState={[
+                                        [[DataFields.Empty], [DataFields.StudentName], [DataFields.Theme], [DataFields.Supervisor], [DataFields.Reviewer]]
+                                    ]} onChange={handleHeadersChange}/>
+                                </>)}
+
                         </div>
-                        <div className="form-check form-check-inline">
-                            <input className="form-check-input" type="radio" checked={type === "vkr"} id="inlineRadio2"
-                                   onChange={() => {
-                                       setType("vkr");
-                                       setMembersColumn(7);
-                                   }}/>
-                            <label className="form-check-label" htmlFor="inlineRadio2">Защиты ВКР</label>
-                        </div>
-
-                        <hr className="my-4"/>
-
-                        <h5 className="form-label">Формат таблицы</h5>
-                        <p>Укажите формат разделителя заседаний и данных о работах студентов. В каждой ячейке
-                            выберите
-                            из
-                            выпадающего меню необходимые поля. Если ячейка должна быть пустой — ничего не
-                            выбирайте.
-                            Поля, содержащиеся в одной ячейке, должны быть разделены запятой. Для удаления поля
-                            нажмите
-                            на него и выберите вариант «Удалить». Пустые строки будут проигнорированы.</p>
-
-                        {type === "practice" ? (
-                            <>
-                                <h6 className="form-label mb-4">Разделитель заседаний</h6>
-                                <FormatTable dataFields={[
-                                    DataFields.Date,
-                                    DataFields.Time,
-                                    DataFields.Auditorium,
-                                    DataFields.Info,
-                                    DataFields.CallLink
-                                ]} initialRowsState={[
-                                    [[DataFields.Empty], [DataFields.Empty], [DataFields.Date, DataFields.Time, DataFields.Auditorium], [DataFields.CallLink]],
-                                    [[DataFields.Empty], [DataFields.Empty], [DataFields.Info], [DataFields.Empty]]
-                                ]} onChange={handleSeparatorChange}/>
-
-                                <h6 className="form-label pt-3 mb-4">Данные о работах студентов</h6>
-                                <FormatTable dataFields={[
-                                    DataFields.StudentName,
-                                    DataFields.StudentInfo,
-                                    DataFields.Theme,
-                                    DataFields.Supervisor,
-                                    DataFields.Consultant,
-                                    DataFields.Reviewer
-                                ]} initialRowsState={[
-                                    [[DataFields.Empty], [DataFields.Empty], [DataFields.StudentName], [DataFields.StudentInfo], [DataFields.Theme], [DataFields.Supervisor]]
-                                ]} onChange={handleHeadersChange}/>
-                            </>) : (
-                            <>
-                                <div className="d-flex align-items-center mb-4">
-                                    <h6 className="form-label mb-0 me-2">Номер колонки с членами комиссии:</h6>
-                                    <input
-                                        type="number"
-                                        className="form-control"
-                                        style={{maxWidth: '65px'}}
-                                        value={membersColumn}
-                                        onChange={(e) => setMembersColumn(e.target.value)}
-                                        placeholder="0"
-                                    />
-                                </div>
-
-
-                                <h6 className="form-label mb-4">Разделитель заседаний</h6>
-                                <FormatTable dataFields={[
-                                    DataFields.Date,
-                                    DataFields.Time,
-                                    DataFields.Auditorium,
-                                    DataFields.Info,
-                                    DataFields.CallLink
-                                ]} initialRowsState={[
-                                    [[DataFields.Empty], [DataFields.Date], [DataFields.Empty]],
-                                    [[DataFields.Empty], [DataFields.Time, DataFields.Auditorium], [DataFields.Info]]
-                                ]} onChange={handleSeparatorChange}/>
-
-                                <h6 className="form-label pt-3 mb-4">Данные о работах студентов</h6>
-                                <FormatTable dataFields={[
-                                    DataFields.StudentName,
-                                    DataFields.StudentInfo,
-                                    DataFields.Theme,
-                                    DataFields.Supervisor,
-                                    DataFields.Consultant,
-                                    DataFields.Reviewer
-                                ]} initialRowsState={[
-                                    [[DataFields.Empty], [DataFields.StudentName], [DataFields.Theme], [DataFields.Supervisor], [DataFields.Reviewer]]
-                                ]} onChange={handleHeadersChange}/>
-                            </>)}
-
                     </div>
 
                     <div className="modal-footer">
@@ -204,6 +208,6 @@ export function FileModal({onSubmit}) {
                 </div>
             </div>
         </div>
-    )
-        ;
+    );
 }
+

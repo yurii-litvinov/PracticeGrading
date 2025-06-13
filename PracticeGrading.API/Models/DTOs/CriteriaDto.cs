@@ -8,4 +8,4 @@ namespace PracticeGrading.API.Models.DTOs;
 /// <summary>
 /// Criteria DTO.
 /// </summary>
-public record CriteriaDto(int Id, string Name, string? Comment, List<RuleDto>? Scale, List<RuleDto>? Rules);
+public record CriteriaDto(int Id, string Name, string? Comment, List<RuleDto>? Scale, List<RuleDto>? Rules, List<int> CriteriaGroupsId);

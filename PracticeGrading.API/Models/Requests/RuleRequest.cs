@@ -6,6 +6,6 @@
 namespace PracticeGrading.API.Models.Requests;
 
 /// <summary>
-/// Class for adding student work request.
+/// Class for adding rule request.
 /// </summary>
-public record RuleRequest(int? Id, string Description, int Value);
+public record RuleRequest(int? Id, string Type, string Description, int Value);

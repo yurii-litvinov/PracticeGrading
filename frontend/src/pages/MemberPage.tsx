@@ -1,48 +1,71 @@
-import React, {useEffect, useState, useRef} from 'react';
+import {useEffect, useState, useRef, ChangeEvent} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
-import {getMeetings, getCriteria, setFinalMark} from '../services/ApiService';
+import {getMeetings, setFinalMark, getCriteriaGroup} from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
 import {formatDate} from './MeetingsPage';
 import {SignalRService} from '../services/SignalRService';
 import {Actions} from '../models/Actions';
+import {Meeting} from '../models/Meeting';
+import {CriteriaGroup} from '../models/CriteriaGroup';
+import {StudentWork} from '../models/StudentWork';
+import {MetricTypes} from '../models/MetricTypes'
+import {calculateFinalMark} from "./ViewMeetingPage"
 
 export function MemberPage() {
     const {id} = useParams();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("works");
-    const [selectedStudentId, setSelectedStudentId] = useState(null);
-    const [criteria, setCriteria] = useState([]);
-    const [meeting, setMeeting] = useState({
+    const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
+    const [meeting, setMeeting] = useState<Meeting>({
+        id: undefined,
         dateAndTime: new Date(),
         auditorium: '',
         info: '',
         callLink: '',
         materialsLink: '',
         studentWorks: [],
-        members: [''],
-        criteriaId: []
+        members: [],
+        criteriaGroup: undefined
     });
-    const [marks, setMarks] = useState([]);
+    const [marks, setMarks] = useState<any[]>([]);
+    const [criteriaGroup, setCriteriaGroup] = useState<CriteriaGroup>();
 
     const signalRService = useRef<SignalRService | null>(null);
 
     const fetchData = () => {
-        getMeetings(id).then(response => {
+        getMeetings(Number(id)).then(response => {
             const meeting = response.data[0]
             setMeeting(meeting);
+            
+            getCriteriaGroup(meeting.criteriaGroup.id).then(response => {
+                const group = response.data[0];
+                setCriteriaGroup(group);
 
-            setMarks(
-                meeting.studentWorks.map(work => {
-                    const mark = Math.round(work.averageCriteriaMarks.reduce((sum, mark) =>
-                        sum + mark.averageMark, 0) / work.averageCriteriaMarks.length * 10) / 10;
+                setMarks(
+                    meeting.studentWorks.map((work: StudentWork) => {
+                        const averageMarks = work.averageCriteriaMarks.filter(item => item.averageMark !== null);
 
-                    return {
-                        id: work.id,
-                        averageMark: mark,
-                        finalMark: work.finalMark === null ? Math.round(mark) : work.finalMark
-                    };
-                })
-            );
+                        let average = 0;
+                        if (group.metricType === MetricTypes[0].value) {
+                            average = Math.round(averageMarks.reduce((sum, mark) =>
+                                sum + mark.averageMark, 0) / averageMarks.length * 10) / 10;
+                        } else if (group.metricType === MetricTypes[1].value) {
+                            average = averageMarks.reduce((sum, mark) =>
+                                sum + mark.averageMark, 0);
+                        }
+
+                        if (work.finalMark === '' && !isNaN(average)) {
+                            setFinalMark(meeting.id, work.id!, calculateFinalMark(Math.round(average), group.markScales));
+                        }
+
+                        return {
+                            id: work.id,
+                            averageMark: average,
+                            finalMark: work.finalMark
+                        };
+                    })
+                );
+            });
         });
     }
 
@@ -72,19 +95,19 @@ export function MemberPage() {
         }
     }, [id]);
 
-    const handleIconClick = (workId: number) => {
-        navigate(`/meetings/${id}/studentwork/${workId}`, {replace: true});
+    const handleRowClick = (workId: number) => {
+        navigate(`/meetings/${id}/studentwork/${workId}`);
     };
 
-    const handleMarkEdit = (e, id) => {
+    const handleMarkEdit = (e: ChangeEvent<HTMLInputElement>, id: number) => {
         const value = e.target.value;
-        
+
         setMarks(marks.map(mark => mark.id === id ? {
             ...mark,
             finalMark: value
         } : mark));
 
-        if (value) setFinalMark(meeting.id, id, +value);
+        setFinalMark(Number(meeting.id), id, value);
     }
 
     return (
@@ -134,8 +157,12 @@ export function MemberPage() {
             <hr className="my-4"/>
 
             <div>
-                <div className="d-flex p-2 mb-2 align-items-center">
-                    <h4>Список защищающихся студентов</h4>
+                <div className="d-flex p-2 align-items-center">
+                    <div>
+                        <h4>Список защищающихся студентов</h4>
+                        <p className="small mb-0" style={{color: '#9a9d9f'}}>Для перехода к оцениванию нажмите на
+                            соответствующую строку таблицы на вкладке «Работы студентов»</p>
+                    </div>
                 </div>
             </div>
 
@@ -165,13 +192,13 @@ export function MemberPage() {
                             <table className="table table-striped">
                                 <thead>
                                 <tr>
-                                    <th></th>
                                     <th>ФИО</th>
                                     {meeting.studentWorks.some((work) => work.info) ?
                                         (<th>Курс, направление</th>) : (<></>)}
                                     <th>Тема</th>
                                     <th>Научник</th>
-                                    <th>Консультант</th>
+                                    {meeting.studentWorks.some((work) => work.consultant) ? (
+                                        <th>Консультант</th>) : (<></>)}
                                     {meeting.studentWorks.some((work) => work.reviewer) ? (
                                         <th>Рецензент</th>) : (<></>)}
                                     <th>Оценка научника</th>
@@ -183,33 +210,33 @@ export function MemberPage() {
                                 </thead>
                                 <tbody>
                                 {meeting.studentWorks.map((work) => (
-                                    <tr key={work.id}
-                                        className={selectedStudentId === work.id ? "table-info" : ""}>
-                                        <td style={{width: '30px'}}>
-                                            <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleIconClick(work.id);
-                                            }}>
-                                                <i className="bi bi-arrows-angle-expand fs-5"
-                                                   style={{color: '#007bff'}}></i>
-                                            </button>
-                                        </td>
+                                    <tr key={work.id} onClick={() => handleRowClick(work.id!)}
+                                        className={selectedStudentId === work.id ? "table-info" : ""}
+                                        style={{cursor: "pointer"}}>
                                         <td>{work.studentName}</td>
                                         {meeting.studentWorks.some((work) => work.info) ?
                                             (<td>{work.info || "—"}</td>) : (<></>)}
                                         <td style={{maxWidth: '600px'}}>{work.theme}</td>
                                         <td>{work.supervisor}</td>
-                                        <td>{work.consultant || "—"}</td>
+                                        {meeting.studentWorks.some((work) => work.consultant) ? (
+                                            <td>{work.consultant || "—"}</td>) : (<></>)}
                                         {meeting.studentWorks.some((work) => work.reviewer) ?
                                             (<td>{work.reviewer || "—"}</td>) : (<></>)}
                                         <td>{work.supervisorMark || "—"}</td>
                                         {meeting.studentWorks.some((work) => work.reviewerMark) ?
                                             (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
                                         {meeting.studentWorks.some((work) => work.codeLink) ?
-                                            (<td style={{minWidth: '85px'}}>{work.codeLink ? (
-                                                <a href={work.codeLink} target="_blank" rel="noopener noreferrer">
-                                                    Ссылка
-                                                </a>
+                                            (<td style={{minWidth: '87px'}}>{work.codeLink ? (
+                                                work.codeLink !== 'NDA' ? (
+                                                    work.codeLink.split(' ').map((link, linkIndex) => (
+                                                        <div key={linkIndex} className="mb-2">
+                                                            <a href={link} target="_blank"
+                                                               rel="noopener noreferrer">
+                                                                Ссылка {work.codeLink && work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                            </a>
+                                                        </div>
+                                                    ))
+                                                ) : (<span className="fst-italic">NDA</span>)
                                             ) : (
                                                 <span>—</span>
                                             )}</td>) : (<></>)}
@@ -227,9 +254,8 @@ export function MemberPage() {
                             <table className="table table-striped">
                                 <thead>
                                 <tr>
-                                    <th></th>
                                     <th>ФИО</th>
-                                    {meeting.criteria.map((criteria) => (
+                                    {criteriaGroup?.criteria.map((criteria) => (
                                         <th key={criteria.id}>{criteria.name}</th>
                                     ))}
                                     <th>Средняя оценка</th>
@@ -240,26 +266,18 @@ export function MemberPage() {
                                 {meeting.studentWorks.map((work) => (
                                     <tr key={work.id}
                                         className={selectedStudentId === work.id ? "table-info" : ""}>
-                                        <td style={{width: '30px'}}>
-                                            <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleIconClick(work.id);
-                                            }}>
-                                                <i className="bi bi-arrows-angle-expand fs-5"
-                                                   style={{color: '#007bff'}}></i>
-                                            </button>
-                                        </td>
                                         <td>{work.studentName}</td>
                                         {work.averageCriteriaMarks.map((mark) => (
-                                            <td key={mark.criteriaId} className="text-center">{mark.averageMark || "—"}</td>
+                                            <td key={mark.criteriaId}
+                                                className="text-center">{mark.averageMark ?? "—"}</td>
                                         ))}
                                         <td className="text-center">{marks.find(mark => mark.id === work.id).averageMark || "—"}</td>
                                         <td>
                                             <input
-                                                type="number"
+                                                type="text"
                                                 className="form-control"
                                                 value={marks.find(mark => mark.id === work.id).finalMark || ""}
-                                                onChange={(e) =>handleMarkEdit(e, work.id)}
+                                                onChange={(e) => handleMarkEdit(e, work.id!)}
                                             />
                                         </td>
                                     </tr>
@@ -270,6 +288,30 @@ export function MemberPage() {
                     </div>
                 )}
             </div>
+
+            {criteriaGroup?.markScales.length !== 0 ? (<>
+                <h4 className="p-2">Таблица перевода оценок</h4>
+
+                <div className="table-responsive" style={{maxWidth: '300px'}}>
+                    <table className="table table-light table-striped-columns">
+                        <thead>
+                        <tr>
+                            <th className="text-center">Сумма баллов</th>
+                            <th className="text-center">Оценка</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {criteriaGroup?.markScales.sort((a, b) =>
+                            (b.min ?? 0) - (a.min ?? 0)).map((scale, index) => (
+                            <tr key={index}>
+                                <td className="text-center">{scale.min}-{scale.max}</td>
+                                <td className="text-center">{scale.mark}</td>
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                </div>
+            </>) : (<></>)}
         </>
     );
 }

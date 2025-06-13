@@ -44,4 +44,9 @@ public class MemberMark
     /// Gets or sets mark.
     /// </summary>
     public int Mark { get; set; }
+
+    /// <summary>
+    /// Gets or sets comment.
+    /// </summary>
+    public string? Comment { get; set; }
 }

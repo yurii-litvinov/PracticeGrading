@@ -10,9 +10,10 @@ import {Rule} from './Rule'
  * @param rules - List of criteria rules
  */
 export interface Criteria {
-    id: number,
+    id?: number,
     name: string,
     comment: string,
+    criteriaGroupsId: number[],
     scale: Rule[],
     rules: Rule[]
 }

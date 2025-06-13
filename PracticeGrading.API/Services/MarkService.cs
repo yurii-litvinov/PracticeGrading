@@ -14,7 +14,7 @@ using PracticeGrading.Data.Repositories;
 /// Service for working with marks.
 /// </summary>
 /// <param name="markRepository">Repository for marks.</param>
-public class MarkService(MarkRepository markRepository, CriteriaRepository criteriaRepository)
+public class MarkService(MarkRepository markRepository)
 {
     /// <summary>
     /// Adds member mark.
@@ -27,21 +27,24 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
             MemberId = request.MemberId,
             StudentWorkId = request.StudentWorkId,
             Mark = request.Mark,
+            Comment = request.Comment,
             CriteriaMarks = [],
         };
 
         foreach (var markRequest in request.CriteriaMarks)
         {
-            var criteria = await criteriaRepository.GetById(markRequest.CriteriaId);
-            var rulesId = markRequest.SelectedRules.Select(ruleRequest => ruleRequest.Id);
-
             memberMark.CriteriaMarks.Add(
                 new CriteriaMark
                 {
                     CriteriaId = markRequest.CriteriaId,
                     Mark = markRequest.Mark,
                     Comment = markRequest.Comment,
-                    SelectedRules = (criteria?.Rules ?? []).Where(rule => rulesId.Contains(rule.Id)).ToList(),
+                    SelectedRules = markRequest.SelectedRules.Select(
+                        ruleRequest => new SelectedRule
+                        {
+                            RuleId = ruleRequest.RuleId,
+                            Value = ruleRequest.Value,
+                        }).ToList(),
                 });
         }
 
@@ -59,21 +62,50 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                              $"Member mark with member ID {request.MemberId} and student work ID {request.StudentWorkId}  was not found.");
 
         memberMark.Mark = request.Mark;
-        memberMark.CriteriaMarks.Clear();
+        memberMark.Comment = request.Comment;
 
         foreach (var markRequest in request.CriteriaMarks)
         {
-            var criteria = await criteriaRepository.GetById(markRequest.CriteriaId);
-            var rulesId = markRequest.SelectedRules.Select(ruleRequest => ruleRequest.Id);
+            var existingCriteriaMark = (memberMark.CriteriaMarks ?? [])
+                .FirstOrDefault(criteriaMark => criteriaMark.CriteriaId == markRequest.CriteriaId);
 
-            memberMark.CriteriaMarks?.Add(
-                new CriteriaMark
-                {
-                    CriteriaId = markRequest.CriteriaId,
-                    Mark = markRequest.Mark,
-                    Comment = markRequest.Comment,
-                    SelectedRules = (criteria?.Rules ?? []).Where(rule => rulesId.Contains(rule.Id)).ToList(),
-                });
+            if (existingCriteriaMark != null)
+            {
+                existingCriteriaMark.Mark = markRequest.Mark;
+                existingCriteriaMark.Comment = markRequest.Comment;
+                existingCriteriaMark.SelectedRules.Clear();
+                existingCriteriaMark.SelectedRules = markRequest.SelectedRules.Select(
+                    ruleRequest => new SelectedRule
+                    {
+                        RuleId = ruleRequest.RuleId,
+                        Value = ruleRequest.Value,
+                    }).ToList();
+            }
+            else
+            {
+                memberMark.CriteriaMarks?.Add(
+                    new CriteriaMark
+                    {
+                        CriteriaId = markRequest.CriteriaId,
+                        Mark = markRequest.Mark,
+                        Comment = markRequest.Comment,
+                        SelectedRules = markRequest.SelectedRules.Select(
+                            ruleRequest => new SelectedRule
+                            {
+                                RuleId = ruleRequest.RuleId,
+                                Value = ruleRequest.Value,
+                            }).ToList(),
+                    });
+            }
+        }
+
+        var criteriaMarksToRemove = (memberMark.CriteriaMarks ?? [])
+            .Where(mark => request.CriteriaMarks.All(markRequest => markRequest.CriteriaId != mark.CriteriaId))
+            .ToList();
+
+        foreach (var mark in criteriaMarksToRemove)
+        {
+            memberMark.CriteriaMarks?.Remove(mark);
         }
 
         await markRepository.Update(memberMark);
@@ -85,16 +117,12 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
     /// <param name="workId">Student work id.</param>
     /// <param name="memberId">Member id.</param>
     /// <returns>List of member marks.</returns>
-    public async Task<List<MemberMarkDto>> GetMemberMarks(int workId, int? memberId = null)
+    public async Task<List<MemberMarkDto>> GetMemberMarks(int? workId = null, int? memberId = null)
     {
-        List<MemberMark> memberMarks;
-        if (memberId == null)
+        List<MemberMark> memberMarks = [];
+        if (workId != null && memberId != null)
         {
-            memberMarks = await markRepository.GetAll(workId);
-        }
-        else
-        {
-            var memberMark = await markRepository.GetById((int)memberId, workId);
+            var memberMark = await markRepository.GetById((int)memberId, (int)workId);
 
             if (memberMark == null)
             {
@@ -103,13 +131,22 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                     new MemberMarkDto(
                         0,
                         (int)memberId,
-                        workId,
+                        (int)workId,
                         [],
-                        0)
+                        0,
+                        string.Empty)
                 ];
             }
 
             memberMarks = [memberMark];
+        }
+        else if (workId != null)
+        {
+            memberMarks = await markRepository.GetStudentMarks((int)workId);
+        }
+        else
+        {
+            memberMarks = await markRepository.GetAll();
         }
 
         var dtoList = memberMarks.Select(
@@ -123,17 +160,13 @@ public class MarkService(MarkRepository markRepository, CriteriaRepository crite
                                 mark.CriteriaId,
                                 mark.MemberMarkId,
                                 mark.Comment ?? string.Empty,
-                                new List<RuleDto>(
-                                        mark.SelectedRules.Select(
-                                            rule => new RuleDto(
-                                                rule.Id,
-                                                rule.Description,
-                                                rule.Value,
-                                                rule.IsScaleRule)))
+                                new List<SelectedRuleDto>(
+                                        mark.SelectedRules.Select(rule => new SelectedRuleDto(rule.RuleId, rule.Value)))
                                     .ToList(),
                                 mark.Mark))
                         .ToList(),
-                    memberMark.Mark))
+                    memberMark.Mark,
+                    memberMark.Comment ?? string.Empty))
             .ToList();
 
         return dtoList;

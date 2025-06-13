@@ -17,27 +17,20 @@ public class MeetingHub : Hub
     /// </summary>
     /// <param name="meetingId"> Meeting Id.</param>
     /// <param name="action">Admin action.</param>
-    public async Task NotifyMembers(string meetingId, string action)
-    {
-        // Сообщаем всем участникам с указанным meetingId
+    public async Task NotifyMembers(string meetingId, string action) =>
         await this.Clients.Group(meetingId).SendAsync("ReceiveNotification", action);
-    }
 
     /// <summary>
     /// Adds a client to the group by meeting Id.
     /// </summary>
     /// <param name="meetingId"> Meeting Id.</param>
-    public async Task JoinMeetingGroup(string meetingId)
-    {
+    public async Task JoinMeetingGroup(string meetingId) =>
         await this.Groups.AddToGroupAsync(this.Context.ConnectionId, meetingId);
-    }
 
     /// <summary>
     /// Removes a client from the group by meeting Id.
     /// </summary>
     /// <param name="meetingId"> Meeting Id.</param>
-    public async Task LeaveMeetingGroup(string meetingId)
-    {
+    public async Task LeaveMeetingGroup(string meetingId) =>
         await this.Groups.RemoveFromGroupAsync(this.Context.ConnectionId, meetingId);
-    }
 }

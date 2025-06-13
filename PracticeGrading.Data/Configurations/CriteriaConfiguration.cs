@@ -24,5 +24,39 @@ public class CriteriaConfiguration : IEntityTypeConfiguration<Criteria>
         builder.HasMany<Rule>(criteria => criteria.Rules)
             .WithOne(rule => rule.Criteria)
             .HasForeignKey(rule => rule.CriteriaId);
+
+        builder.HasMany<AverageCriteriaMark>()
+            .WithOne()
+            .HasForeignKey(mark => mark.CriteriaId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasData(
+            new Criteria
+            {
+                Id = 1,
+                Name = "Ясность изложения цели работы, актуальность",
+            },
+            new Criteria
+            {
+                Id = 2,
+                Name = "Сложность работы",
+                Comment = "Тут и далее имеется в виду 'как их донёс защищающийся'",
+            },
+            new Criteria
+            {
+                Id = 3,
+                Name = "Полнота и целостность работы",
+            },
+            new Criteria
+            {
+                Id = 4,
+                Name = "Представление",
+            },
+            new Criteria
+            {
+                Id = 5,
+                Name = "Код",
+                Comment = "для теоретических работ и работ с закрытым кодом не оценивается",
+            });
     }
 }

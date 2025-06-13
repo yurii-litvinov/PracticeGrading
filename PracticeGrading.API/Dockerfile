@@ -1,4 +1,8 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+
+RUN sed -i 's/^Components: main$/& contrib/' /etc/apt/sources.list.d/debian.sources
+RUN apt-get update; apt-get install -y ttf-mscorefonts-installer fontconfig
+
 WORKDIR /app
 EXPOSE 8080
 
@@ -7,7 +11,6 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["PracticeGrading.API/PracticeGrading.API.csproj", "PracticeGrading.API/"]
 COPY ["PracticeGrading.Data/PracticeGrading.Data.csproj", "PracticeGrading.Data/"]
-COPY ["ScheduleParser/ScheduleParser.csproj", "ScheduleParser/"]
 RUN dotnet restore "PracticeGrading.API/PracticeGrading.API.csproj"
 COPY . .
 WORKDIR "/src/PracticeGrading.API"
@@ -20,4 +23,5 @@ RUN dotnet publish "PracticeGrading.API.csproj" -c $BUILD_CONFIGURATION -o /app/
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY ["PracticeGrading.API/Integrations/Templates", "/app/Integrations/Templates/"]
 ENTRYPOINT ["dotnet", "PracticeGrading.API.dll"]

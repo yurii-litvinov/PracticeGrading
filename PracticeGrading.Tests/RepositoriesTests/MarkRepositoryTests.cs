@@ -70,7 +70,7 @@ public class MarkRepositoryTests : TestBase
         await MarkRepository.Create(mark);
         await MarkRepository.Delete(mark);
 
-        var marks = await MarkRepository.GetAll(mark.StudentWorkId);
+        var marks = await MarkRepository.GetStudentMarks(mark.StudentWorkId);
 
         marks.Should().NotContain(mark);
     }

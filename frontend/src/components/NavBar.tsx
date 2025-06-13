@@ -9,6 +9,7 @@ export function NavBar() {
     let role = '';
     if (token) {
         const decoded = jwtDecode(token);
+        // @ts-ignore
         role = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
     }
 
@@ -36,7 +37,6 @@ export function NavBar() {
                                     to="/meetings"
                                     end
                                     className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}
-                                    replace
                                     id="meetings-link"
                                 >
                                     Заседания
@@ -46,7 +46,6 @@ export function NavBar() {
                                 <NavLink
                                     to="/criteria"
                                     className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}
-                                    replace
                                     id="criteria-link"
                                 >
                                     Критерии
@@ -56,7 +55,6 @@ export function NavBar() {
                                 <NavLink
                                     to="/profile"
                                     className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}
-                                    replace
                                     id="profile-link"
                                 >
                                     Профиль

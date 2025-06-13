@@ -16,6 +16,11 @@ public class Rule
     public int Id { get; set; }
 
     /// <summary>
+    /// Gets or sets type.
+    /// </summary>
+    public string? Type { get; set; }
+
+    /// <summary>
     /// Gets or sets description.
     /// </summary>
     public required string Description { get; set; }
@@ -39,14 +44,4 @@ public class Rule
     /// Gets or sets criteria.
     /// </summary>
     public Criteria? Criteria { get; set; }
-
-    /// <summary>
-    /// Gets or sets criteria mark id.
-    /// </summary>
-    public int? CriteriaMarkId { get; set; }
-
-    /// <summary>
-    /// Gets or sets criteria mark.
-    /// </summary>
-    public CriteriaMark? CriteriaMark { get; set; }
 }

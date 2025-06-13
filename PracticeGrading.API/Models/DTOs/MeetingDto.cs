@@ -17,4 +17,4 @@ public record MeetingDto(
     string? MaterialsLink,
     List<StudentWorkDto> StudentWorks,
     List<MemberDto> Members,
-    List<CriteriaDto> Criteria);
+    CriteriaGroupDto CriteriaGroup);

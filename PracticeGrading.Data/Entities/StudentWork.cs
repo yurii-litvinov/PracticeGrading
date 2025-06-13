@@ -48,22 +48,47 @@ public class StudentWork
     /// <summary>
     /// Gets or sets supervisor's mark.
     /// </summary>
-    public int? SupervisorMark { get; set; }
+    public string? SupervisorMark { get; set; }
 
     /// <summary>
     /// Gets or sets reviewer's mark.
     /// </summary>
-    public int? ReviewerMark { get; set; }
+    public string? ReviewerMark { get; set; }
 
     /// <summary>
     /// Gets or sets final mark.
     /// </summary>
-    public int? FinalMark { get; set; }
+    public string FinalMark { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets code link.
     /// </summary>
     public string? CodeLink { get; set; }
+
+    /// <summary>
+    /// Gets or sets report link.
+    /// </summary>
+    public string? ReportLink { get; set; }
+
+    /// <summary>
+    /// Gets or sets supervisor review link.
+    /// </summary>
+    public string? SupervisorReviewLink { get; set; }
+
+    /// <summary>
+    /// Gets or sets consultant review link.
+    /// </summary>
+    public string? ConsultantReviewLink { get; set; }
+
+    /// <summary>
+    /// Gets or sets reviewer review link.
+    /// </summary>
+    public string? ReviewerReviewLink { get; set; }
+
+    /// <summary>
+    /// Gets or sets additional link.
+    /// </summary>
+    public string? AdditionalLink { get; set; }
 
     /// <summary>
     /// Gets or sets meeting id.

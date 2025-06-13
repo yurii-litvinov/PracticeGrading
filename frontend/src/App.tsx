@@ -9,60 +9,70 @@ import {ViewMeetingPage} from './pages/ViewMeetingPage';
 import {MemberLoginPage} from './pages/MemberLoginPage';
 import {MemberPage} from './pages/MemberPage';
 import {StudentWorkPage} from './pages/StudentWorkPage';
+import {FinishMeetingPage} from './pages/FinishMeetingPage';
+
+export const BASENAME = "/practice-grading";
 
 export function App() {
     const router = createBrowserRouter([
+            {
+                path: "/",
+                element: <Layout/>,
+                children: [
+                    {
+                        path: "/",
+                        element: <Navigate to="/meetings" replace/>,
+                    },
+                    {
+                        path: "/meetings",
+                        element: <MeetingsPage/>,
+                    },
+                    {
+                        path: "/profile",
+                        element: <ProfilePage/>,
+                    },
+                    {
+                        path: "/meetings/new",
+                        element: <MeetingFormPage/>,
+                    },
+                    {
+                        path: "/meetings/edit/:id",
+                        element: <MeetingFormPage/>,
+                    },
+                    {
+                        path: "/meetings/finish/:id",
+                        element: <FinishMeetingPage/>,
+                    },
+                    {
+                        path: "/criteria",
+                        element: <CriteriaPage/>,
+                    },
+                    {
+                        path: "/meetings/:id",
+                        element: <ViewMeetingPage/>,
+                    },
+                    {
+                        path: "/meetings/:id/member",
+                        element: <MemberPage/>,
+                    },
+                    {
+                        path: "/meetings/:meetingId/studentwork/:workId",
+                        element: <StudentWorkPage/>,
+                    },
+                ],
+            },
+            {
+                path: "/login",
+                element: <LoginPage/>,
+            },
+            {
+                path: "/meetings/:id/member/login",
+                element: <MemberLoginPage/>,
+            },
+        ],
         {
-            path: "/",
-            element: <Layout/>,
-            children: [
-                {
-                    path: "/",
-                    element: <Navigate to="/meetings" replace/>,
-                },
-                {
-                    path: "/meetings",
-                    element: <MeetingsPage/>,
-                },
-                {
-                    path: "/profile",
-                    element: <ProfilePage/>,
-                },
-                {
-                    path: "/meetings/new",
-                    element: <MeetingFormPage/>,
-                },
-                {
-                    path: "/meetings/edit/:id",
-                    element: <MeetingFormPage/>,
-                },
-                {
-                    path: "/criteria",
-                    element: <CriteriaPage/>,
-                },
-                {
-                    path: "/meetings/:id",
-                    element: <ViewMeetingPage/>,
-                },
-                {
-                    path: "/meetings/:id/member",
-                    element: <MemberPage/>,
-                },
-                {
-                    path: "/meetings/:meetingId/studentwork/:workId",
-                    element: <StudentWorkPage/>,
-                },
-            ],
-        },
-        {
-            path: "/login",
-            element: <LoginPage/>,
-        },
-        {
-            path: "/meetings/:id/member/login",
-            element: <MemberLoginPage/>,
-        },
-    ]);
+            basename: BASENAME,
+        });
 
     return <RouterProvider router={router}/>;
 }
