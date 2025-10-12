@@ -22,21 +22,21 @@ public class DocumentsGenerator
     private const int FontSize = 12;
 
     private const int StatementTableSize = 3;
-    private const int SheetTableSize = 3;
+    private const int SheetTableSize = 5;
     private const int DateSpace = 45;
     private const int SignSpace = 30;
 
-    private static readonly Dictionary<string, string> MajorDictionary = new()
+    private static readonly Dictionary<string, (string Number, string Name)> MajorDictionary = new()
     {
-        { "5080", "Программная инженерия" },
-        { "5162", "Технологии программирования" },
-        { "5665", "Математическое обеспечение и администрирование информационных систем" },
-        { "5890", "Искусственный интеллект и наука о данных" },
+        { "5080", ("09.03.04", "Программная инженерия") },
+        { "5162", ("02.03.03", "Технологии программирования") },
+        { "5665", ("02.03.03", "Математическое обеспечение и администрирование информационных систем") },
+        { "5890", ("09.03.03", "Искусственный интеллект и наука о данных") },
     };
 
     private readonly MeetingDto meeting;
     private readonly string commissionNumber;
-    private readonly string major;
+    private readonly (string Number, string Name) major;
     private readonly string date;
 
     /// <summary>
@@ -61,7 +61,7 @@ public class DocumentsGenerator
         var statementData = new Dictionary<string, string>
         {
             { "[number]", this.commissionNumber },
-            { "[major]", this.major },
+            { "[major]", $"{this.major.Number} «{this.major.Name}»" },
             { "[date]", this.date },
             {
                 "[members]",
@@ -78,26 +78,25 @@ public class DocumentsGenerator
             FileMode.Open);
         var doc = new XWPFDocument(stream);
 
-        foreach (var placeholder in statementData)
+        foreach (var placeHolder in statementData)
         {
-            doc.Paragraphs.FirstOrDefault(paragraph => paragraph.Text.Contains(placeholder.Key))
-                ?.ReplaceText(placeholder.Key, placeholder.Value);
+            ReplacePlaceHolderInTables(doc, placeHolder.Key, placeHolder.Value);
         }
 
-        var colCount = this.meeting.Members.Count + 2;
-        var table = doc.Tables[0];
-
-        CreateStatementTableHeader(table, colCount);
-        this.FillStudentTable(table, colCount);
+        var table = doc.Tables[4];
+        CreateStatementTableHeader(table, this.meeting.Members.Count);
+        this.FillStatementStudentTable(table, this.meeting.Members.Count);
 
         table.GetCTTbl().tblPr.AddNewTblLayout().type = ST_TblLayoutType.autofit;
         table.GetCTTbl().tblPr.AddNewTblW().type = ST_TblWidth.pct;
         table.GetCTTbl().tblPr.tblW.w = "100%";
 
+        var commisionTable = doc.Tables[5];
+        this.FillСommissionMembers(commisionTable, chairman);
+
         var memoryStream = new MemoryStream();
         doc.Write(memoryStream);
         memoryStream.Position = 0;
-
         return (memoryStream, $"Ведомость ВКР ГЭК {this.commissionNumber}.docx");
     }
 
@@ -108,12 +107,15 @@ public class DocumentsGenerator
     /// <returns>File with its name.</returns>
     public (Stream File, string FileName) GenerateGradingSheet(string member)
     {
+        var memberSplit = member.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+        string memberInitials = $"{memberSplit[0]} {memberSplit[1][0]}. {memberSplit[2][0]}.";
         var sheetData = new Dictionary<string, string>
         {
+            { "[member_initials]", memberInitials },
             { "[member]", member },
             { "[number]", this.commissionNumber },
-            { "[major]", this.major },
-            { "[date]", this.date + string.Concat(Enumerable.Repeat(" ", DateSpace - this.date.Length)) },
+            { "[major]", $"{this.major.Number} «{this.major.Name}»" },
+            { "[date]", this.date },
             { "[member_sign]", member + string.Concat(Enumerable.Repeat(" ", int.Max(SignSpace - member.Length, 0))) },
         };
 
@@ -122,15 +124,14 @@ public class DocumentsGenerator
             FileMode.Open);
         var doc = new XWPFDocument(stream);
 
-        foreach (var placeholder in sheetData)
+        foreach (var placeHolder in sheetData)
         {
-            doc.Paragraphs.FirstOrDefault(paragraph => paragraph.Text.Contains(placeholder.Key))
-                ?.ReplaceText(placeholder.Key, placeholder.Value);
+            ReplacePlaceHolderInTables(doc, placeHolder.Key, placeHolder.Value);
         }
 
-        var table = doc.Tables[0];
+        var table = doc.Tables[4];
 
-        this.FillStudentTable(table, SheetTableSize);
+        this.FillGradingSheetStudentTable(table, SheetTableSize);
 
         var memoryStream = new MemoryStream();
         doc.Write(memoryStream);
@@ -148,44 +149,75 @@ public class DocumentsGenerator
         }
     }
 
-    private static void CreateStatementTableHeader(XWPFTable table, int colCount)
+    private static void CreateStatementTableHeader(XWPFTable table, int membersCount)
     {
         var firstRow = table.Rows[0];
         var secondRow = table.Rows[1];
 
-        for (var i = 1; i < colCount - 1; i++)
+        for (var i = 1; i <= membersCount; i++)
         {
+            secondRow.GetCell(i).Paragraphs[0].Alignment = ParagraphAlignment.CENTER;
             var run = secondRow.GetCell(i).Paragraphs[0].CreateRun();
-            run.FontFamily = FontFamily;
-            run.FontSize = FontSize;
-            run.SetText(i.ToString());
-
+            SetFormattedTextToRun(run, i.ToString());
+            run.IsBold = true;
             firstRow.CreateCell();
             secondRow.CreateCell();
         }
 
-        firstRow.GetCell(colCount - 1).RemoveParagraph(0);
+        MergeCellVertically(table, 0, 0, 1);
+        MergeCellVertically(table, membersCount + 1, 0, 1);
+
+        firstRow.GetCell(0).SetVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+
+        var lastCell = firstRow.GetCell(membersCount + 1);
+        lastCell.RemoveParagraph(0);
+        lastCell.SetVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
         var paragraphs = new List<string> { "Итоговая", "оценка*" };
 
         foreach (var paragraph in paragraphs)
         {
-            var finalRun = firstRow.GetCell(colCount - 1).AddParagraph().CreateRun();
+            var finalRun = lastCell.AddParagraph().CreateRun();
             finalRun.Paragraph.Alignment = ParagraphAlignment.CENTER;
             finalRun.FontFamily = FontFamily;
             finalRun.FontSize = FontSize;
             finalRun.SetText(paragraph);
         }
 
-        MergeCellVertically(table, 0, 0, 1);
-        MergeCellVertically(table, colCount - 1, 0, 1);
-
-        if (colCount - 2 > 1)
+        if (membersCount > 1)
         {
-            firstRow.MergeCells(1, colCount - 2);
+            firstRow.MergeCells(1, membersCount);
         }
     }
 
-    private (string CommissionNumber, string Major) ProcessMeetingInfo()
+    private static void ReplacePlaceHolderInTables(XWPFDocument doc, string placeHolder, string replaceText)
+    {
+        foreach (var table in doc.Tables)
+        {
+            foreach (var row in table.Rows)
+            {
+                foreach (var cell in row.GetTableCells())
+                {
+                    foreach (var paragraph in cell.Paragraphs)
+                    {
+                        if (paragraph.Text.Contains(placeHolder))
+                        {
+                            paragraph.ReplaceText(placeHolder, replaceText);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static void SetFormattedTextToRun(XWPFRun run, string text)
+    {
+        run.FontFamily = FontFamily;
+        run.FontSize = FontSize;
+        run.SetText(text);
+    }
+
+    private (string CommissionNumber, (string Number, string Name) Major) ProcessMeetingInfo()
     {
         var info = this.meeting.Info;
 
@@ -201,23 +233,54 @@ public class DocumentsGenerator
         return (number, name);
     }
 
-    private void FillStudentTable(XWPFTable table, int colCount)
+    private void FillGradingSheetStudentTable(XWPFTable table, int colCount)
     {
-        var studentList = this.meeting.StudentWorks.Select((work, index) => $"{index + 1}. {work.StudentName}");
+        var studentList = this.meeting.StudentWorks.Select((work) => work.StudentName);
+        int number = 1;
 
         foreach (var student in studentList)
         {
             var row = table.CreateRow();
-            var run = row.GetCell(0).Paragraphs[0].CreateRun();
+            var numberRun = row.GetCell(0).Paragraphs[0].CreateRun();
+            SetFormattedTextToRun(numberRun, number++.ToString());
 
-            run.FontFamily = FontFamily;
-            run.FontSize = FontSize;
-            run.SetText(student);
+            var studentNameRun = row.GetCell(1).Paragraphs[0].CreateRun();
+            SetFormattedTextToRun(studentNameRun, student);
 
-            for (var i = StatementTableSize; i < colCount; i++)
+            row.CreateCell();
+        }
+    }
+
+    private void FillStatementStudentTable(XWPFTable table, int membersCount)
+    {
+        var studentList = this.meeting.StudentWorks.Select((work) => work.StudentName);
+
+        foreach (var student in studentList)
+        {
+            var row = table.CreateRow();
+            var studentNameRun = row.GetCell(0).Paragraphs[0].CreateRun();
+            SetFormattedTextToRun(studentNameRun, student);
+            studentNameRun.IsBold = true;
+
+            for (int i = 0; i < membersCount - 1; i++)
             {
                 row.CreateCell();
             }
+        }
+    }
+
+    private void FillСommissionMembers(XWPFTable commissionTable, string chairman)
+    {
+        var commissionMembers = new List<string>();
+        commissionMembers.Append(chairman);
+        commissionMembers.AddRange(this.meeting.Members.Select((MemberDto member) => member.Name));
+
+        int number = 1;
+
+        foreach (var member in commissionMembers)
+        {
+            var run = commissionTable.CreateRow().GetCell(0).Paragraphs[0].CreateRun();
+            SetFormattedTextToRun(run, $"{number++} {member};");
         }
     }
 }
