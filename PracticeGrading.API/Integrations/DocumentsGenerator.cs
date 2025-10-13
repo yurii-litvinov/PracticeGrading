@@ -107,11 +107,9 @@ public class DocumentsGenerator
     /// <returns>File with its name.</returns>
     public (Stream File, string FileName) GenerateGradingSheet(string member)
     {
-        var memberSplit = member.Split(" ", StringSplitOptions.RemoveEmptyEntries);
-        string memberInitials = $"{memberSplit[0]} {memberSplit[1][0]}. {memberSplit[2][0]}.";
         var sheetData = new Dictionary<string, string>
         {
-            { "[member_initials]", memberInitials },
+            { "[member_initials]", GetSurnameWithInitials(member) },
             { "[member]", member },
             { "[number]", this.commissionNumber },
             { "[major]", $"{this.major.Number} «{this.major.Name}»" },
@@ -131,7 +129,7 @@ public class DocumentsGenerator
 
         var table = doc.Tables[4];
 
-        this.FillGradingSheetStudentTable(table, SheetTableSize);
+        this.FillGradingSheetStudentTable(table);
 
         var memoryStream = new MemoryStream();
         doc.Write(memoryStream);
@@ -178,9 +176,7 @@ public class DocumentsGenerator
         {
             var finalRun = lastCell.AddParagraph().CreateRun();
             finalRun.Paragraph.Alignment = ParagraphAlignment.CENTER;
-            finalRun.FontFamily = FontFamily;
-            finalRun.FontSize = FontSize;
-            finalRun.SetText(paragraph);
+            SetFormattedTextToRun(finalRun, paragraph);
         }
 
         if (membersCount > 1)
@@ -217,6 +213,18 @@ public class DocumentsGenerator
         run.SetText(text);
     }
 
+    private static string GetSurnameWithInitials(string fullName)
+    {
+        var nameSplit = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        if (nameSplit.Length != 3)
+        {
+            throw new ArgumentException(nameof(fullName));
+        }
+
+        return $"{nameSplit[0]} {nameSplit[1][0]}. {nameSplit[2][0]}.";
+    }
+
     private (string CommissionNumber, (string Number, string Name) Major) ProcessMeetingInfo()
     {
         var info = this.meeting.Info;
@@ -233,7 +241,7 @@ public class DocumentsGenerator
         return (number, name);
     }
 
-    private void FillGradingSheetStudentTable(XWPFTable table, int colCount)
+    private void FillGradingSheetStudentTable(XWPFTable table)
     {
         var studentList = this.meeting.StudentWorks.Select((work) => work.StudentName);
         int number = 1;
@@ -272,15 +280,15 @@ public class DocumentsGenerator
     private void FillСommissionMembers(XWPFTable commissionTable, string chairman)
     {
         var commissionMembers = new List<string>();
-        commissionMembers.Append(chairman);
-        commissionMembers.AddRange(this.meeting.Members.Select((MemberDto member) => member.Name));
+        commissionMembers.Add(chairman);
+        commissionMembers.AddRange(this.meeting.Members.Select((member) => member.Name).Where((member) => member != chairman));
 
         int number = 1;
 
         foreach (var member in commissionMembers)
         {
             var run = commissionTable.CreateRow().GetCell(0).Paragraphs[0].CreateRun();
-            SetFormattedTextToRun(run, $"{number++} {member};");
+            SetFormattedTextToRun(run, $"{number++}. {member};");
         }
     }
 }
