@@ -62,7 +62,6 @@ builder.Services.AddCustomAuth(builder.Configuration.GetSection("JwtOptions").Bi
 
 Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
 
-
 var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 var host = Environment.GetEnvironmentVariable("HOST") ?? "localhost";
 
@@ -112,4 +111,7 @@ app.MapMarkEndpoints();
 
 app.Run();
 
+/// <summary>
+/// Entry point class for the PracticeGrading application.
+/// </summary>
 public partial class Program;

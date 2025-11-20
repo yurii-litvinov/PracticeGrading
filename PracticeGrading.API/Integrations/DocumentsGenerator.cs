@@ -6,6 +6,7 @@
 namespace PracticeGrading.API.Integrations;
 
 using System.Globalization;
+using System.Text.RegularExpressions;
 using NPOI.OpenXmlFormats.Wordprocessing;
 using NPOI.XWPF.UserModel;
 using PracticeGrading.API.Models.DTOs;
@@ -21,9 +22,6 @@ public class DocumentsGenerator
     private const string FontFamily = "Times New Roman";
     private const int FontSize = 12;
 
-    private const int StatementTableSize = 3;
-    private const int SheetTableSize = 5;
-    private const int DateSpace = 45;
     private const int SignSpace = 30;
 
     private static readonly Dictionary<string, (string Number, string Name)> MajorDictionary = new()
@@ -55,8 +53,10 @@ public class DocumentsGenerator
     /// </summary>
     /// <param name="coordinator">coordinator.</param>
     /// <param name="chairman">Chairman.</param>
+    /// <param name="stream">Stream containing the agreement template document.
+    /// The stream will be disposed after processing. Ensure the stream is readable and contains a valid DOCX template.</param>
     /// <returns>File with its name.</returns>
-    public (Stream File, string FileName) GenerateStatement(string coordinator, string chairman)
+    public (Stream File, string FileName) GenerateStatement(string coordinator, string chairman, Stream stream)
     {
         var statementData = new Dictionary<string, string>
         {
@@ -73,15 +73,9 @@ public class DocumentsGenerator
             { "[chairman]", chairman },
         };
 
-        using var stream = new FileStream(
-            Path.Combine("Integrations", "Templates", "statement_template.docx"),
-            FileMode.Open);
-        var doc = new XWPFDocument(stream);
+        using var doc = new XWPFDocument(stream);
 
-        foreach (var placeHolder in statementData)
-        {
-            ReplacePlaceHolderInTables(doc, placeHolder.Key, placeHolder.Value);
-        }
+        ReplacePlaceholdersInTables(doc, statementData);
 
         var table = doc.Tables[4];
         CreateStatementTableHeader(table, this.meeting.Members.Count);
@@ -97,6 +91,7 @@ public class DocumentsGenerator
         var memoryStream = new MemoryStream();
         doc.Write(memoryStream);
         memoryStream.Position = 0;
+        stream.Dispose();
         return (memoryStream, $"Ведомость ВКР ГЭК {this.commissionNumber}.docx");
     }
 
@@ -104,8 +99,10 @@ public class DocumentsGenerator
     /// Generates the grading sheet document.
     /// </summary>
     /// <param name="member">Member name.</param>
+    /// <param name="stream">Stream containing the grading sheet template document.
+    /// The stream will be disposed after processing. Ensure the stream is readable and contains a valid DOCX template.</param>
     /// <returns>File with its name.</returns>
-    public (Stream File, string FileName) GenerateGradingSheet(string member)
+    public (Stream File, string FileName) GenerateGradingSheet(string member, Stream stream)
     {
         var sheetData = new Dictionary<string, string>
         {
@@ -117,15 +114,9 @@ public class DocumentsGenerator
             { "[member_sign]", member + string.Concat(Enumerable.Repeat(" ", int.Max(SignSpace - member.Length, 0))) },
         };
 
-        using var stream = new FileStream(
-            Path.Combine("Integrations", "Templates", "grading_sheet_template.docx"),
-            FileMode.Open);
-        var doc = new XWPFDocument(stream);
+        using var doc = new XWPFDocument(stream);
 
-        foreach (var placeHolder in sheetData)
-        {
-            ReplacePlaceHolderInTables(doc, placeHolder.Key, placeHolder.Value);
-        }
+        ReplacePlaceholdersInTables(doc, sheetData);
 
         var table = doc.Tables[4];
 
@@ -134,8 +125,40 @@ public class DocumentsGenerator
         var memoryStream = new MemoryStream();
         doc.Write(memoryStream);
         memoryStream.Position = 0;
+        stream.Dispose();
 
         return (memoryStream, $"{member} оценочный лист ГЭК {this.commissionNumber}.docx");
+    }
+
+    /// <summary>
+    /// Generates the agreement document.
+    /// </summary>
+    /// <param name="member">Member name.</param>
+    /// <param name="stream">Stream containing the agreement template document.
+    /// The stream will be disposed after processing. Ensure the stream is readable and contains a valid DOCX template.</param>
+    /// <returns>File with its name.</returns>
+    public (Stream File, string FileName) GenerateAgreement(string member, Stream stream)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "[member]", member },
+            { "[member_initials]", GetSurnameWithInitials(member) },
+            { "[member_info_ru]", "[member_info_ru]" },
+            { "[member_info_en]", "[member_info_en]" },
+            { "[email]", "[email]" },
+        };
+
+        using var doc = new XWPFDocument(stream);
+
+        ReplacePlaceholdersInParagraphs(doc, placeholders);
+        ReplacePlaceholdersInTables(doc, placeholders);
+
+        var memoryStream = new MemoryStream();
+        doc.Write(memoryStream);
+        memoryStream.Position = 0;
+        stream.Dispose();
+
+        return (memoryStream, $"{member} Согласие на обработку персональных данных.docx");
     }
 
     private static void MergeCellVertically(XWPFTable table, int column, int start, int end)
@@ -185,8 +208,10 @@ public class DocumentsGenerator
         }
     }
 
-    private static void ReplacePlaceHolderInTables(XWPFDocument doc, string placeHolder, string replaceText)
+    private static void ReplacePlaceholdersInTables(XWPFDocument doc, Dictionary<string, string> placeholderReplacements)
     {
+        var regex = new Regex(@"\[([^\]]+)\]", RegexOptions.Compiled);
+
         foreach (var table in doc.Tables)
         {
             foreach (var row in table.Rows)
@@ -195,13 +220,43 @@ public class DocumentsGenerator
                 {
                     foreach (var paragraph in cell.Paragraphs)
                     {
-                        if (paragraph.Text.Contains(placeHolder))
-                        {
-                            paragraph.ReplaceText(placeHolder, replaceText);
-                            return;
-                        }
+                        ReplacePlaceholdersInParagraph(paragraph, placeholderReplacements, regex);
                     }
                 }
+            }
+        }
+    }
+
+    private static void ReplacePlaceholdersInParagraphs(XWPFDocument doc, Dictionary<string, string> placeholderReplacements)
+    {
+        var regex = new Regex(@"\[([^\]]+)\]", RegexOptions.Compiled);
+
+        foreach (var paragraph in doc.Paragraphs)
+        {
+            ReplacePlaceholdersInParagraph(paragraph, placeholderReplacements, regex);
+        }
+    }
+
+    private static void ReplacePlaceholdersInParagraph(XWPFParagraph paragraph, Dictionary<string, string> placeholderReplacements, Regex regex)
+    {
+        string originalText = paragraph.Text;
+        if (string.IsNullOrEmpty(originalText))
+        {
+            return;
+        }
+
+        var matches = regex.Matches(originalText);
+
+        if (matches.Count == 0)
+        {
+            return;
+        }
+
+        foreach (Match match in matches)
+        {
+            if (placeholderReplacements.TryGetValue(match.Value, out string? replacement))
+            {
+                paragraph.ReplaceText(match.Value, replacement);
             }
         }
     }

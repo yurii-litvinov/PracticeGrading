@@ -129,7 +129,7 @@ public class MeetingService(
             var scaleDto = (group?.MarkScales ?? [])
                 .Select(scale => new MarkScaleDto(scale.Id, scale.Min, scale.Max, scale.Mark)).ToList();
 
-            var groupDto = new CriteriaGroupDto(group.Id, group.Name, group.MetricType, [], scaleDto);
+            var groupDto = new CriteriaGroupDto(group!.Id, group.Name, group.MetricType, [], scaleDto);
 
             meetingsDto.Add(
                 new MeetingDto(
