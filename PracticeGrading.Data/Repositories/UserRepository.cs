@@ -18,6 +18,7 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
     /// Creates new user.
     /// </summary>
     /// <param name="user">New user.</param>
+    /// <returns>The ID of the newly created user.</returns>
     public async Task<int> Create(User user)
     {
         await context.Users.AddAsync(user);
@@ -37,6 +38,14 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
             .FirstOrDefaultAsync(user => user.UserName == userName);
     }
 
+    /// <summary>
+    /// Searches for users by name with pagination support.
+    /// Only returns members.
+    /// </summary>
+    /// <param name="searchName">The name to search for (case-insensitive).</param>
+    /// <param name="offset">The number of records to skip.</param>
+    /// <param name="limit">The maximum number of records to return.</param>
+    /// <returns>An array of users matching the search criteria.</returns>
     public async Task<User[]> SearchMembersByNameAsync(string searchName, int offset, int limit)
     {
         return await context.Users
@@ -47,6 +56,12 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
             .ToArrayAsync();
     }
 
+    /// <summary>
+    /// Retrieves a user by their unique identifier.
+    /// Includes the user's role and meetings in the result.
+    /// </summary>
+    /// <param name="id">The user ID to search for.</param>
+    /// <returns>The user entity if found; otherwise, null.</returns>
     public async Task<User?> GetUserById(int id)
     {
         return await context.Users.Where(u => u.Id == id)
@@ -54,6 +69,11 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
             .Include(u => u.Meetings).FirstOrDefaultAsync();
     }
 
+    /// <summary>
+    /// Retrieves multiple users by their IDs.
+    /// </summary>
+    /// <param name="userIds">The collection of user IDs to retrieve.</param>
+    /// <returns>A list of user entities.</returns>
     public async Task<List<User>> GetUsersByIdsAsync(List<int> userIds)
     {
         return await context.Users
@@ -61,6 +81,15 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Adds a user to a specific meeting.
+    /// </summary>
+    /// <param name="userId">The ID of the user to add.</param>
+    /// <param name="meetingId">The ID of the meeting to add the user to.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when the meeting or user is not found.
+    /// </exception>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task AddUserToMeeting(int userId, int meetingId)
     {
         var meeting = await meetingRepository.GetById(meetingId);
@@ -76,7 +105,6 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
             throw new InvalidOperationException($"User with id {userId} was not found");
         }
 
-        meeting.Members ??= new List<User>();
         meeting.Members.Add(user);
         await meetingRepository.Update(meeting);
     }
@@ -85,6 +113,7 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
     /// Updates user.
     /// </summary>
     /// <param name="user">User to update.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task Update(User user)
     {
         context.Users.Update(user);
@@ -95,6 +124,7 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
     /// Deletes user.
     /// </summary>
     /// <param name="user">User to delete.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task Delete(User user)
     {
         context.Users.Remove(user);

@@ -6,11 +6,18 @@
 namespace PracticeGrading.API.Endpoints;
 
 using Microsoft.AspNetCore.Http;
-using PracticeGrading.API.Models.DTOs;
+using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 
+/// <summary>
+/// Provides endpoints for member management operations.
+/// </summary>
 public static class MembersEndpoints
 {
+    /// <summary>
+    /// Maps all member-related endpoints to the application route builder.
+    /// </summary>
+    /// <param name="app">The endpoint route builder to map routes to.</param>
     public static void MapMemberEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGet("/members", SearchMembers).RequireAuthorization("RequireAdminRole");
@@ -31,12 +38,12 @@ public static class MembersEndpoints
         });
     }
 
-    private static async Task AddNewMember(UserService service, MemberDto member)
+    private static async Task AddNewMember(UserService service, MemberRequest member)
     {
         await service.AddNewMember(member);
     }
 
-    private static async Task UpdateMember(UserService service, MemberDto member)
+    private static async Task UpdateMember(UserService service, MemberRequest member)
     {
         await service.UpdateMember(member);
     }

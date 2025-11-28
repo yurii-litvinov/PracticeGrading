@@ -36,18 +36,33 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
         return string.Empty;
     }
 
-    public async Task AddNewMember(MemberDto member)
+    /// <summary>
+    /// Creates a new member user.
+    /// </summary>
+    /// <param name="member">Member data for the new user.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task AddNewMember(MemberRequest member)
     {
-        var user = GetUserFromMemberDto(member);
+        var user = GetUserFromMemberRequest(member, true);
         await userRepository.Create(user);
     }
 
-    public async Task UpdateMember(MemberDto member)
+    /// <summary>
+    /// Updates an existing member user.
+    /// </summary>
+    /// <param name="member">Updated member data.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    public async Task UpdateMember(MemberRequest member)
     {
-        var user = GetUserFromMemberDto(member);
+        var user = GetUserFromMemberRequest(member);
         await userRepository.Update(user);
     }
 
+    /// <summary>
+    /// Deletes a member user by ID.
+    /// </summary>
+    /// <param name="id">The ID of the member to delete.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task DeleteMember(int id)
     {
         var user = await userRepository.GetUserById(id);
@@ -57,43 +72,24 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
         }
     }
 
+    /// <summary>
+    /// Searches for members by name with pagination support.
+    /// </summary>
+    /// <param name="searchName">The name to search for (case-insensitive).</param>
+    /// <param name="offset">The number of records to skip.</param>
+    /// <param name="limit">The maximum number of records to return.</param>
+    /// <returns>An array of member DTOs matching the search criteria.</returns>
     public async Task<MemberDto[]> SearchMembersByNameAsync(string searchName, int offset, int limit)
     {
         var users = await userRepository.SearchMembersByNameAsync(searchName, offset, limit);
         return users.Select(GetMemberDtoFromUser).ToArray();
     }
 
-    internal static MemberDto GetMemberDtoFromUser(User user)
-    {
-        return new MemberDto(
-            Id: user.Id,
-            Name: user.UserName,
-            Email: user.Email,
-            Phone: user.Phone,
-            InformationRu: user.InformationRu,
-            InformationEn: user.InformationEn
-        );
-    }
-
-    internal static User GetUserFromMemberDto(MemberDto member)
-    {
-        return new User
-        {
-            Id = member.Id,
-            UserName = member.Name,
-            RoleId = (int)RolesEnum.Member,
-            Email = member.Email,
-            Phone = member.Phone,
-            InformationRu = member.InformationRu,
-            InformationEn = member.InformationEn,
-        };
-    }
-
     /// <summary>
     /// Logins member.
     /// </summary>
     /// <param name="request">Member login request.</param>
-    /// <returns>JWT token.</returns> 
+    /// <returns>JWT token.</returns>
     public async Task<string> LoginMember(LoginMemberRequest request)
     {
         User? member = null;
@@ -132,5 +128,41 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
         }
 
         return jwtService.GenerateToken(member);
+    }
+
+    /// <summary>
+    /// Converts a User entity to a MemberDto.
+    /// </summary>
+    /// <param name="user">The user entity to convert.</param>
+    /// <returns>A MemberDto containing the user's data.</returns>
+    internal static MemberDto GetMemberDtoFromUser(User user)
+    {
+        return new MemberDto(
+            Id: user.Id,
+            Name: user.UserName,
+            Email: user.Email,
+            Phone: user.Phone,
+            InformationRu: user.InformationRu,
+            InformationEn: user.InformationEn);
+    }
+
+    /// <summary>
+    /// Converts a MemberRequest to a User entity.
+    /// </summary>
+    /// <param name="member">The member request data.</param>
+    /// <param name="isNew">Indicates whether this is a new user (ID will be reset to 0).</param>
+    /// <returns>A User entity populated with the member data.</returns>
+    internal static User GetUserFromMemberRequest(MemberRequest member, bool isNew = false)
+    {
+        return new User
+        {
+            Id = isNew ? 0 : member.Id,
+            UserName = member.Name,
+            RoleId = (int)RolesEnum.Member,
+            Email = member.Email,
+            Phone = member.Phone,
+            InformationRu = member.InformationRu,
+            InformationEn = member.InformationEn,
+        };
     }
 }

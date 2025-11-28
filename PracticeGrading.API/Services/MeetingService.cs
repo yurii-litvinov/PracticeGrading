@@ -7,7 +7,6 @@ namespace PracticeGrading.API.Services;
 
 using System.Text.Json;
 using PracticeGrading.API.Integrations;
-using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.DTOs;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.Data.Entities;
@@ -27,6 +26,7 @@ public class MeetingService(
     /// Adds new meeting.
     /// </summary>
     /// <param name="request">Meeting creation request.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task AddMeeting(MeetingRequest request)
     {
         var group = await criteriaGroupRepository.GetById(request.CriteriaGroupId) ??
@@ -143,6 +143,7 @@ public class MeetingService(
     /// Updates meeting.
     /// </summary>
     /// <param name="request">Meeting updating request.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task UpdateMeeting(MeetingRequest request)
     {
         if (request.Id != null)
@@ -259,6 +260,7 @@ public class MeetingService(
     /// Deletes meeting.
     /// </summary>
     /// <param name="id">Meeting id.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task DeleteMeeting(int id)
     {
         var meeting = await meetingRepository.GetById(id) ??
@@ -271,6 +273,7 @@ public class MeetingService(
     /// Gets meeting members.
     /// </summary>
     /// <param name="id">Meeting id.</param>
+    /// <returns>A list of member DTOs representing the meeting participants.</returns>
     public async Task<List<MemberDto>> GetMembers(int id)
     {
         var meeting = await meetingRepository.GetById(id) ??
@@ -285,6 +288,7 @@ public class MeetingService(
     /// <param name="meetingId">Meeting id.</param>
     /// <param name="workId">Student work id.</param>
     /// <param name="mark">Final mark.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task SetFinalMark(int meetingId, int workId, string mark)
     {
         var meeting = await meetingRepository.GetById(meetingId) ??
@@ -302,6 +306,7 @@ public class MeetingService(
     /// Creates meetings from file.
     /// </summary>
     /// <param name="request">Schedule parsing request.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task CreateMeetingsFromFile(ParseScheduleRequest request)
     {
         var parser = new ScheduleParser(

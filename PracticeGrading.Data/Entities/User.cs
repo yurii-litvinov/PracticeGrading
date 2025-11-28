@@ -40,12 +40,26 @@ public class User
     /// </summary>
     public ICollection<Meeting>? Meetings { get; set; }
 
+    /// <summary>
+    /// Gets or sets the email address of the user.
+    /// </summary>
     public string? Email { get; set; }
 
+    /// <summary>
+    /// Gets or sets the phone number of the user.
+    /// </summary>
     public string? Phone { get; set; }
 
+    /// <summary>
+    /// Gets or sets the additional information about the user in Russian.
+    /// This field may contain biographical data, professional background, or other relevant details.
+    /// </summary>
     public string? InformationRu { get; set; }
 
+    /// <summary>
+    /// Gets or sets the additional information about the user in English.
+    /// This field may contain biographical data, professional background, or other relevant details.
+    /// </summary>
     public string? InformationEn { get; set; }
 
     /// <summary>
