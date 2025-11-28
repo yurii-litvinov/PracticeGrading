@@ -107,6 +107,8 @@ app.MapCriteriaEndpoints();
 
 app.MapUserEndpoints();
 
+app.MapMemberEndpoints();
+
 app.MapMarkEndpoints();
 
 app.Run();

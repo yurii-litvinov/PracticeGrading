@@ -36,14 +36,17 @@ public class User
     public Role? Role { get; set; }
 
     /// <summary>
-    /// Gets or sets meeting id.
+    /// Gets or sets meetings.
     /// </summary>
-    public int? MeetingId { get; set; }
+    public ICollection<Meeting>? Meetings { get; set; }
 
-    /// <summary>
-    /// Gets or sets meeting.
-    /// </summary>
-    public Meeting? Meeting { get; set; }
+    public string? Email { get; set; }
+
+    public string? Phone { get; set; }
+
+    public string? InformationRu { get; set; }
+
+    public string? InformationEn { get; set; }
 
     /// <summary>
     /// Gets or sets marks.

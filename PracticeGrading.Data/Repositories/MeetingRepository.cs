@@ -63,4 +63,26 @@ public class MeetingRepository(AppDbContext context)
         context.Meetings.Remove(meeting);
         await context.SaveChangesAsync();
     }
+
+    public async Task RemoveUserFromMeeting(int meetingId, int userId)
+    {
+        var meeting = await context.Meetings
+            .Include(m => m.Members)
+            .FirstOrDefaultAsync(m => m.Id == meetingId);
+
+        if (meeting == null)
+        {
+            throw new InvalidOperationException($"Meeting with {meetingId} id was not found");
+        }
+
+        var user = await context.Users.FindAsync(userId);
+
+        if (user == null)
+        {
+            throw new InvalidOperationException($"User with {userId} id is not related to the meeting with {meetingId} id.");
+        }
+
+        meeting.Members.Remove(user);
+        await context.SaveChangesAsync();
+    }
 }

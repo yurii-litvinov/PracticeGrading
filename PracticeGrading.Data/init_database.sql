@@ -94,9 +94,11 @@ CREATE TABLE "Users" (
                          "UserName" text NOT NULL,
                          "PasswordHash" text,
                          "RoleId" integer NOT NULL,
-                         "MeetingId" integer,
+                         "InformationRu" text,
+                         "InformationEn" text,
+                         "Email" text,
+                         "Phone" text,
                          CONSTRAINT "PK_Users" PRIMARY KEY ("Id"),
-                         CONSTRAINT "FK_Users_Meetings_MeetingId" FOREIGN KEY ("MeetingId") REFERENCES "Meetings" ("Id") ON DELETE CASCADE,
                          CONSTRAINT "FK_Users_Role_RoleId" FOREIGN KEY ("RoleId") REFERENCES "Role" ("Id") ON DELETE CASCADE
 );
 
@@ -108,6 +110,14 @@ CREATE TABLE "AverageCriteriaMark" (
                                        CONSTRAINT "PK_AverageCriteriaMark" PRIMARY KEY ("CriteriaId", "StudentWorkId"),
                                        CONSTRAINT "FK_AverageCriteriaMark_Criteria_CriteriaId" FOREIGN KEY ("CriteriaId") REFERENCES "Criteria" ("Id") ON DELETE CASCADE,
                                        CONSTRAINT "FK_AverageCriteriaMark_StudentWork_StudentWorkId" FOREIGN KEY ("StudentWorkId") REFERENCES "StudentWork" ("Id") ON DELETE CASCADE
+);
+
+CREATE TABLE "MeetingUser" (
+                                "MeetingsId" integer NOT NULL,
+                                "MembersId" integer NOT NULL,
+                                CONSTRAINT "PK_MeetingUser" PRIMARY KEY ("MeetingsId", "MembersId"),
+                                CONSTRAINT "FK_MeetingUser_Meetings_MeetingsId" FOREIGN KEY ("MeetingsId") REFERENCES "Meetings" ("Id") ON DELETE CASCADE,
+                                CONSTRAINT "FK_MeetingUser_Users_MembersId" FOREIGN KEY ("MembersId") REFERENCES "Users" ("Id") ON DELETE CASCADE
 );
 
 
@@ -250,8 +260,8 @@ INSERT INTO "Rule" ("Id", "CriteriaId", "Description", "IsScaleRule", "Type", "V
 VALUES (28, 5, 'за каждый отсутствующий пункт из чеклиста по оформлению репозитория: https://github.com/yurii-litvinov/courses/blob/master/additional/repo-checklist/repo-checklist.pdf', FALSE, 'custom', -1);
 
 
-INSERT INTO "Users" ("Id", "MeetingId", "PasswordHash", "RoleId", "UserName")
-VALUES (1, NULL, '$2a$11$0CCsMkYMzLq/5/tvvlwb/OpAaYuXul1te/yuKAYm9unI5fehP5r82', 1, 'admin');
+INSERT INTO "Users" ("Id", "PasswordHash", "RoleId", "UserName")
+VALUES (1, '$2a$11$0CCsMkYMzLq/5/tvvlwb/OpAaYuXul1te/yuKAYm9unI5fehP5r82', 1, 'admin');
 
 
 CREATE INDEX "IX_AverageCriteriaMark_StudentWorkId" ON "AverageCriteriaMark" ("StudentWorkId");
@@ -286,12 +296,9 @@ CREATE INDEX "IX_SelectedRule_CriteriaMarkId" ON "SelectedRule" ("CriteriaMarkId
 
 CREATE INDEX "IX_StudentWork_MeetingId" ON "StudentWork" ("MeetingId");
 
-
-CREATE INDEX "IX_Users_MeetingId" ON "Users" ("MeetingId");
-
-
 CREATE INDEX "IX_Users_RoleId" ON "Users" ("RoleId");
 
+CREATE INDEX IF NOT EXISTS "IX_MeetingUser_MembersId" ON "MeetingUser" USING btree ("MembersId" ASC NULLS LAST);
 
 SELECT setval(
                pg_get_serial_sequence('"Criteria"', 'Id'),

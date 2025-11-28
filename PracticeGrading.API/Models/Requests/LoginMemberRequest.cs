@@ -8,4 +8,4 @@ namespace PracticeGrading.API.Models.Requests;
 /// <summary>
 /// Class for member login request.
 /// </summary>
-public record LoginMemberRequest(string UserName, int MeetingId);
+public record LoginMemberRequest(int MemberId, string UserName, int MeetingId);

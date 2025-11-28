@@ -127,7 +127,7 @@ public class ScheduleParserTests : TestBase
                 new() { UserName = "Далматов Николай Александрович", RoleId = 2 },
                 new() { UserName = "Иванов Дмитрий Аркадьевич", RoleId = 2 },
             },
-            CriteriaGroup = null
+            CriteriaGroup = null!
         }
     ];
 
@@ -165,7 +165,7 @@ public class ScheduleParserTests : TestBase
                     Consultant = string.Empty
                 }
             },
-            CriteriaGroup = null
+            CriteriaGroup = null!
         },
 
         new Meeting
@@ -188,7 +188,7 @@ public class ScheduleParserTests : TestBase
                     Consultant = string.Empty
                 }
             },
-            CriteriaGroup = null
+            CriteriaGroup = null!
         }
     ];
 }

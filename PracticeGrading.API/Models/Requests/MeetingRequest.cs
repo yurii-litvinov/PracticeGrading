@@ -5,6 +5,8 @@
 
 namespace PracticeGrading.API.Models.Requests;
 
+using PracticeGrading.API.Models.DTOs;
+
 /// <summary>
 /// Class for meeting creation or updating request.
 /// </summary>
@@ -16,5 +18,5 @@ public record MeetingRequest(
     string? CallLink,
     string? MaterialsLink,
     List<StudentWorkRequest> StudentWorks,
-    List<MemberRequest> Members,
+    List<int> MemberIds,
     int CriteriaGroupId);

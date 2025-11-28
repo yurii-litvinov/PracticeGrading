@@ -61,13 +61,7 @@ public class MeetingService(
                         .Select(criteria => new AverageCriteriaMark { CriteriaId = criteria.Id })
                         .ToList(),
                 }).ToList(),
-            Members = request.Members.Select(
-                memberRequest => new User
-                {
-                    UserName = memberRequest.Name,
-                    PasswordHash = string.Empty,
-                    RoleId = (int)RolesEnum.Member,
-                }).ToList(),
+            Members = await userRepository.GetUsersByIdsAsync(request.MemberIds),
             CriteriaGroup = group,
         };
 
@@ -120,9 +114,7 @@ public class MeetingService(
                         .Select(mark => new AverageCriteriaMarkDto(mark.CriteriaId, mark.AverageMark)).ToList(),
                     work.FinalMark)).ToList();
 
-            var members = (meeting.Members ?? []).Select(
-                member =>
-                    new MemberDto(member.Id, member.UserName)).ToList();
+            var members = (meeting.Members ?? []).Select(UserService.GetMemberDtoFromUser).ToList();
 
             var group = meeting.CriteriaGroup;
 
@@ -242,31 +234,11 @@ public class MeetingService(
                 meeting.StudentWorks?.Remove(work);
             }
 
-            foreach (var memberRequest in request.Members)
-            {
-                var existingMember = (meeting.Members ?? [])
-                    .FirstOrDefault(member => member.Id == memberRequest.Id);
+            var previousMembers = await this.GetMembers((int)request.Id);
 
-                if (existingMember != null)
-                {
-                    existingMember.UserName = memberRequest.Name;
-                }
-                else
-                {
-                    meeting.Members?.Add(
-                        new User
-                        {
-                            UserName = memberRequest.Name,
-                            PasswordHash = string.Empty,
-                            RoleId = (int)RolesEnum.Member,
-                        });
-                }
-            }
-
-            var membersToRemove = (meeting.Members ?? [])
-                .Where(
-                    member => request.Members.All(
-                        memberRequest => memberRequest.Id != null && memberRequest.Id != member.Id)).ToList();
+            var membersToRemove = previousMembers
+                .Where(prevMember => !request.MemberIds.Contains(prevMember.Id))
+                .ToList();
 
             foreach (var member in membersToRemove)
             {
@@ -276,7 +248,7 @@ public class MeetingService(
                     await markRepository.Delete(mark);
                 }
 
-                await userRepository.Delete(member);
+                await meetingRepository.RemoveUserFromMeeting((int)request.Id, member.Id);
             }
 
             await meetingRepository.Update(meeting);
@@ -304,7 +276,7 @@ public class MeetingService(
         var meeting = await meetingRepository.GetById(id) ??
                       throw new InvalidOperationException($"Meeting with ID {id} was not found.");
 
-        return (meeting.Members ?? []).Select(member => new MemberDto(member.Id, member.UserName)).ToList();
+        return (meeting.Members ?? []).Select(UserService.GetMemberDtoFromUser).ToList();
     }
 
     /// <summary>

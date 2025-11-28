@@ -6,5 +6,9 @@
  */
 export interface Member {
     id?: number,
-    name: string
+    name: string,
+    informationRu?: string,
+    informationEn?: string,
+    phone?: string,
+    email?: string,
 }

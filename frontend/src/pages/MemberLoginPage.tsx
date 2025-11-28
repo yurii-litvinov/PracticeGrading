@@ -1,39 +1,63 @@
-import {useState, useEffect} from 'react'
-import {useNavigate, useParams} from 'react-router-dom';
-import {getMembers, loginMember, setAuthHeader} from '../services/ApiService';
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom';
+import { getMembers, loginMember, setAuthHeader } from '../services/ApiService';
+import { Member } from '../models/Member';
 
 export function MemberLoginPage() {
-    const {id} = useParams();
+    const { id } = useParams();
     const navigate = useNavigate();
-    const [members, setMembers] = useState([]);
-    const [selectedMember, setSelectedMember] = useState('');
+    const [members, setMembers] = useState<Member[]>([]);
+    const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+    const [customName, setCustomName] = useState<string>('');
 
     useEffect(() => {
         getMembers(Number(id)).then(response => {
-            const membersList = response.data;
-            const namesList = membersList.map((member: { name: string; }) => member.name);
-            setMembers(namesList);
+            setMembers(response.data);
 
-            if (namesList.length > 0) {
-                setSelectedMember(namesList[0]);
+            if (response.data.length > 0) {
+                setSelectedMember(members[0]);
             }
         });
     }, [id]);
 
     const handleLogin = async () => {
-        if (selectedMember === '') {
+        const credentials = customName.trim()
+            ? { userName: customName }
+            : selectedMember
+                ? { member: selectedMember }
+                : null;
+
+        if (!credentials) {
             alert('Выберите себя из списка или введите ФИО');
-        } else {
-            const response = await loginMember(selectedMember, Number(id));
-            const token = response.data.token;
-            sessionStorage.setItem('token', token);
-            setAuthHeader(token);
-            navigate(`/meetings/${id}/member`, {replace: true});
+            return;
         }
+
+        const response = await loginMember(Number(id), credentials);
+        const token = response.data.token;
+        sessionStorage.setItem('token', token);
+        setAuthHeader(token);
+        navigate(`/meetings/${id}/member`, { replace: true });
+    }
+
+    const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedId = parseInt(e.target.value);
+        if (selectedId === 0 ) {
+            setSelectedMember(null);
+            return;
+        }
+        const member = members.find(m => m.id === selectedId);
+
+        setSelectedMember(member || null);
+        setCustomName('');
+    }
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setCustomName(e.target.value);
+        setSelectedMember(null);
     }
 
     return (
-        <div className="d-flex justify-content-center align-items-center" style={{height: '100vh'}}>
+        <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
             <div className="card w-auto">
                 <div className="card-body">
                     <h4 className="card-title text-center mb-4">Вход</h4>
@@ -41,12 +65,13 @@ export function MemberLoginPage() {
 
                     <select
                         className="form-select mb-3"
-                        value={selectedMember}
-                        onChange={(e) => setSelectedMember(e.target.value)}
+                        value={selectedMember?.id || ''}
+                        onChange={handleSelectChange}
                     >
-                        {members.map((member, index) => (
-                            <option key={index} value={member}>
-                                {member}
+                        <option value={0}>-- Выберите участника --</option>
+                        {members.map((member) => (
+                            <option key={member.id} value={member.id}>
+                                {member.name}
                             </option>
                         ))}
                     </select>
@@ -56,12 +81,13 @@ export function MemberLoginPage() {
                         type="text"
                         className="form-control mb-4"
                         placeholder="Введите ФИО"
-                        onChange={(e) => setSelectedMember(e.target.value)}
+                        value={customName}
+                        onChange={handleInputChange}
                     />
 
                     <div className="d-flex justify-content-center">
                         <button className="btn btn-primary w-100" onClick={handleLogin}>Войти
-                            как {selectedMember}</button>
+                            как {selectedMember?.name || customName}</button>
                     </div>
                 </div>
             </div>

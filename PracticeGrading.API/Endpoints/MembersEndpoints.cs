@@ -1,0 +1,48 @@
+﻿// <copyright file="MembersEndpoints.cs" company="Maria Myasnikova">
+// Copyright (c) Maria Myasnikova. All rights reserved.
+// Licensed under the Apache-2.0 license. See LICENSE file in the project root for full license information.
+// </copyright>
+
+namespace PracticeGrading.API.Endpoints;
+
+using Microsoft.AspNetCore.Http;
+using PracticeGrading.API.Models.DTOs;
+using PracticeGrading.API.Services;
+
+public static class MembersEndpoints
+{
+    public static void MapMemberEndpoints(this IEndpointRouteBuilder app)
+    {
+        app.MapGet("/members", SearchMembers).RequireAuthorization("RequireAdminRole");
+        app.MapPost("/members", AddNewMember).RequireAuthorization("RequireAdminRole");
+        app.MapPut("/members", UpdateMember).RequireAuthorization("RequireAdminRole");
+        app.MapDelete("/members", DeleteMember).RequireAuthorization("RequireAdminRole");
+    }
+
+    private static async Task<IResult> SearchMembers(UserService service, string searchName, int offset = 0, int limit = 0)
+    {
+        var members = await service.SearchMembersByNameAsync(searchName, offset, limit + 1);
+        var hasMore = members.Length > limit;
+        var result = members.Take(limit).ToArray();
+        return Results.Ok(new
+        {
+            members = result,
+            hasMore,
+        });
+    }
+
+    private static async Task AddNewMember(UserService service, MemberDto member)
+    {
+        await service.AddNewMember(member);
+    }
+
+    private static async Task UpdateMember(UserService service, MemberDto member)
+    {
+        await service.UpdateMember(member);
+    }
+
+    private static async Task DeleteMember(UserService service, int id)
+    {
+        await service.DeleteMember(id);
+    }
+}

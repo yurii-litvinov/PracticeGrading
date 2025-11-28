@@ -29,10 +29,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .WithOne(mark => mark.Member)
             .HasForeignKey(mark => mark.MemberId);
 
-        builder.HasOne<Meeting>(member => member.Meeting)
-            .WithMany(meeting => meeting.Members)
-            .HasForeignKey(member => member.MeetingId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(user => user.Meetings)
+            .WithMany(meeting => meeting.Members);
 
         builder.HasData(
             new User

@@ -34,6 +34,15 @@ export function NavBar() {
                         <ul className="navbar-nav ms-auto">
                             <li className="nav-item">
                                 <NavLink
+                                    to="/members"
+                                    className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}
+                                    id="members-link"
+                                >
+                                    Члены Комиссии
+                                </NavLink>
+                            </li>
+                            <li className="nav-item">
+                                <NavLink
                                     to="/meetings"
                                     end
                                     className={({isActive}) => isActive ? 'nav-link active' : 'nav-link'}
