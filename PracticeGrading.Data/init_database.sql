@@ -94,10 +94,10 @@ CREATE TABLE "Users" (
                          "UserName" text NOT NULL,
                          "PasswordHash" text,
                          "RoleId" integer NOT NULL,
-                         "InformationRu" text,
-                         "InformationEn" text,
                          "Email" text,
                          "Phone" text,
+                         "InformationRu" text,
+                         "InformationEn" text,
                          CONSTRAINT "PK_Users" PRIMARY KEY ("Id"),
                          CONSTRAINT "FK_Users_Role_RoleId" FOREIGN KEY ("RoleId") REFERENCES "Role" ("Id") ON DELETE CASCADE
 );

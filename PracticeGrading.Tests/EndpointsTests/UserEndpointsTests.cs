@@ -34,7 +34,7 @@ public class UserEndpointsTests : TestBase
     {
         await CreateTestMeeting();
         
-        var loginRequest = new LoginMemberRequest("member", 1);
+        var loginRequest = new LoginMemberRequest(MemberId, null!, MeetingId);
 
         var response = await Client.PostAsJsonAsync("member/login", loginRequest);
 

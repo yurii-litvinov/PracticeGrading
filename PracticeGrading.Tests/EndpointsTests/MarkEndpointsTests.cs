@@ -15,7 +15,7 @@ public class MarkEndpointsTests : TestBase
     [Test]
     public async Task TestCreateMark()
     {
-        var mark = new MemberMarkRequest(null, 4, 3, [], 5, string.Empty);
+        var mark = new MemberMarkRequest(null, MemberId, 3, [], 5, string.Empty);
         var response = await Client.PostAsJsonAsync("/marks/new", mark);
 
         response.EnsureSuccessStatusCode();
@@ -24,7 +24,7 @@ public class MarkEndpointsTests : TestBase
     [Test]
     public async Task TestGetMarkById()
     {
-        var mark = new MemberMarkRequest(null, 4, 3, [], 5, string.Empty);
+        var mark = new MemberMarkRequest(null, MemberId, 3, [], 5, string.Empty);
         await Client.PostAsJsonAsync("/marks/new", mark);
         var response = await Client.GetAsync("/marks?workId=3&memberId=4");
 
@@ -42,9 +42,9 @@ public class MarkEndpointsTests : TestBase
     [Test]
     public async Task TestUpdateMark()
     {
-        var mark = new MemberMarkRequest(null, 4, 3, [], 5, string.Empty);
+        var mark = new MemberMarkRequest(null, MemberId, 3, [], 5, string.Empty);
         await Client.PostAsJsonAsync("/marks/new", mark);
-        var updatedMark = new MemberMarkRequest(null, 4, 3, [], 4, string.Empty);
+        var updatedMark = new MemberMarkRequest(null, MemberId, 3, [], MemberId, string.Empty);
         
         var response = await Client.PutAsJsonAsync("/marks/update", updatedMark);
 
@@ -54,10 +54,10 @@ public class MarkEndpointsTests : TestBase
     [Test]
     public async Task TestDeleteMark()
     {
-        var mark = new MemberMarkRequest(null, 4, 3, [], 5, string.Empty);
+        var mark = new MemberMarkRequest(null, MemberId, 3, [], 5, string.Empty);
         await Client.PostAsJsonAsync("/marks/new", mark);
         
-        var response = await Client.DeleteAsync("/marks/delete?workId=3&memberId=4");
+        var response = await Client.DeleteAsync($"/marks/delete?workId=3&memberId={MemberId}");
 
         response.EnsureSuccessStatusCode();
     }

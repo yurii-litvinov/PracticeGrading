@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using PracticeGrading.API;
+using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data;
@@ -34,7 +35,7 @@ public class TestBase
     protected MeetingService MeetingService;
     protected CriteriaGroupService CriteriaGroupService;
     protected CriteriaService CriteriaService;
-    protected MarkService MarkService;
+    protected MarkService MarkService; 
 
     protected StudentWork TestWork = new()
         { StudentName = string.Empty, Theme = string.Empty, Supervisor = string.Empty, AverageCriteriaMarks = [] };
@@ -42,6 +43,9 @@ public class TestBase
     protected Criteria TestCriteria = new() { Name = string.Empty };
     
     protected CriteriaGroup TestCriteriaGroup = new() { Name = string.Empty };
+
+    protected int MeetingId = 1;
+    protected int MemberId = 0;
 
     [SetUp]
     public void SetUp()
@@ -71,8 +75,8 @@ public class TestBase
 
         dbContext.Database.EnsureCreated();
 
-        UserRepository = new UserRepository(dbContext);
         MeetingRepository = new MeetingRepository(dbContext);
+        UserRepository = new UserRepository(dbContext, MeetingRepository);
         CriteriaGroupRepository = new CriteriaGroupRepository(dbContext);
         CriteriaRepository = new CriteriaRepository(dbContext);
         MarkRepository = new MarkRepository(dbContext);
@@ -108,6 +112,9 @@ public class TestBase
 
     protected async Task CreateTestMeeting()
     {
+        var user = new User { UserName = "member", RoleId = (int)RolesEnum.Member };
+        MemberId = await UserRepository.Create(user);
+        user.Id = MemberId;
         var meeting = new Meeting
         {
             Id = 1,
@@ -121,7 +128,7 @@ public class TestBase
                     AverageCriteriaMarks = []
                 }
             ],
-            Members = [new User { Id = 4, UserName = "member" }]
+            Members = [user!]
         };
 
         await MeetingRepository.Create(meeting);

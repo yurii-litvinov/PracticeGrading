@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.Data.Entities;
 
@@ -57,7 +58,7 @@ public class UserServiceTests : TestBase
     {
         await CreateTestMeeting();
         
-        var request = new LoginMemberRequest("member", 1);
+        var request = new LoginMemberRequest(MemberId, null!,  1);
         var token = await UserService.LoginMember(request);
 
         token.Should().NotBeEmpty();
@@ -68,7 +69,7 @@ public class UserServiceTests : TestBase
     {
         await CreateTestMeeting();
         
-        var request = new LoginMemberRequest("nonexistent", 1);
+        var request = new LoginMemberRequest(0, "nonexistent", 1);
         var token = await UserService.LoginMember(request);
 
         token.Should().NotBeEmpty();

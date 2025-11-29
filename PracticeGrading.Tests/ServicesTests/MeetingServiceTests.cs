@@ -10,7 +10,7 @@ public class MeetingServiceTests : TestBase
 {
     [Test]
     public async Task TestAddMeeting()
-    {
+    { 
         var works = new List<StudentWorkRequest>
         {
             new(null,
@@ -39,9 +39,9 @@ public class MeetingServiceTests : TestBase
             null,
             works,
             [
-                new MemberRequest(null, "member1"),
-                new MemberRequest(null, "member2"),
-                new MemberRequest(null, "member3")
+                await UserRepository.Create(new User { UserName = "member1" }),
+                await UserRepository.Create(new User { UserName = "member2" }),
+                await UserRepository.Create(new User { UserName = "member3" }),
             ],
             1);
 
@@ -52,7 +52,7 @@ public class MeetingServiceTests : TestBase
         meetings.Should().HaveCount(1);
         meetings.First().Auditorium.Should().BeEquivalentTo(request.Auditorium);
         meetings.First().StudentWorks.Should().HaveCount(works.Count);
-        meetings.First().Members.Should().HaveCount(request.Members.Count);
+        meetings.First().Members.Should().HaveCount(request.MemberIds.Count);
     }
 
     [Test]
