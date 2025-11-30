@@ -48,54 +48,6 @@ const createMeeting = async (page, info) => {
     await page.click('#save-meeting');
 }
 
-const addTestMember = async (page, name: string) => {
-    const id = await page.evaluate(async (name: string) => {
-        const token = window.sessionStorage.getItem('token');
-        const response = await fetch('http://localhost:5183/members', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                name: name,
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed: ${response.status}`);
-        }
-
-        const membersGetResponse = await fetch(`http://localhost:5183/members?searchName=${name}&offset=0&limit=1`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            }
-        })
-        const members = (await membersGetResponse.json()).members;
-
-        return members[0].id
-    }, name);
-
-    return id;
-}
-
-const deleteTestMember = async (page, id: number) => {
-    await page.evaluate(async (id: number) => {
-        const token = window.sessionStorage.getItem('token');
-        const response = await fetch(`http://localhost:5183/members?id=${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to delete member: ${response.status}`);
-        }
-    }, id);
-}
-
 const createTestMember = async (page, info) => {
     await page.fill('#searchInput', info.name);
     await page.click("#add-member-button");
@@ -125,8 +77,17 @@ test('admin logout', async ({ page }) => {
 });
 
 test('create meeting', async ({ page }) => {
+    const info = {
+        name: 'testMember',
+        email: 'email@gmail.com',
+        phone: '77777777777',
+        informationRu: 'Информация',
+        informationEn: 'Information',
+    }
+
     await login(page);
-    const id = await addTestMember(page, 'testMember');
+    await page.click('#members-link');
+    await createTestMember(page, info);
 
     await createCriteria(page, 'критерий', 'комментарий');
 
@@ -145,7 +106,12 @@ test('create meeting', async ({ page }) => {
     await expect(page).toHaveURL(`${BASENAME}/criteria`);
 
     await page.click('#delete-criteria');
-    await deleteTestMember(page, id);
+    await page.click('#members-link');
+
+    await page.fill('#searchInput', info.name)
+    await page.waitForSelector('.dropdown-item');
+    await page.click('.dropdown-item');
+    await page.click("#delete-member-button");
 });
 
 test('create and delete new user', async ({ page }) => {
@@ -154,10 +120,11 @@ test('create and delete new user', async ({ page }) => {
         email: 'email@gmail.com',
         phone: '77777777777',
         informationRu: 'Информация',
-        informationEn: 'Information'
+        informationEn: 'Information',
     }
 
     await login(page);
+
     await page.click('#members-link');
     await createTestMember(page, info);
 
@@ -191,7 +158,7 @@ test('edit user', async ({ page }) => {
         email: 'email@gmail.com',
         phone: '77777777777',
         informationRu: 'Информация',
-        informationEn: 'Information'
+        informationEn: 'Information',
     }
 
     await login(page);
