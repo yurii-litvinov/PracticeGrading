@@ -142,7 +142,7 @@ export const updateMember = async (member: Member) => {
 }
 
 export const addMember = async (member: Member) => {
-    await axiosService.post('members', member);
+    return await axiosService.post('members', member);
 }
 
 export const deleteMember = async (id: number) => {

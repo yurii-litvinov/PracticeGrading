@@ -40,11 +40,11 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
     /// Creates a new member user.
     /// </summary>
     /// <param name="member">Member data for the new user.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    public async Task AddNewMember(MemberRequest member)
+    /// <returns>The ID of the newly created member user.</returns>
+    public async Task<int> AddNewMember(MemberRequest member)
     {
         var user = GetUserFromMemberRequest(member, true);
-        await userRepository.Create(user);
+        return await userRepository.Create(user);
     }
 
     /// <summary>

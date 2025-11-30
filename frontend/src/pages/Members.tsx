@@ -66,7 +66,14 @@ export default function Members() {
         if (mode === MemberFormMode.EDIT) {
             await updateMember(member);
         } else {
-            await addMember(member);
+            const newMemberId = (await addMember(member)).data.id;
+            if (!newMemberId) {
+                setSelectedMember(null);
+                setSearchName('');
+                return;
+            }
+
+            member.id = newMemberId;
         }
 
         setSelectedMember(member);
@@ -96,7 +103,8 @@ export default function Members() {
                         outline={false}
                         disabled={mode != MemberFormMode.VIEW}
                         onClick={handleAddButtonClick}
-                        className="flex-grow-1">
+                        className="flex-grow-1"
+                        id={"add-member-button"}>
                         Добавить
                     </Button>
 
@@ -104,14 +112,16 @@ export default function Members() {
                         outline={!selectedMember}
                         disabled={!selectedMember || mode != MemberFormMode.VIEW}
                         onClick={handleEditButtonClick}
-                        className="flex-grow-1">
+                        className="flex-grow-1"
+                        id={"edit-member-button"}>
                         Редактировать
                     </Button>
                     <Button variant={selectedMember ? "danger" : "secondary"}
                         outline={!selectedMember}
                         disabled={!selectedMember || mode != MemberFormMode.VIEW}
                         onClick={handleDeleteButtonClick}
-                        className="flex-grow-1">
+                        className="flex-grow-1"
+                        id ={"delete-member-button"}>
                         Удалить
                     </Button>
                 </div>

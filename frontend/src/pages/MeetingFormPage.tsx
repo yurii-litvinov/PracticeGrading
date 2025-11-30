@@ -351,6 +351,7 @@ export function MeetingFormPage() {
                                         onClick={handleAddMember}
                                         disabled={!selectedMember}
                                         className="w-100"
+                                        id="add-member-button"
                                     >
                                         Добавить
                                     </Button>

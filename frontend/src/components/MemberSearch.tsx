@@ -30,22 +30,23 @@ export default function MemberSearch({ onMemberSelect, onSearchChange, selectedM
 
     previousSearchRef.current = trimmedSearch;
 
+    if (!trimmedSearch) {
+      setFoundMembers([]);
+      setHasMore(false);
+      setShowDropdown(false);
+      setOffset(0)
+      return;
+    }
+
     const timeoutId = setTimeout(() => {
-      if (trimmedSearch) {
-        loadMembers(trimmedSearch, 0, 10, false).then(() => {
-          if (foundMembers.length === 1) {
-            if (foundMembers[0].name.trim().toLowerCase() === trimmedSearch.toLowerCase()) {
-              handleAutoSelect(foundMembers[0]);
-            }
+      loadMembers(trimmedSearch, 0, 10, false).then(() => {
+        if (foundMembers.length === 1) {
+          if (foundMembers[0].name.trim().toLowerCase() === trimmedSearch.toLowerCase()) {
+            handleAutoSelect(foundMembers[0]);
           }
         }
-        );
-      } else {
-        setFoundMembers([]);
-        setHasMore(false);
-        setShowDropdown(false);
-        setOffset(0);
       }
+      );
     }, 300);
 
     return () => clearTimeout(timeoutId);
@@ -118,6 +119,7 @@ export default function MemberSearch({ onMemberSelect, onSearchChange, selectedM
     <>
       <div ref={dropdownRef} className="position-relative" style={{ width: '100%' }}>
         <input
+          id="searchInput"
           type="text"
           value={searchName}
           className="form-control"
@@ -135,7 +137,7 @@ export default function MemberSearch({ onMemberSelect, onSearchChange, selectedM
               maxHeight: '300px',
               overflowY: 'auto',
             }}>
-            {foundMembers.map(member => (
+            {!isLoading && foundMembers.map(member => (
               <button
                 key={member.id}
                 onClick={() => handleSelectMember(member)}
@@ -148,7 +150,7 @@ export default function MemberSearch({ onMemberSelect, onSearchChange, selectedM
               </button>
             ))}
 
-            {hasMore && (
+            {!isLoading && hasMore && (
               <>
                 <div className="dropdown-divider"></div>
                 <button

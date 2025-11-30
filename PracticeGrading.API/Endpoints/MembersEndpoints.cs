@@ -38,9 +38,10 @@ public static class MembersEndpoints
         });
     }
 
-    private static async Task AddNewMember(UserService service, MemberRequest member)
+    private static async Task<IResult> AddNewMember(UserService service, MemberRequest member)
     {
-        await service.AddNewMember(member);
+        var memberId = await service.AddNewMember(member);
+        return Results.Ok(new { Id = memberId });
     }
 
     private static async Task UpdateMember(UserService service, MemberRequest member)

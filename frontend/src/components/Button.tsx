@@ -9,6 +9,7 @@ interface ButtonProps {
   disabled?: boolean;
   type?: 'button' | 'submit' | 'reset';
   className?: string;
+  id?: string
 }
 
 export default function Button({
@@ -19,7 +20,8 @@ export default function Button({
   size,
   disabled = false,
   type = 'button',
-  className = ''
+  className = '',
+  id = '',
 }: ButtonProps) {
   const baseClass = 'btn';
   const variantClass = outline ? `btn-outline-${variant}` : `btn-${variant}`;
@@ -29,6 +31,7 @@ export default function Button({
 
   return (
     <button
+      id={id}
       type={type}
       className={buttonClass}
       onClick={onClick}

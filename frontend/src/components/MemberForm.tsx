@@ -159,7 +159,7 @@ export default function MemberForm({
 
                         {mode != MemberFormMode.VIEW && (
                             <div className="d-flex gap-2">
-                                <Button type="submit" variant="primary">
+                                <Button type="submit" variant="primary" id="form-submit-button">
                                     {member ? 'Сохранить' : 'Добавить'}
                                 </Button>
                                 <Button type="button" variant="secondary" onClick={handleFormCancel}>
