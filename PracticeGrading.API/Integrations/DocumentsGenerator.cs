@@ -5,11 +5,11 @@
 
 namespace PracticeGrading.API.Integrations;
 
-using System.Globalization;
-using System.Text.RegularExpressions;
 using NPOI.OpenXmlFormats.Wordprocessing;
 using NPOI.XWPF.UserModel;
 using PracticeGrading.API.Models.DTOs;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Class to generate meeting documents.

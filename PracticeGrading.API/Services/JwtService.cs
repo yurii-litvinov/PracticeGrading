@@ -5,12 +5,12 @@
 
 namespace PracticeGrading.API.Services;
 
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using PracticeGrading.Data.Entities;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 /// <summary>
 /// Service for generating JWT tokens.

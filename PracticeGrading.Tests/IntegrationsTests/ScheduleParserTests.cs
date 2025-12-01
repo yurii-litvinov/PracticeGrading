@@ -1,6 +1,6 @@
+using FluentAssertions;
 using PracticeGrading.API.Integrations;
 using PracticeGrading.Data.Entities;
-using FluentAssertions;
 
 namespace PracticeGrading.Tests.IntegrationsTests;
 

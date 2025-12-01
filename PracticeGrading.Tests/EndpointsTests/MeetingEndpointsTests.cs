@@ -1,8 +1,8 @@
+using Microsoft.AspNetCore.Http;
+using PracticeGrading.API.Models.Requests;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using Microsoft.AspNetCore.Http;
-using PracticeGrading.API.Models.Requests;
 
 namespace PracticeGrading.Tests.EndpointsTests;
 
@@ -44,7 +44,7 @@ public class MeetingEndpointsTests : TestBase
             null,
             null,
             [],
-            [], 
+            [],
             1);
 
         await Client.PostAsJsonAsync("/meetings/new", meeting);

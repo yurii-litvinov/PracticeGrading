@@ -1,6 +1,3 @@
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,13 +9,16 @@ using PracticeGrading.API.Services;
 using PracticeGrading.Data;
 using PracticeGrading.Data.Entities;
 using PracticeGrading.Data.Repositories;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace PracticeGrading.Tests;
 
 public class TestBase
 {
     private WebApplicationFactory<Program> factory;
-    private AppDbContext dbContext;
+    protected AppDbContext dbContext;
 
     protected HttpClient Client;
 
@@ -35,13 +35,13 @@ public class TestBase
     protected MeetingService MeetingService;
     protected CriteriaGroupService CriteriaGroupService;
     protected CriteriaService CriteriaService;
-    protected MarkService MarkService; 
+    protected MarkService MarkService;
 
     protected StudentWork TestWork = new()
-        { StudentName = string.Empty, Theme = string.Empty, Supervisor = string.Empty, AverageCriteriaMarks = [] };
+    { StudentName = string.Empty, Theme = string.Empty, Supervisor = string.Empty, AverageCriteriaMarks = [] };
 
     protected Criteria TestCriteria = new() { Name = string.Empty };
-    
+
     protected CriteriaGroup TestCriteriaGroup = new() { Name = string.Empty };
 
     protected int MeetingId = 1;
@@ -119,7 +119,7 @@ public class TestBase
         {
             Id = 1,
             DateAndTime = DateTime.Now,
-            CriteriaGroup = new CriteriaGroup{Id = 12, Name = string.Empty},
+            CriteriaGroup = new CriteriaGroup { Id = 12, Name = string.Empty },
             StudentWorks =
             [
                 new StudentWork

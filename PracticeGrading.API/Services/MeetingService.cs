@@ -5,12 +5,12 @@
 
 namespace PracticeGrading.API.Services;
 
-using System.Text.Json;
 using PracticeGrading.API.Integrations;
 using PracticeGrading.API.Models.DTOs;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.Data.Entities;
 using PracticeGrading.Data.Repositories;
+using System.Text.Json;
 
 /// <summary>
 /// Service for working with meetings.
@@ -235,10 +235,13 @@ public class MeetingService(
                 meeting.StudentWorks?.Remove(work);
             }
 
-            var previousMembers = await this.GetMembers((int)request.Id);
+            if (meeting.Members == null)
+            {
+                throw new InvalidOperationException("Unable to get members for the meeting");
+            }
 
-            var membersToRemove = previousMembers
-                .Where(prevMember => !request.MemberIds.Contains(prevMember.Id))
+            var membersToRemove = meeting.Members
+                .Where(member => !request.MemberIds.Contains(member.Id))
                 .ToList();
 
             foreach (var member in membersToRemove)
@@ -248,8 +251,24 @@ public class MeetingService(
                 {
                     await markRepository.Delete(mark);
                 }
+            }
 
-                await meetingRepository.RemoveUserFromMeeting((int)request.Id, member.Id);
+            meeting.Members = meeting.Members
+                .Where(m => !membersToRemove.Select(mr => mr.Id).Contains(m.Id))
+                .ToList();
+
+            var newMemberIds = request.MemberIds.Except(meeting.Members.Select(m => m.Id));
+
+            foreach (var newMemberId in newMemberIds)
+            {
+                var newMember = await userRepository.GetUserById(newMemberId);
+
+                if (newMember == null)
+                {
+                    throw new InvalidOperationException("Unable to add new member for the meeting");
+                }
+
+                meeting.Members.Add(newMember);
             }
 
             await meetingRepository.Update(meeting);

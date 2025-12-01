@@ -1,5 +1,5 @@
-using System.Net.Http.Json;
 using PracticeGrading.API.Models.Requests;
+using System.Net.Http.Json;
 
 namespace PracticeGrading.Tests.EndpointsTests;
 

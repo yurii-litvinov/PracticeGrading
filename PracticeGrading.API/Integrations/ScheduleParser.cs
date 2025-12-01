@@ -5,11 +5,11 @@
 
 namespace PracticeGrading.API.Integrations;
 
-using System.Globalization;
-using System.Text.RegularExpressions;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using PracticeGrading.Data.Entities;
+using System.Globalization;
+using System.Text.RegularExpressions;
 
 /// <summary>
 /// Class for parsing the schedule.
@@ -79,7 +79,7 @@ public class ScheduleParser
         return (from cell in cells
                 where !GetCellValue(cell).Contains("Секретарь")
                 select new User
-                    { UserName = GetCellValue(cell).Replace("Председатель: ", string.Empty).Trim(), RoleId = 2, })
+                { UserName = GetCellValue(cell).Replace("Председатель: ", string.Empty).Trim(), RoleId = 2, })
             .ToList();
     }
 

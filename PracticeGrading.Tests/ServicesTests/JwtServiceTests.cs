@@ -1,9 +1,9 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 using FluentAssertions;
 using Microsoft.IdentityModel.Tokens;
 using PracticeGrading.Data.Entities;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace PracticeGrading.Tests.ServicesTests;
 

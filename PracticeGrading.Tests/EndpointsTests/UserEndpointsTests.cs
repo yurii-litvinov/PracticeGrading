@@ -1,6 +1,6 @@
-using System.Net.Http.Json;
 using FluentAssertions;
 using PracticeGrading.API.Models.Requests;
+using System.Net.Http.Json;
 
 namespace PracticeGrading.Tests.EndpointsTests;
 
@@ -28,12 +28,12 @@ public class UserEndpointsTests : TestBase
 
         response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
     }
-    
+
     [Test]
     public async Task TestLoginMember()
     {
         await CreateTestMeeting();
-        
+
         var loginRequest = new LoginMemberRequest(MemberId, null!, MeetingId);
 
         var response = await Client.PostAsJsonAsync("member/login", loginRequest);

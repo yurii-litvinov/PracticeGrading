@@ -4,9 +4,6 @@
 // </copyright>
 
 namespace PracticeGrading.API.Models.Requests;
-
-using PracticeGrading.API.Models.DTOs;
-
 /// <summary>
 /// Class for meeting creation or updating request.
 /// </summary>

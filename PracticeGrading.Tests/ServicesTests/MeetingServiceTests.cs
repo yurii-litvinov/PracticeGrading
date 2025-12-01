@@ -1,8 +1,8 @@
-using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.Data.Entities;
+using System.Text.Json;
 
 namespace PracticeGrading.Tests.ServicesTests;
 
@@ -10,7 +10,7 @@ public class MeetingServiceTests : TestBase
 {
     [Test]
     public async Task TestAddMeeting()
-    { 
+    {
         var works = new List<StudentWorkRequest>
         {
             new(null,
@@ -226,7 +226,7 @@ public class MeetingServiceTests : TestBase
 
         var request = new ParseScheduleRequest(file, JsonSerializer.Serialize(headers),
             JsonSerializer.Serialize(separator), membersColumn);
-        
+
         await MeetingService.CreateMeetingsFromFile(request);
 
         var meetings = await MeetingService.GetMeeting();
