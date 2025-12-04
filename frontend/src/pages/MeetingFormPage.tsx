@@ -220,7 +220,7 @@ export function MeetingFormPage() {
                             name="info"
                             required
                             onChange={handleMeetingChange}
-                            placeholder="СП, бакалавры ПИ, ГЭК 5080-01" />
+                            placeholder="СП, бакалавры ПИ, ГЭК 5080-01 2025" />
                     </div>
 
                     <div className="d-flex mb-2 align-items-center flex-wrap">

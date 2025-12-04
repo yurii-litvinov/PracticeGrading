@@ -5,11 +5,12 @@
 
 namespace PracticeGrading.API.Integrations;
 
+using System.Globalization;
+using System.Text.RegularExpressions;
 using NPOI.OpenXmlFormats.Wordprocessing;
 using NPOI.XWPF.UserModel;
 using PracticeGrading.API.Models.DTOs;
-using System.Globalization;
-using System.Text.RegularExpressions;
+using RussianTransliteration;
 
 /// <summary>
 /// Class to generate meeting documents.
@@ -24,44 +25,56 @@ public class DocumentsGenerator
 
     private const int SignSpace = 30;
 
-    private static readonly Dictionary<string, (string Number, string Name)> MajorDictionary = new()
+    private static readonly Dictionary<string, (string Major, string EducationalProgram, string AcademicDegree)> MajorInfoDictionary = new()
     {
-        { "5080", ("09.03.04", "Программная инженерия") },
-        { "5162", ("02.03.03", "Технологии программирования") },
-        { "5665", ("02.03.03", "Математическое обеспечение и администрирование информационных систем") },
-        { "5890", ("09.03.03", "Искусственный интеллект и наука о данных") },
+        { "5080", ("09.03.04 Программная инженерия", "CB.5080.[year] Программная инженерия", "бакалавриат") },
+        { "5162", ("02.03.03 Математическое обеспечение и администрирование информационных систем", "CB.5162.[year] Технологии программирования", "бакалавриат" ) },
+        { "5665", ("02.04.03 Математическое обеспечение и администрирование информационных систем", "BM.5665.[year] Математическое обеспечение и администрирование информационных систем", "магистратура") },
+        { "5666", ("09.04.04 Программная инженерия", "BM.5666.[year] Программная инженерия", "магистратура") },
+        { "5001", ("02.03.01 Математика и компьютерные науки", "CB.5001.[year] Математика и компьютерные науки", "бакалавриат") },
+        { "5212", ("09.03.03 Прикладная информатика", "CB.5212.[year] Искусственный интеллект и наука о данных", "бакалавриат") },
+        { "5890", ("09.04.03 Прикладная информатика", "BM.5890.[year] Искусственный интеллект и наука о данных", "магистратура") },
     };
 
     private readonly MeetingDto meeting;
     private readonly string commissionNumber;
-    private readonly (string Number, string Name) major;
+    private readonly string major;
+    private readonly string educationalProgram;
+    private readonly string academicDegree;
     private readonly string date;
+    private readonly string time;
+    private readonly MemberDto chairman;
+    private readonly string chairmanOrder;
+    private readonly string secretary;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DocumentsGenerator"/> class.
     /// </summary>
     /// <param name="meeting">Meeting DTO.</param>
-    public DocumentsGenerator(MeetingDto meeting)
+    public DocumentsGenerator(MeetingDto meeting, MemberDto chairman, string chairmanOrder, string secretary)
     {
         this.meeting = meeting;
-        (this.commissionNumber, this.major) = this.ProcessMeetingInfo();
+        (this.commissionNumber, this.major, this.educationalProgram, this.academicDegree) = this.ProcessMeetingInfo();
         this.date = string.Format(CultureInfo.GetCultureInfo("ru-RU"), "{0:d MMMM yyyy} г.", this.meeting.DateAndTime);
+        this.time = this.meeting.DateAndTime.ToString("HH:mm");
+        this.chairman = chairman;
+        this.chairmanOrder = chairmanOrder;
+        this.secretary = secretary;
     }
 
     /// <summary>
     /// Generates the statement document.
     /// </summary>
     /// <param name="coordinator">coordinator.</param>
-    /// <param name="chairman">Chairman.</param>
     /// <param name="stream">Stream containing the agreement template document.
     /// The stream will be disposed after processing. Ensure the stream is readable and contains a valid DOCX template.</param>
     /// <returns>File with its name.</returns>
-    public (Stream File, string FileName) GenerateStatement(string coordinator, string chairman, Stream stream)
+    public (Stream File, string FileName) GenerateStatement(string coordinator, Stream stream)
     {
         var statementData = new Dictionary<string, string>
         {
             { "[number]", this.commissionNumber },
-            { "[major]", $"{this.major.Number} «{this.major.Name}»" },
+            { "[major]", this.major },
             { "[date]", this.date },
             {
                 "[members]",
@@ -70,7 +83,7 @@ public class DocumentsGenerator
                     this.meeting.Members.Select((member, index) => $"{index + 1}. {member.Name}"))
             },
             { "[coordinator]", coordinator },
-            { "[chairman]", chairman },
+            { "[chairman]", this.chairman.Name },
         };
 
         using var doc = new XWPFDocument(stream);
@@ -86,7 +99,7 @@ public class DocumentsGenerator
         table.GetCTTbl().tblPr.tblW.w = "100%";
 
         var commisionTable = doc.Tables[5];
-        this.FillСommissionMembers(commisionTable, chairman);
+        this.FillСommissionMembers(commisionTable, this.chairman.Name);
 
         var memoryStream = new MemoryStream();
         doc.Write(memoryStream);
@@ -102,16 +115,15 @@ public class DocumentsGenerator
     /// <param name="stream">Stream containing the grading sheet template document.
     /// The stream will be disposed after processing. Ensure the stream is readable and contains a valid DOCX template.</param>
     /// <returns>File with its name.</returns>
-    public (Stream File, string FileName) GenerateGradingSheet(string member, Stream stream)
+    public (Stream File, string FileName) GenerateGradingSheet(MemberDto member, Stream stream)
     {
         var sheetData = new Dictionary<string, string>
         {
-            { "[member_initials]", GetSurnameWithInitials(member) },
-            { "[member]", member },
+            { "[member_initials]", GetSurnameWithInitials(member.Name) },
+            { "[member]", member.Name },
             { "[number]", this.commissionNumber },
-            { "[major]", $"{this.major.Number} «{this.major.Name}»" },
+            { "[major]", this.major },
             { "[date]", this.date },
-            { "[member_sign]", member + string.Concat(Enumerable.Repeat(" ", int.Max(SignSpace - member.Length, 0))) },
         };
 
         using var doc = new XWPFDocument(stream);
@@ -127,7 +139,7 @@ public class DocumentsGenerator
         memoryStream.Position = 0;
         stream.Dispose();
 
-        return (memoryStream, $"{member} оценочный лист ГЭК {this.commissionNumber}.docx");
+        return (memoryStream, $"{member.Name} оценочный лист ГЭК {this.commissionNumber}.docx");
     }
 
     /// <summary>
@@ -137,15 +149,16 @@ public class DocumentsGenerator
     /// <param name="stream">Stream containing the agreement template document.
     /// The stream will be disposed after processing. Ensure the stream is readable and contains a valid DOCX template.</param>
     /// <returns>File with its name.</returns>
-    public (Stream File, string FileName) GenerateAgreement(string member, Stream stream)
+    public (Stream File, string FileName) GenerateAgreement(MemberDto member, Stream stream)
     {
         var placeholders = new Dictionary<string, string>
         {
-            { "[member]", member },
-            { "[member_initials]", GetSurnameWithInitials(member) },
-            { "[member_info_ru]", "[member_info_ru]" },
-            { "[member_info_en]", "[member_info_en]" },
-            { "[email]", "[email]" },
+            { "[member]", member.Name },
+            { "[member_initials]", GetSurnameWithInitials(member.Name) },
+            { "[member_info_ru]", member.Name + ", " + (string.IsNullOrWhiteSpace(member.InformationRu) ? new string('_', 50) : member.InformationRu) },
+            { "[member_info_en]", RussianTransliterator.GetTransliteration(member.Name) + ", " + (string.IsNullOrWhiteSpace(member.InformationEn) ? new string('_', 90) : member.InformationEn) },
+            { "[email]", string.IsNullOrWhiteSpace(member.Email) ? new string('_', 25) : member.Email },
+            { "[phone]", string.IsNullOrWhiteSpace(member.Phone) ? new string('_', 25) : member.Phone },
         };
 
         using var doc = new XWPFDocument(stream);
@@ -158,7 +171,47 @@ public class DocumentsGenerator
         memoryStream.Position = 0;
         stream.Dispose();
 
-        return (memoryStream, $"{member} Согласие на обработку персональных данных.docx");
+        return (memoryStream, $"{member.Name} Согласие на обработку персональных данных.docx");
+    }
+
+    public (Stream File, string FileName) GenerateChairmanReport(Stream stream)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "[academic_degree]", this.academicDegree },
+            { "[major]", this.major },
+            { "[educational_program]", this.educationalProgram },
+            { "[date]", this.date },
+            { "[commission_number]", this.commissionNumber },
+            { "[time]", this.time },
+            { "[chairman_initials]", GetSurnameWithInitials(this.chairman.Name) },
+        };
+
+        using var doc = new XWPFDocument(stream);
+
+        ReplacePlaceholdersInParagraphs(doc, placeholders);
+        ReplacePlaceholdersInTables(doc, placeholders);
+
+        var membersTable = doc.Tables[0];
+        var cell = membersTable.Rows[0].GetCell(0);
+
+        while (cell.Paragraphs.Count > 0)
+        {
+            cell.RemoveParagraph(0);
+        }
+
+        for (int i = 0; i < this.meeting.Members.Count; i++)
+        {
+            bool isChairman = this.meeting.Members[i] == this.chairman;
+            this.GenerateMemberInfoText(cell, this.meeting.Members[i], $"2.{i + 1}", isChairman);
+        }
+
+        var memoryStream = new MemoryStream();
+        doc.Write(memoryStream);
+        memoryStream.Position = 0;
+        stream.Dispose();
+
+        return (memoryStream, $"Отчёт председателя.docx");
     }
 
     private static void MergeCellVertically(XWPFTable table, int column, int start, int end)
@@ -270,17 +323,63 @@ public class DocumentsGenerator
 
     private static string GetSurnameWithInitials(string fullName)
     {
-        var nameSplit = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-        if (nameSplit.Length != 3)
+        if (string.IsNullOrWhiteSpace(fullName))
         {
-            throw new ArgumentException(nameof(fullName));
+            return string.Empty;
         }
 
-        return $"{nameSplit[0]} {nameSplit[1][0]}. {nameSplit[2][0]}.";
+        var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        return parts.Length switch
+        {
+            0 => string.Empty,
+            1 => parts[0],
+            2 => $"{parts[0]} {parts[1][0]}.",
+            _ => $"{parts[0]} {parts[1][0]}. {parts[2][0]}.",
+        };
     }
 
-    private (string CommissionNumber, (string Number, string Name) Major) ProcessMeetingInfo()
+    private void GenerateMemberInfoText(XWPFTableCell cell, MemberDto member, string number, bool isChairman)
+    {
+        var nameAndInfoParagraph = cell.AddParagraph();
+        var infoBeforeName = number + (isChairman ? " Председатель государственной экзаменационной комиссии:" : string.Empty) + " ";
+        var infoBeforeNameRun = nameAndInfoParagraph.CreateRun();
+        infoBeforeNameRun.SetText(infoBeforeName);
+        var nameRun = nameAndInfoParagraph.CreateRun();
+        nameRun.IsItalic = true;
+        nameRun.SetText(member.Name + ", ");
+
+        var infoRun = nameAndInfoParagraph.CreateRun();
+        var infoText = !string.IsNullOrWhiteSpace(member.InformationRu)
+            ? member.InformationRu + (isChairman ? ',' : '.')
+            : new string('_', 90) + (isChairman ? ',' : '.');
+        infoRun.SetText(infoText);
+
+        if (isChairman)
+        {
+            var orderParagraph = cell.AddParagraph();
+            var orderRun = orderParagraph.CreateRun();
+            orderRun.SetText($"утвержден приказом от {this.chairmanOrder} (с изменениями и дополнениями).");
+        }
+
+        var emailParagraph = cell.AddParagraph();
+        var emailRun = emailParagraph.CreateRun();
+        var emailText = "Электронный адрес: " +
+            (!string.IsNullOrWhiteSpace(member.Email)
+               ? member.Email
+               : new string('_', 25));
+        emailRun.SetText(emailText);
+
+        var phoneParagraph = cell.AddParagraph();
+        var phoneRun = phoneParagraph.CreateRun();
+        var phoneText = "Контактный телефон: " +
+            (!string.IsNullOrWhiteSpace(member.Phone)
+                ? member.Phone
+                : new string('_', 25));
+        phoneRun.SetText(phoneText);
+    }
+
+    private (string ComissionNumber, string Major, string EducationalProgram, string AcademicDegree) ProcessMeetingInfo()
     {
         var info = this.meeting.Info;
 
@@ -290,10 +389,20 @@ public class DocumentsGenerator
         }
 
         var startIndex = info.IndexOf(Prefix, StringComparison.Ordinal) + Prefix.Length;
-        var number = info.Substring(startIndex, NumberLength);
-        var name = MajorDictionary[number.Split('-')[0]];
+        var comissionNumber = info.Substring(startIndex, NumberLength);
+        var majorInfo = MajorInfoDictionary[comissionNumber.Split('-')[0]];
+        string admissionYear = "    ";
 
-        return (number, name);
+        Match match = Regex.Match(info, @"20\d{2}(?!\d|-)");
+
+        if (match.Success)
+        {
+            admissionYear = match.Value;
+        }
+
+        var educationalProgram = majorInfo.EducationalProgram.Replace("[year]", admissionYear);
+
+        return (comissionNumber, majorInfo.Major, educationalProgram, majorInfo.AcademicDegree);
     }
 
     private void FillGradingSheetStudentTable(XWPFTable table)

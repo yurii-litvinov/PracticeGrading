@@ -131,8 +131,8 @@ export const getMarkTable = async (id: number) =>
 export const getMarkTableForStudents = async (id: number) =>
     await axiosService.get(`meetings/getMarkTableForStudents`, { params: { id }, responseType: 'blob' });
 
-export const getDocuments = async (id: number, coordinator: string, chairman: string) =>
-    await axiosService.get(`meetings/getDocuments`, { params: { id, coordinator, chairman }, responseType: 'blob' });
+export const getDocuments = async (meetingId: number, coordinator: string, chairmanId: number, secretary: string, chairmanOrder: string) =>
+    await axiosService.get(`meetings/getDocuments`, { params: { meetingId, coordinator, chairmanId, chairmanOrder, secretary, }, responseType: 'blob' });
 
 export const searchMembers = async (searchName: string, offset: number, limit: number) =>
     await axiosService.get(`members?searchName=${searchName}&offset=${offset}&limit=${limit}`)

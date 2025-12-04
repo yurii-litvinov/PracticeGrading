@@ -12,6 +12,7 @@ using PracticeGrading.API.Integrations.XlsxGenerator;
 using PracticeGrading.API.Models.DTOs;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
+using PracticeGrading.Data.Repositories;
 using System.IO.Compression;
 using System.Text.Json;
 
@@ -141,15 +142,25 @@ public static class MeetingEndpoints
     }
 
     private static async Task<IResult> GetDocuments(
-        int id,
+        int meetingId,
         string coordinator,
-        string chairman,
-        MeetingService meetingService)
+        int chairmanId,
+        string chairmanOrder,
+        string secretary,
+        MeetingService meetingService,
+        UserService userService)
     {
-        var meetings = await meetingService.GetMeeting(id);
+        var chairman = await userService.GetMemberById(chairmanId);
+
+        if (chairman == null)
+        {
+            throw new InvalidOperationException("Chairman with such id was not found");
+        }
+
+        var meetings = await meetingService.GetMeeting(meetingId);
         var meeting = meetings.First();
 
-        var allDocuments = await GenerateAllDocumentsParallelAsync(meeting, coordinator, chairman);
+        var allDocuments = await GenerateAllDocumentsParallelAsync(meeting, coordinator, chairman, chairmanOrder, secretary);
         var zipStream = new MemoryStream();
 
         using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: true))
@@ -174,15 +185,20 @@ public static class MeetingEndpoints
     }
 
     private static async Task<List<(Stream File, string FileName)>> GenerateAllDocumentsParallelAsync(
-    MeetingDto meeting, string coordinator, string chairman)
+    MeetingDto meeting, string coordinator, MemberDto chairman, string chairmanOrder, string secretary)
     {
-        var generator = new DocumentsGenerator(meeting);
+        var generator = new DocumentsGenerator(meeting, chairman, chairmanOrder, secretary);
 
-        var statementTemplate = new MemoryStream(File.ReadAllBytes(Path.Combine("Integrations", "Templates", "statement_template.docx")));
+        var statementTemplateBytes = await File.ReadAllBytesAsync(Path.Combine("Integrations", "Templates", "statement_template.docx"));
+        var reportTemplateBytes = await File.ReadAllBytesAsync(Path.Combine("Integrations", "Templates", "report_template.docx"));
+
+        var statementTemplate = new MemoryStream(statementTemplateBytes);
+        var reportTemplate = new MemoryStream(reportTemplateBytes);
 
         var tasks = new List<Task<(Stream, string)>>
         {
-        Task.Run(() => generator.GenerateStatement(coordinator, chairman, statementTemplate)),
+        Task.Run(() => generator.GenerateStatement(coordinator, statementTemplate)),
+        Task.Run(() => generator.GenerateChairmanReport(reportTemplate)),
         };
 
         byte[] gradingTemplateBytes = await File.ReadAllBytesAsync(Path.Combine("Integrations", "Templates", "grading_sheet_template.docx"));
@@ -192,8 +208,8 @@ public static class MeetingEndpoints
         {
             var gradingTemplate = new MemoryStream(gradingTemplateBytes);
             var agreementTemplate = new MemoryStream(agreementTemplateBytes);
-            tasks.Add(Task.Run(() => generator.GenerateGradingSheet(member.Name, gradingTemplate)));
-            tasks.Add(Task.Run(() => generator.GenerateAgreement(member.Name, agreementTemplate)));
+            tasks.Add(Task.Run(() => generator.GenerateGradingSheet(member, gradingTemplate)));
+            tasks.Add(Task.Run(() => generator.GenerateAgreement(member, agreementTemplate)));
         }
 
         var results = await Task.WhenAll(tasks);

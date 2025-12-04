@@ -85,6 +85,23 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
         return users.Select(GetMemberDtoFromUser).ToArray();
     }
 
+    public async Task<MemberDto> GetMemberById(int id)
+    {
+        var user = await userRepository.GetUserById(id);
+
+        if (user == null)
+        {
+            throw new InvalidOperationException("Member with such id was not found");
+        }
+
+        if (user.RoleId != (int)RolesEnum.Member)
+        {
+            throw new InvalidOperationException("User with such id is not a member");
+        }
+
+        return GetMemberDtoFromUser(user);
+    }
+
     /// <summary>
     /// Logins member.
     /// </summary>
