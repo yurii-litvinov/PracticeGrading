@@ -47,8 +47,10 @@ public class MeetingService(
                     Info = workRequest.Info,
                     Theme = workRequest.Theme,
                     Supervisor = workRequest.Supervisor,
+                    SupervisorInfo = workRequest.SupervisorInfo,
                     Consultant = workRequest.Consultant,
                     Reviewer = workRequest.Reviewer,
+                    ReviewerInfo = workRequest.ReviewerInfo,
                     SupervisorMark = workRequest.SupervisorMark,
                     ReviewerMark = workRequest.ReviewerMark,
                     CodeLink = workRequest.CodeLink,
@@ -100,8 +102,10 @@ public class MeetingService(
                     work.Info,
                     work.Theme,
                     work.Supervisor,
+                    work.SupervisorInfo,
                     work.Consultant,
                     work.Reviewer,
+                    work.ReviewerInfo,
                     work.SupervisorMark,
                     work.ReviewerMark,
                     work.CodeLink,
@@ -173,8 +177,10 @@ public class MeetingService(
                     existingWork.Info = work.Info;
                     existingWork.Theme = work.Theme;
                     existingWork.Supervisor = work.Supervisor;
+                    existingWork.SupervisorInfo = work.SupervisorInfo;
                     existingWork.Consultant = work.Consultant;
                     existingWork.Reviewer = work.Reviewer;
+                    existingWork.ReviewerInfo = work.ReviewerInfo;
                     existingWork.SupervisorMark = work.SupervisorMark;
                     existingWork.ReviewerMark = work.ReviewerMark;
                     existingWork.CodeLink = work.CodeLink;
@@ -208,8 +214,10 @@ public class MeetingService(
                             Info = work.Info,
                             Theme = work.Theme,
                             Supervisor = work.Supervisor,
+                            SupervisorInfo = work.SupervisorInfo,
                             Consultant = work.Consultant,
                             Reviewer = work.Reviewer,
+                            ReviewerInfo = work.ReviewerInfo,
                             SupervisorMark = work.SupervisorMark,
                             ReviewerMark = work.ReviewerMark,
                             CodeLink = work.CodeLink,

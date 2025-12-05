@@ -212,6 +212,14 @@ public static class MeetingEndpoints
             tasks.Add(Task.Run(() => generator.GenerateAgreement(member, agreementTemplate)));
         }
 
+        byte[] defenseProtocolBytes = await File.ReadAllBytesAsync(Path.Combine("Integrations", "Templates", "defense_protocol_template.docx"));
+
+        foreach (var studentWork in meeting.StudentWorks)
+        {
+            var defenseProtocolTemplate = new MemoryStream(defenseProtocolBytes);
+            tasks.Add(Task.Run(() => generator.GenerateDefenseProtocol(studentWork, defenseProtocolTemplate)));
+        }
+
         var results = await Task.WhenAll(tasks);
 
         return results.ToList();

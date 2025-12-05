@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using NPOI.OpenXmlFormats.Wordprocessing;
 using NPOI.XWPF.UserModel;
 using PracticeGrading.API.Models.DTOs;
+using PracticeGrading.Data.Entities;
 using RussianTransliteration;
 
 /// <summary>
@@ -36,6 +37,12 @@ public class DocumentsGenerator
         { "5890", ("09.04.03 Прикладная информатика", "BM.5890.[year] Искусственный интеллект и наука о данных", "магистратура") },
     };
 
+    private static readonly Dictionary<string, string> Degrees = new()
+    {
+        { "бакалавриат", "Бакалавр" },
+        { "магистратура", "Магисттр" },
+    };
+
     private readonly MeetingDto meeting;
     private readonly string commissionNumber;
     private readonly string major;
@@ -56,7 +63,7 @@ public class DocumentsGenerator
         this.meeting = meeting;
         (this.commissionNumber, this.major, this.educationalProgram, this.academicDegree) = this.ProcessMeetingInfo();
         this.date = string.Format(CultureInfo.GetCultureInfo("ru-RU"), "{0:d MMMM yyyy} г.", this.meeting.DateAndTime);
-        this.time = this.meeting.DateAndTime.ToString("HH:mm");
+        this.time = this.meeting.DateAndTime.ToLocalTime().ToString("HH:mm");
         this.chairman = chairman;
         this.chairmanOrder = chairmanOrder;
         this.secretary = secretary;
@@ -212,6 +219,44 @@ public class DocumentsGenerator
         stream.Dispose();
 
         return (memoryStream, $"Отчёт председателя.docx");
+    }
+
+    public (Stream File, string FileName) GenerateDefenseProtocol(StudentWorkDto work, Stream stream)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "[commission_number]", this.commissionNumber },
+            { "[date]", this.date },
+            { "[academic_degree]", this.academicDegree },
+            { "[major]", this.major },
+            { "[educational_program]", this.educationalProgram },
+            { "[time]", this.time },
+            { "[student_name]", work.StudentName },
+            { "[theme]", work.Theme },
+            { "[supervisor]", work.Supervisor + " " + (string.IsNullOrWhiteSpace(work.SupervisorInfo) ? new string('_', 30) : work.SupervisorInfo) },
+            {
+                "[reviewer]", (string.IsNullOrWhiteSpace(work.Reviewer) ? new string('_', 20) : work.Reviewer + " ") +
+                (string.IsNullOrWhiteSpace(work.ReviewerInfo) ? new string('_', 30) : work.ReviewerInfo)
+            },
+            { "[degree]", Degrees[this.academicDegree] },
+            { "[chairman]", GetSurnameWithInitials(this.chairman.Name) },
+            { "[secretary]", GetSurnameWithInitials(this.secretary) },
+        };
+
+        using var doc = new XWPFDocument(stream);
+
+        ReplacePlaceholdersInParagraphs(doc, placeholders);
+        ReplacePlaceholdersInTables(doc, placeholders);
+
+        this.FillChairmanWithComissionMembers(doc.Tables[1]);
+        this.FillChairmanWithComissionMembers(doc.Tables[2]);
+
+        var memoryStream = new MemoryStream();
+        doc.Write(memoryStream);
+        memoryStream.Position = 0;
+        stream.Dispose();
+
+        return (memoryStream, $"Протокол защиты {work.StudentName}.docx");
     }
 
     private static void MergeCellVertically(XWPFTable table, int column, int start, int end)
@@ -438,6 +483,37 @@ public class DocumentsGenerator
             {
                 row.CreateCell();
             }
+        }
+    }
+
+    private void FillChairmanWithComissionMembers(XWPFTable table)
+    {
+        var cell = table.Rows[0].GetCell(0);
+        var chairmanParagraph = cell.Paragraphs[0];
+
+        var chairmanSpanRun = chairmanParagraph.CreateRun();
+        chairmanSpanRun.SetText($"Председатель: ");
+        var chairmanRun = chairmanParagraph.CreateRun();
+        chairmanRun.IsItalic = true;
+        chairmanRun.SetText(chairman.Name);
+
+        var membersSpanParagraph = cell.AddParagraph();
+        var membersSpanRun = membersSpanParagraph.CreateRun();
+        membersSpanRun.SetText("Члены:");
+        int currentNumber = 1;
+
+        for (int i = 0; i < this.meeting.Members.Count; i++)
+        {
+            var currentMember = this.meeting.Members[i];
+            if (currentMember.Id == this.chairman.Id)
+            {
+                continue;
+            }
+
+            var currentMemberParagraph = cell.AddParagraph();
+            var currentMemberRun = currentMemberParagraph.CreateRun();
+            currentMemberRun.IsItalic = true;
+            currentMemberRun.SetText($"{currentNumber++}. {currentMember.Name}");
         }
     }
 
