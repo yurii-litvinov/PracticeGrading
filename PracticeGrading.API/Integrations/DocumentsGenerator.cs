@@ -29,7 +29,7 @@ public class DocumentsGenerator
     private static readonly Dictionary<string, (string Major, string EducationalProgram, string AcademicDegree)> MajorInfoDictionary = new()
     {
         { "5080", ("09.03.04 Программная инженерия", "CB.5080.[year] Программная инженерия", "бакалавриат") },
-        { "5162", ("02.03.03 Математическое обеспечение и администрирование информационных систем", "CB.5162.[year] Технологии программирования", "бакалавриат" ) },
+        { "5162", ("02.03.03 Математическое обеспечение и администрирование информационных систем", "CB.5162.[year] Технологии программирования", "бакалавриат") },
         { "5665", ("02.04.03 Математическое обеспечение и администрирование информационных систем", "BM.5665.[year] Математическое обеспечение и администрирование информационных систем", "магистратура") },
         { "5666", ("09.04.04 Программная инженерия", "BM.5666.[year] Программная инженерия", "магистратура") },
         { "5001", ("02.03.01 Математика и компьютерные науки", "CB.5001.[year] Математика и компьютерные науки", "бакалавриат") },
@@ -58,6 +58,9 @@ public class DocumentsGenerator
     /// Initializes a new instance of the <see cref="DocumentsGenerator"/> class.
     /// </summary>
     /// <param name="meeting">Meeting DTO.</param>
+    /// <param name="chairman">Chairman member DTO.</param>
+    /// <param name="chairmanOrder">Chairman appointment order number.</param>
+    /// <param name="secretary">Secretary's full name.</param>
     public DocumentsGenerator(MeetingDto meeting, MemberDto chairman, string chairmanOrder, string secretary)
     {
         this.meeting = meeting;
@@ -181,6 +184,11 @@ public class DocumentsGenerator
         return (memoryStream, $"{member.Name} Согласие на обработку персональных данных.docx");
     }
 
+    /// <summary>
+    /// Generates the chairman's report document based on a template.
+    /// </summary>
+    /// <param name="stream">Template document stream.</param>
+    /// <returns>Generated report file and its name.</returns>
     public (Stream File, string FileName) GenerateChairmanReport(Stream stream)
     {
         var placeholders = new Dictionary<string, string>
@@ -221,6 +229,12 @@ public class DocumentsGenerator
         return (memoryStream, $"Отчёт председателя.docx");
     }
 
+    /// <summary>
+    /// Generates defense protocol document for a student's work.
+    /// </summary>
+    /// <param name="work">Student work information.</param>
+    /// <param name="stream">Template document stream.</param>
+    /// <returns>Generated protocol file and its name.</returns>
     public (Stream File, string FileName) GenerateDefenseProtocol(StudentWorkDto work, Stream stream)
     {
         var placeholders = new Dictionary<string, string>
@@ -495,7 +509,7 @@ public class DocumentsGenerator
         chairmanSpanRun.SetText($"Председатель: ");
         var chairmanRun = chairmanParagraph.CreateRun();
         chairmanRun.IsItalic = true;
-        chairmanRun.SetText(chairman.Name);
+        chairmanRun.SetText(this.chairman.Name);
 
         var membersSpanParagraph = cell.AddParagraph();
         var membersSpanRun = membersSpanParagraph.CreateRun();
