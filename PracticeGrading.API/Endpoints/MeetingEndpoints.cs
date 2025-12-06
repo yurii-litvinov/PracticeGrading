@@ -190,14 +190,17 @@ public static class MeetingEndpoints
 
         var statementTemplateBytes = await File.ReadAllBytesAsync(Path.Combine("Integrations", "Templates", "statement_template.docx"));
         var reportTemplateBytes = await File.ReadAllBytesAsync(Path.Combine("Integrations", "Templates", "report_template.docx"));
+        var finalProtocolBytes = await File.ReadAllBytesAsync(Path.Combine("Integrations", "Templates", "final_protocol_template.docx"));
 
         var statementTemplate = new MemoryStream(statementTemplateBytes);
         var reportTemplate = new MemoryStream(reportTemplateBytes);
+        var finalProtocolTemplate = new MemoryStream(finalProtocolBytes);
 
         var tasks = new List<Task<(Stream, string)>>
         {
-        Task.Run(() => generator.GenerateStatement(coordinator, statementTemplate)),
-        Task.Run(() => generator.GenerateChairmanReport(reportTemplate)),
+            Task.Run(() => generator.GenerateStatement(coordinator, statementTemplate)),
+            Task.Run(() => generator.GenerateChairmanReport(reportTemplate)),
+            Task.Run(() => generator.GenerateFinalProtocol(finalProtocolTemplate)),
         };
 
         byte[] gradingTemplateBytes = await File.ReadAllBytesAsync(Path.Combine("Integrations", "Templates", "grading_sheet_template.docx"));

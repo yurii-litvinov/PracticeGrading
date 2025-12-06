@@ -83,7 +83,7 @@ public class DocumentsGenerator
     {
         var statementData = new Dictionary<string, string>
         {
-            { "[number]", this.commissionNumber },
+            { "[commission_number]", this.commissionNumber },
             { "[major]", this.major },
             { "[date]", this.date },
             {
@@ -99,8 +99,9 @@ public class DocumentsGenerator
         using var doc = new XWPFDocument(stream);
 
         ReplacePlaceholdersInTables(doc, statementData);
+        ReplacePlaceholdersInParagraphs(doc, statementData);
 
-        var table = doc.Tables[4];
+        var table = doc.Tables[2];
         CreateStatementTableHeader(table, this.meeting.Members.Count);
         this.FillStatementStudentTable(table, this.meeting.Members.Count);
 
@@ -108,8 +109,10 @@ public class DocumentsGenerator
         table.GetCTTbl().tblPr.AddNewTblW().type = ST_TblWidth.pct;
         table.GetCTTbl().tblPr.tblW.w = "100%";
 
-        var commisionTable = doc.Tables[5];
-        this.FillСommissionMembers(commisionTable, this.chairman.Name);
+        var commisionTable = doc.Tables[3];
+        var members = new List<string> { this.chairman.Name };
+        members.AddRange(this.meeting.Members.Where(m => m.Id != this.chairman.Id).Select(m => m.Name));
+        GenerateMembersList(members, commisionTable.GetRow(0).GetCell(0));
 
         var memoryStream = new MemoryStream();
         doc.Write(memoryStream);
@@ -226,7 +229,7 @@ public class DocumentsGenerator
         memoryStream.Position = 0;
         stream.Dispose();
 
-        return (memoryStream, $"Отчёт председателя.docx");
+        return (memoryStream, $"Отчёт председателя ГЭК {this.commissionNumber}.docx");
     }
 
     /// <summary>
@@ -271,6 +274,43 @@ public class DocumentsGenerator
         stream.Dispose();
 
         return (memoryStream, $"Протокол защиты {work.StudentName}.docx");
+    }
+
+    /// <summary>
+    /// Generates a final protocol document for the state examination commission meeting.
+    /// The method populates a DOCX template with commission data, member information, and student lists.
+    /// </summary>
+    /// <param name="stream">Input stream containing the DOCX template document.</param>
+    /// <returns>A tuple containing the generated document stream and filename.</returns>
+    public (Stream File, string FileName) GenerateFinalProtocol(Stream stream)
+    {
+        var placeholders = new Dictionary<string, string>
+        {
+            { "[commission_number]", this.commissionNumber },
+            { "[date]", this.date },
+            { "[academic_degree]", this.academicDegree },
+            { "[major]", this.major },
+            { "[educational_program]", this.educationalProgram },
+            { "[time]", this.time },
+            { "[chairman_initials]", GetSurnameWithInitials(this.chairman.Name) },
+            { "[secretary_initials]", GetSurnameWithInitials(this.secretary) },
+        };
+
+        using var doc = new XWPFDocument(stream);
+
+        ReplacePlaceholdersInParagraphs(doc, placeholders);
+        ReplacePlaceholdersInTables(doc, placeholders);
+
+        this.FillChairmanWithComissionMembers(doc.Tables[1]);
+        var students = this.meeting.StudentWorks.Select(w => w.StudentName).ToList();
+        GenerateMembersList(students, doc.Tables[2].GetRow(0).GetCell(0));
+
+        var memoryStream = new MemoryStream();
+        doc.Write(memoryStream);
+        memoryStream.Position = 0;
+        stream.Dispose();
+
+        return (memoryStream, $"Протокол итоговый {this.commissionNumber}.docx");
     }
 
     private static void MergeCellVertically(XWPFTable table, int column, int start, int end)
@@ -396,6 +436,19 @@ public class DocumentsGenerator
             2 => $"{parts[0]} {parts[1][0]}.",
             _ => $"{parts[0]} {parts[1][0]}. {parts[2][0]}.",
         };
+    }
+
+    private static void GenerateMembersList(IEnumerable<string> members, XWPFTableCell cell)
+    {
+        int number = 1;
+        var currentParagraph = cell.Paragraphs[0];
+
+        foreach (var member in members)
+        {
+            var currentRun = currentParagraph.CreateRun();
+            SetFormattedTextToRun(currentRun, $"{number++}. {member};");
+            currentParagraph = cell.AddParagraph();
+        }
     }
 
     private void GenerateMemberInfoText(XWPFTableCell cell, MemberDto member, string number, bool isChairman)
@@ -528,21 +581,6 @@ public class DocumentsGenerator
             var currentMemberRun = currentMemberParagraph.CreateRun();
             currentMemberRun.IsItalic = true;
             currentMemberRun.SetText($"{currentNumber++}. {currentMember.Name}");
-        }
-    }
-
-    private void FillСommissionMembers(XWPFTable commissionTable, string chairman)
-    {
-        var commissionMembers = new List<string>();
-        commissionMembers.Add(chairman);
-        commissionMembers.AddRange(this.meeting.Members.Select((member) => member.Name).Where((member) => member != chairman));
-
-        int number = 1;
-
-        foreach (var member in commissionMembers)
-        {
-            var run = commissionTable.CreateRow().GetCell(0).Paragraphs[0].CreateRun();
-            SetFormattedTextToRun(run, $"{number++}. {member};");
         }
     }
 }
