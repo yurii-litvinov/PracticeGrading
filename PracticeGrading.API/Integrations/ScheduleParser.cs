@@ -5,11 +5,11 @@
 
 namespace PracticeGrading.API.Integrations;
 
+using System.Globalization;
+using System.Text.RegularExpressions;
 using NPOI.SS.UserModel;
 using NPOI.XSSF.UserModel;
 using PracticeGrading.Data.Entities;
-using System.Globalization;
-using System.Text.RegularExpressions;
 
 /// <summary>
 /// Class for parsing the schedule.

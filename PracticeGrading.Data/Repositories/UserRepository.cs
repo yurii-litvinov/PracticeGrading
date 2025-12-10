@@ -105,7 +105,7 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
             throw new InvalidOperationException($"User with id {userId} was not found");
         }
 
-        meeting.Members.Add(user);
+        meeting.Members?.Add(user);
         await meetingRepository.Update(meeting);
     }
 

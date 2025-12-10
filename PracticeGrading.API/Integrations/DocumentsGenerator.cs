@@ -40,7 +40,7 @@ public class DocumentsGenerator
     private static readonly Dictionary<string, string> Degrees = new()
     {
         { "бакалавриат", "Бакалавр" },
-        { "магистратура", "Магисттр" },
+        { "магистратура", "Магистр" },
     };
 
     private readonly MeetingDto meeting;

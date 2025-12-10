@@ -169,7 +169,7 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
     /// <param name="member">The member request data.</param>
     /// <param name="isNew">Indicates whether this is a new user (ID will be reset to 0).</param>
     /// <returns>A User entity populated with the member data.</returns>
-    internal static User GetUserFromMemberRequest(MemberRequest member, bool isNew = false)
+    private static User GetUserFromMemberRequest(MemberRequest member, bool isNew = false)
     {
         return new User
         {

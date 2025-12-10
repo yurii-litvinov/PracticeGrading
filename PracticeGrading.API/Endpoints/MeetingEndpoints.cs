@@ -151,13 +151,7 @@ public static class MeetingEndpoints
         MeetingService meetingService,
         UserService userService)
     {
-        var chairman = await userService.GetMemberById(chairmanId);
-
-        if (chairman == null)
-        {
-            throw new InvalidOperationException("Chairman with such id was not found");
-        }
-
+        var chairman = await userService.GetMemberById(chairmanId) ?? throw new InvalidOperationException("Chairman with such id was not found");
         var meetings = await meetingService.GetMeeting(meetingId);
         var meeting = meetings.First();
 
@@ -172,9 +166,9 @@ public static class MeetingEndpoints
                 using var entryStream = entry.Open();
 
                 using var memoryStream = new MemoryStream();
-                file.CopyTo(memoryStream);
+                await file.CopyToAsync(memoryStream);
                 memoryStream.Position = 0;
-                memoryStream.CopyTo(entryStream);
+                await memoryStream.CopyToAsync(entryStream);
 
                 file.Dispose();
             }
@@ -186,7 +180,11 @@ public static class MeetingEndpoints
     }
 
     private static async Task<List<(Stream File, string FileName)>> GenerateAllDocumentsParallelAsync(
-    MeetingDto meeting, string coordinator, MemberDto chairman, string chairmanOrder, string secretary)
+        MeetingDto meeting,
+        string coordinator,
+        MemberDto chairman,
+        string chairmanOrder,
+        string secretary)
     {
         var generator = new DocumentsGenerator(meeting, chairman, chairmanOrder, secretary);
 

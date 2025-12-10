@@ -68,7 +68,7 @@ export function MemberLoginPage() {
                         value={selectedMember?.id || ''}
                         onChange={handleSelectChange}
                     >
-                        <option value={0}>-- Выберите участника --</option>
+                        <option value={0}>Выберите участника</option>
                         {members.map((member) => (
                             <option key={member.id} value={member.id}>
                                 {member.name}

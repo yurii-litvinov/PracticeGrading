@@ -31,7 +31,8 @@ public static class MembersEndpoints
         var members = await service.SearchMembersByNameAsync(searchName, offset, limit + 1);
         var hasMore = members.Length > limit;
         var result = members.Take(limit).ToArray();
-        return Results.Ok(new
+        return Results.Ok(
+        new
         {
             members = result,
             hasMore,

@@ -248,12 +248,7 @@ public class MeetingService(
                 meeting.StudentWorks?.Remove(work);
             }
 
-            if (meeting.Members == null)
-            {
-                throw new InvalidOperationException("Unable to get members for the meeting");
-            }
-
-            var membersToRemove = meeting.Members
+            var membersToRemove = meeting.Members!
                 .Where(member => !request.MemberIds.Contains(member.Id))
                 .ToList();
 
@@ -266,7 +261,7 @@ public class MeetingService(
                 }
             }
 
-            meeting.Members = meeting.Members
+            meeting.Members = meeting.Members!
                 .Where(m => !membersToRemove.Select(mr => mr.Id).Contains(m.Id))
                 .ToList();
 
