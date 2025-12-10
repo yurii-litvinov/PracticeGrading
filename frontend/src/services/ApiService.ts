@@ -22,7 +22,7 @@ axiosService.interceptors.response.use(
 
     (error) => {
         console.log(error);
-        if (error.response.status === 403 || error.response.status === 401) {
+        if (error.response?.status === 403 || error.response?.status === 401) {
             const currentPath = window.location.pathname;
             const match = currentPath.match(/\/meetings\/(\d+)\/member/);
             const meetingId = match ? match[1] : null;
@@ -134,8 +134,20 @@ export const getMarkTableForStudents = async (id: number) =>
 export const getDocuments = async (meetingId: number, coordinator: string, chairmanId: number, secretary: string, chairmanOrder: string) =>
     await axiosService.get(`meetings/getDocuments`, { params: { meetingId, coordinator, chairmanId, chairmanOrder, secretary, }, responseType: 'blob' });
 
-export const searchMembers = async (searchName: string, offset: number, limit: number) =>
-    await axiosService.get(`members?searchName=${searchName}&offset=${offset}&limit=${limit}`)
+export const searchMembers = async (
+  searchName: string, 
+  offset: number, 
+  limit: number,  
+  signal?: AbortSignal
+) =>
+  await axiosService.get('members', {
+    params: {
+      searchName,
+      offset,
+      limit
+    },
+    signal
+  });
 
 export const updateMember = async (member: Member) => {
     await axiosService.put(`members`, member)

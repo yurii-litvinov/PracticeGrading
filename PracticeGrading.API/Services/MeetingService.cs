@@ -75,7 +75,7 @@ public class MeetingService(
     /// </summary>
     /// <param name="id">Meeting id.</param>
     /// <returns>List of meetings.</returns>
-    public async Task<List<MeetingDto>> GetMeeting(int? id = null)
+    public async Task<List<MeetingDto>> GetMeeting(int? id = null, bool isMemberRequest = false)
     {
         List<Meeting> meetings;
         if (id == null)
@@ -119,6 +119,11 @@ public class MeetingService(
                     work.FinalMark)).ToList();
 
             var members = (meeting.Members ?? []).Select(UserService.GetMemberDtoFromUser).ToList();
+
+            if (isMemberRequest)
+            {
+                members = members.Select(m => new MemberDto(m.Id, m.Name, string.Empty, string.Empty, string.Empty, string.Empty)).ToList();
+            }
 
             var group = meeting.CriteriaGroup;
 

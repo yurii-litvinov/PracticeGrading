@@ -5,8 +5,6 @@
 
 namespace PracticeGrading.API.Endpoints;
 
-using System.IO.Compression;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using PracticeGrading.API.Integrations;
 using PracticeGrading.API.Integrations.ThesisUploader;
@@ -14,6 +12,9 @@ using PracticeGrading.API.Integrations.XlsxGenerator;
 using PracticeGrading.API.Models.DTOs;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
+using System.IO.Compression;
+using System.Security.Claims;
+using System.Text.Json;
 
 /// <summary>
 /// Class for meeting endpoints.
@@ -51,9 +52,10 @@ public static class MeetingEndpoints
         return Results.Ok();
     }
 
-    private static async Task<IResult> GetMeeting(int? id, MeetingService meetingService)
+    private static async Task<IResult> GetMeeting(int? id, HttpContext context, MeetingService meetingService)
     {
-        var meetings = await meetingService.GetMeeting(id);
+        var role = context.User.FindFirst(ClaimTypes.Role)?.Value;
+        var meetings = await meetingService.GetMeeting(id, role == "member");
         return Results.Ok(meetings);
     }
 

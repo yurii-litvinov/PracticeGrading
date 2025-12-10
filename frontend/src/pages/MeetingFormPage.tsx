@@ -10,9 +10,9 @@ import { Actions } from '../models/Actions';
 import { StudentWork } from '../models/StudentWork';
 import { Meeting } from '../models/Meeting';
 import { CriteriaGroup } from '../models/CriteriaGroup';
-import MemberSearch from '../components/MemberSearch';
 import { Member } from '../models/Member';
-import Button from '../components/Button';
+import { MemberSearchDropdown } from '../components/MemberSearchDropdown';
+import { MemberList } from '../components/MemberList';
 
 registerLocale('ru', ru);
 
@@ -22,7 +22,6 @@ export function MeetingFormPage() {
     const [criteriaGroups, setCriteriaGroups] = useState<CriteriaGroup[]>();
     const signalRService = useRef<SignalRService | null>(null);
     const [searchName, setSearchName] = useState('');
-    const [selectedMember, setSelectedMember] = useState<Member | null>(null)
 
     const [meeting, setMeeting] = useState<Meeting>({
         id: undefined,
@@ -126,37 +125,26 @@ export function MeetingFormPage() {
         }
     });
 
-    const handleSearchChange = (searchValue: string) => {
-        if (selectedMember && (searchValue.trim() != selectedMember?.name.trim())) {
-            setSelectedMember(null);
-        }
-        setSearchName(searchValue);
-    }
-
-    const handleMemberSelect = (member: Member) => {
-        setSearchName(member.name.trim());
-        setSelectedMember(member);
-    };
-
-    const handleAddMember = () => {
-        if (!selectedMember) {
-            return;
-        }
-
-        if (meeting.members.some(member => member.id === selectedMember.id)) {
-            alert('Этот член уже добавлен в комиссию');
+    const handleAddMember = (member: Member) => {
+        if (meeting.members.some(m => m.id === member.id)) {
+            alert('Этот пользователь уже добавлен в комиссию');
             return;
         }
 
         setMeeting({
             ...meeting,
-            members: [...meeting.members, selectedMember]
+            members: [...meeting.members, member]
         });
     }
 
-    const handleRemoveMember = (index: number) => {
+    const handleRemoveMember = (id: number | undefined) => {
+        if (!id) {
+            alert("Не удалось удалить пользователя");
+            return;
+        }
         const updatedMembers = [...meeting.members];
 
+        const index = updatedMembers.findIndex(m => m.id == id)
         updatedMembers.splice(index, 1);
 
         setMeeting({
@@ -337,53 +325,21 @@ export function MeetingFormPage() {
                         <div style={{ width: '50%' }}>
                             <h4 className="p-2">Список членов комиссии</h4>
                             <div className='d-flex align-items-center gap-2 mb-3'>
-                                <div style={{ width: '80%' }}>
-                                    <MemberSearch
-                                        onMemberSelect={handleMemberSelect}
-                                        onSearchChange={handleSearchChange}
-                                        selectedMember={selectedMember}
-                                        searchName={searchName}
+                                <div style={{ width: '100%' }}>
+                                    <MemberSearchDropdown
+                                        onSelect={handleAddMember}
+                                        onChange={(name) => setSearchName(name)}
+                                        value={searchName}
                                     />
-                                </div>
-                                <div style={{ width: '20%' }}>
-                                    <Button
-                                        variant="primary"
-                                        onClick={handleAddMember}
-                                        disabled={!selectedMember}
-                                        className="w-100"
-                                        id="add-member-button"
-                                    >
-                                        Добавить
-                                    </Button>
                                 </div>
                             </div>
 
-                            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                                {meeting.members.map((member, index) => (
-                                    <div key={member.id || index} className="card mb-2">
-                                        <div className="card-body py-2 d-flex align-items-center justify-content-between">
-                                            <div className="d-flex align-items-center">
-                                                <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
-                                                    style={{ width: '32px', height: '32px', fontSize: '14px', color: 'white' }}>
-                                                    {member.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                                </div>
-                                                <div>
-                                                    <h6 className="card-title mb-0">{member.name}</h6>
-                                                    {member.email && <small className="text-muted">{member.email}</small>}
-                                                </div>
-                                            </div>
-                                            <button
-                                                type="button"
-                                                className="btn btn-outline-danger btn-sm"
-                                                onClick={() => handleRemoveMember(index)}
-                                                title="Удалить"
-                                            >
-                                                ×
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                            <MemberList
+                                members={meeting.members}
+                                removable={true}
+                                onMemberRemove={handleRemoveMember}
+                            />
+
                         </div>
 
                         <div className="flex-grow-1 ps-4">
