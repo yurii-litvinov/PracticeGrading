@@ -158,6 +158,7 @@ export function MemberModal({
                                 ) : (
                                     <input
                                         type="text"
+                                        name="name"
                                         className={`form-control ${errors.name ? 'is-invalid' : ''}`}
                                         value={formData.name}
                                         onChange={(e) => handleChange('name', e.target.value)}
@@ -179,6 +180,7 @@ export function MemberModal({
                                 ) : (
                                     <input
                                         type="email"
+                                        name="email"
                                         className={`form-control ${errors.email ? 'is-invalid' : ''}`}
                                         value={formData.email || ''}
                                         onChange={(e) => handleChange('email', e.target.value)}
@@ -200,6 +202,7 @@ export function MemberModal({
                                 ) : (
                                     <input
                                         type="tel"
+                                        name="phone"
                                         className="form-control"
                                         value={formData.phone || ''}
                                         onChange={(e) => handleChange('phone', e.target.value)}
@@ -217,6 +220,7 @@ export function MemberModal({
                                     </div>
                                 ) : (
                                     <textarea
+                                        name="information-ru"
                                         className="form-control"
                                         value={formData.informationRu || ''}
                                         onChange={(e) => handleChange('informationRu', e.target.value)}
@@ -235,6 +239,7 @@ export function MemberModal({
                                     </div>
                                 ) : (
                                     <textarea
+                                        name="information-en"
                                         className="form-control"
                                         value={formData.informationEn || ''}
                                         onChange={(e) => handleChange('informationEn', e.target.value)}
@@ -252,6 +257,7 @@ export function MemberModal({
                                     <div>
                                         {!readOnly && isEditMode && onDelete && (
                                             <Button
+                                                id="delete-member-button"
                                                 variant="danger"
                                                 outline
                                                 onClick={handleDelete}
@@ -275,6 +281,7 @@ export function MemberModal({
 
                                                 {onSave && (
                                                     <Button
+                                                        id="form-submit-button"
                                                         variant="primary"
                                                         onClick={handleSubmit}
                                                         disabled={!canSave}

@@ -37,11 +37,10 @@ const createMeeting = async (page, info) => {
     await page.fill('input[name="supervisor"]', 'научник');
     await page.click('#save-student');
 
-    await page.fill('#searchInput', 'testMember')
+    await page.fill('#search-input', 'testMember')
 
     await page.waitForSelector('.dropdown-item');
     await page.click('.dropdown-item');
-    await page.click('#add-member-button')
 
     await page.click('input[name="criteria-0"] + label');
 
@@ -49,12 +48,12 @@ const createMeeting = async (page, info) => {
 }
 
 const createTestMember = async (page, info) => {
-    await page.fill('#searchInput', info.name);
+    await page.fill('#search-input', info.name);
     await page.click("#add-member-button");
     await page.fill('input[name=email]', info.email);
     await page.fill('input[name=phone]', info.phone)
-    await page.fill('textarea[name=informationRu]', info.informationRu)
-    await page.fill('textarea[name=informationEn]', info.informationEn);
+    await page.fill('textarea[name=information-ru]', info.informationRu)
+    await page.fill('textarea[name=information-en]', info.informationEn);
     await page.click('#form-submit-button');
 }
 
@@ -108,9 +107,15 @@ test('create meeting', async ({ page }) => {
     await page.click('#delete-criteria');
     await page.click('#members-link');
 
-    await page.fill('#searchInput', info.name)
-    await page.waitForSelector('.dropdown-item');
-    await page.click('.dropdown-item');
+    await page.fill('#search-input', info.name)
+    await page.waitForSelector('.card');
+    await page.click('.card');
+
+    page.on('dialog', async dialog => {
+        expect(dialog.type()).toBe('confirm');
+        await dialog.accept();
+    });
+
     await page.click("#delete-member-button");
 });
 
@@ -128,28 +133,29 @@ test('create and delete new user', async ({ page }) => {
     await page.click('#members-link');
     await createTestMember(page, info);
 
-    await page.fill('#searchInput', '');
-    await page.fill('#searchInput', info.name);
+    await page.fill('#search-input', '');
+    await page.fill('#search-input', info.name);
 
-    await page.waitForSelector('.dropdown-item');
-    await page.click('.dropdown-item');
+    await page.waitForSelector('.card');
+    await page.click('.card');
 
     await expect(page.locator('input[name=name]')).toHaveValue(info.name);
     await expect(page.locator('input[name=email]')).toHaveValue(info.email);
     await expect(page.locator('input[name=phone]')).toHaveValue(info.phone);
-    await expect(page.locator('textarea[name=informationRu]')).toHaveValue(info.informationRu);
-    await expect(page.locator('textarea[name=informationEn]')).toHaveValue(info.informationEn);
+    await expect(page.locator('textarea[name=information-ru]')).toHaveValue(info.informationRu);
+    await expect(page.locator('textarea[name=information-en]')).toHaveValue(info.informationEn);
+
+    page.on('dialog', async dialog => {
+        expect(dialog.type()).toBe('confirm');
+        await dialog.accept();
+    });
 
     await page.click("#delete-member-button");
 
-    await page.fill('#searchInput', '');
-    await page.fill('#searchInput', 'testMember');
+    await page.fill('#search-input', '');
+    await page.fill('#search-input', info.name);
 
-    await expect(page.locator('input[name=name]')).toHaveValue('');
-    await expect(page.locator('input[name=email]')).toHaveValue('');
-    await expect(page.locator('input[name=phone]')).toHaveValue('');
-    await expect(page.locator('textarea[name=informationRu]')).toHaveValue('');
-    await expect(page.locator('textarea[name=informationEn]')).toHaveValue('');
+    await expect(page.locator(".card")).toHaveCount(0);
 })
 
 test('edit user', async ({ page }) => {
@@ -166,24 +172,27 @@ test('edit user', async ({ page }) => {
 
     await createTestMember(page, info);
 
-    await page.click("#edit-member-button");
+    await page.fill("#search-input", info.name);
+    await page.waitForSelector(".card");
+    await page.click(".card");
+
     await page.fill('input[name=name]', info.name + '..');
     await page.fill('input[name=email]', info.email + 'mm');
     await page.fill('input[name=phone]', info.phone + '..')
-    await page.fill('textarea[name=informationRu]', info.informationRu + '..')
-    await page.fill('textarea[name=informationEn]', info.informationEn + '..');
+    await page.fill('textarea[name=information-ru]', info.informationRu + '..')
+    await page.fill('textarea[name=information-en]', info.informationEn + '..');
     await page.click('#form-submit-button');
 
-    await page.fill('#searchInput', '');
-    await page.fill('#searchInput', info.name + '..')
-    await page.waitForSelector('.dropdown-item');
-    await page.click('.dropdown-item');
+    await page.fill('#search-input', '');
+    await page.fill('#search-input', info.name + '..')
+    await page.waitForSelector('.card');
+    await page.click('.card');
 
     await expect(page.locator('input[name=name]')).toHaveValue(info.name + '..');
     await expect(page.locator('input[name=email]')).toHaveValue(info.email + 'mm');
     await expect(page.locator('input[name=phone]')).toHaveValue(info.phone + '..');
-    await expect(page.locator('textarea[name=informationRu]')).toHaveValue(info.informationRu + '..');
-    await expect(page.locator('textarea[name=informationEn]')).toHaveValue(info.informationEn + '..');
+    await expect(page.locator('textarea[name=information-ru]')).toHaveValue(info.informationRu + '..');
+    await expect(page.locator('textarea[name=information-en]')).toHaveValue(info.informationEn + '..');
 
     await page.click("#delete-member-button");
 });

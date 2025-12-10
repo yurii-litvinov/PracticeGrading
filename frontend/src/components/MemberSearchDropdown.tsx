@@ -46,6 +46,7 @@ export function MemberSearchDropdown({
         <div ref={dropdownRef} className="position-relative" style={{ width: '100%' }}>
             <input
                 type="text"
+                id="search-input"
                 value={value}
                 className="form-control"
                 onChange={(e) => onChange(e.target.value)}

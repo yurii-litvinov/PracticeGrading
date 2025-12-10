@@ -10,9 +10,6 @@ interface MemberSearchListProps {
   clickable?: boolean;
   onMemberClick?: (member: Member) => void;
 
-  removable?: boolean;
-  onMemberRemove?: (member: Member) => void;
-
   onAddClick?: () => void;
 
   reloadKey?: number;
@@ -28,9 +25,6 @@ export function MemberSearchList({
 
   clickable = true,
   onMemberClick,
-
-  removable = false,
-  onMemberRemove,
 
   onAddClick,
 
@@ -53,6 +47,7 @@ export function MemberSearchList({
           <input
             type="text"
             value={value}
+            id="search-input"
             onChange={(e) => onChange(e.target.value)}
             className="form-control"
             placeholder={placeholder}
@@ -63,6 +58,7 @@ export function MemberSearchList({
             }}
           />
           <button
+            id="add-member-button"
             className="btn btn-success px-4"
             type="button"
             onClick={onAddClick}
@@ -90,9 +86,6 @@ export function MemberSearchList({
 
         clickable={clickable}
         onMemberClick={onMemberClick}
-
-        removable={removable}
-        onMemberRemove={onMemberRemove}
 
         maxHeight={maxHeight}
       />
