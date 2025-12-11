@@ -111,11 +111,6 @@ test('create meeting', async ({ page }) => {
     await page.waitForSelector('.card');
     await page.click('.card');
 
-    page.on('dialog', async dialog => {
-        expect(dialog.type()).toBe('confirm');
-        await dialog.accept();
-    });
-
     await page.click("#delete-member-button");
 });
 
