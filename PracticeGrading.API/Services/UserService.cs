@@ -85,6 +85,15 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
         return users.Select(GetMemberDtoFromUser).ToArray();
     }
 
+    /// <summary>
+    /// Retrieves a member by their unique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the user.</param>
+    /// <returns>A <see cref="MemberDto"/> representing the member details.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when a user with the specified <paramref name="id"/> is not found.
+    /// or when the user exists but does not have the "Member" role.
+    /// </exception>
     public async Task<MemberDto> GetMemberById(int id)
     {
         var user = await userRepository.GetUserById(id);

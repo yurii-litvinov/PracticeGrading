@@ -78,7 +78,8 @@ builder.Services.AddCors(
                 .WithOrigins(origin)
                 .AllowAnyMethod()
                 .AllowCredentials()
-                .AllowAnyHeader());
+                .AllowAnyHeader()
+                .WithExposedHeaders("Content-Disposition"));
     });
 
 var app = builder.Build();

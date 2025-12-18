@@ -41,7 +41,6 @@ export function ViewMeetingPage() {
         members: [],
         criteriaGroup: undefined
     });
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [marks, setMarks] = useState<any[]>([]);
     const [criteriaGroup, setCriteriaGroup] = useState<CriteriaGroup>();
 

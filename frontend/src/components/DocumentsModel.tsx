@@ -7,6 +7,8 @@ interface DocumentsModelProps {
     meeting: Meeting;
 }
 
+const COORDINATOR_STORAGE_KEY = 'coordinator_name';
+
 export function DocumentsModel({ meeting }: DocumentsModelProps) {
     const formRef = useRef<HTMLFormElement | null>(null);
     const closeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -16,6 +18,12 @@ export function DocumentsModel({ meeting }: DocumentsModelProps) {
     const [chairmanOrder, setOrder] = useState('');
 
     useEffect(() => {
+        const savedCoordinator = localStorage.getItem(COORDINATOR_STORAGE_KEY);
+
+        if (savedCoordinator) {
+            setCoordinator(savedCoordinator);
+        }
+
         if (meeting.members.length > 0) {
             setChairman(meeting.members[0]);
         }
@@ -35,18 +43,27 @@ export function DocumentsModel({ meeting }: DocumentsModelProps) {
 
             const response = await getDocuments(meeting.id!, coordinator, chairman.id!, secretary, chairmanOrder);
             const blob = new Blob([response.data]);
-            const url = window.URL.createObjectURL(blob);
+            const contentDisposition = response.headers['content-disposition'];
+            let filename = "Документы.zip";
 
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename\*=UTF-8''([^;]+)/i);
+                if (match) {
+                    filename = decodeURIComponent(match[1]);
+                }
+            }
+
+            const url = window.URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = "Документы.zip";
+            link.download = filename;
 
             document.body.appendChild(link);
             link.click();
 
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-
+            localStorage.setItem(COORDINATOR_STORAGE_KEY, coordinator);
             if (closeButtonRef.current) {
                 closeButtonRef.current.click();
             }

@@ -175,8 +175,9 @@ public static class MeetingEndpoints
         }
 
         zipStream.Position = 0;
+        var archiveName = string.IsNullOrWhiteSpace(meeting.Info) ? "Документы" : meeting.Info;
 
-        return Results.File(zipStream, "application/zip", "documents.zip");
+        return Results.File(zipStream, "application/zip", $"{archiveName}.zip");
     }
 
     private static async Task<List<(Stream File, string FileName)>> GenerateAllDocumentsParallelAsync(

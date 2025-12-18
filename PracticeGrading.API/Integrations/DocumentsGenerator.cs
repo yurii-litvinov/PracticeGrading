@@ -10,7 +10,6 @@ using System.Text.RegularExpressions;
 using NPOI.OpenXmlFormats.Wordprocessing;
 using NPOI.XWPF.UserModel;
 using PracticeGrading.API.Models.DTOs;
-using PracticeGrading.Data.Entities;
 using RussianTransliteration;
 
 /// <summary>
@@ -28,13 +27,13 @@ public class DocumentsGenerator
 
     private static readonly Dictionary<string, (string Major, string EducationalProgram, string AcademicDegree)> MajorInfoDictionary = new()
     {
-        { "5080", ("09.03.04 Программная инженерия", "CB.5080.[year] Программная инженерия", "бакалавриат") },
-        { "5162", ("02.03.03 Математическое обеспечение и администрирование информационных систем", "CB.5162.[year] Технологии программирования", "бакалавриат") },
-        { "5665", ("02.04.03 Математическое обеспечение и администрирование информационных систем", "BM.5665.[year] Математическое обеспечение и администрирование информационных систем", "магистратура") },
-        { "5666", ("09.04.04 Программная инженерия", "BM.5666.[year] Программная инженерия", "магистратура") },
-        { "5001", ("02.03.01 Математика и компьютерные науки", "CB.5001.[year] Математика и компьютерные науки", "бакалавриат") },
-        { "5212", ("09.03.03 Прикладная информатика", "CB.5212.[year] Искусственный интеллект и наука о данных", "бакалавриат") },
-        { "5890", ("09.04.03 Прикладная информатика", "BM.5890.[year] Искусственный интеллект и наука о данных", "магистратура") },
+        { "5080", ("09.03.04 «Программная инженерия»", "CB.5080.[year] «Программная инженерия»", "бакалавриат") },
+        { "5162", ("02.03.03 «Математическое обеспечение и администрирование информационных систем»", "CB.5162.[year] «Технологии программирования»", "бакалавриат") },
+        { "5665", ("02.04.03 «Математическое обеспечение и администрирование информационных систем»", "BM.5665.[year] «Математическое обеспечение и администрирование информационных систем»", "магистратура") },
+        { "5666", ("09.04.04 «Программная инженерия»", "BM.5666.[year] «Программная инженерия»", "магистратура") },
+        { "5001", ("02.03.01 «Математика и компьютерные науки»", "CB.5001.[year] «Математика и компьютерные науки»", "бакалавриат") },
+        { "5212", ("09.03.03 «Прикладная информатика»", "CB.5212.[year] «Искусственный интеллект и наука о данных»", "бакалавриат") },
+        { "5890", ("09.04.03 «Прикладная информатика»", "BM.5890.[year] «Искусственный интеллект и наука о данных»", "магистратура") },
     };
 
     private static readonly Dictionary<string, string> Degrees = new()
@@ -92,8 +91,8 @@ public class DocumentsGenerator
                     "\n",
                     this.meeting.Members.Select((member, index) => $"{index + 1}. {member.Name}"))
             },
-            { "[coordinator]", coordinator },
-            { "[chairman]", this.chairman.Name },
+            { "[coordinator]", GetSurnameWithInitials(coordinator) },
+            { "[chairman]", GetSurnameWithInitials(this.chairman.Name) },
         };
 
         using var doc = new XWPFDocument(stream);
@@ -525,7 +524,10 @@ public class DocumentsGenerator
         foreach (var student in studentList)
         {
             var row = table.CreateRow();
-            var numberRun = row.GetCell(0).Paragraphs[0].CreateRun();
+            var currentCell = row.GetCell(0);
+            var numberRun = currentCell.Paragraphs[0].CreateRun();
+            currentCell.SetVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+            currentCell.Paragraphs[0].Alignment = ParagraphAlignment.CENTER;
             SetFormattedTextToRun(numberRun, number++.ToString());
 
             var studentNameRun = row.GetCell(1).Paragraphs[0].CreateRun();
