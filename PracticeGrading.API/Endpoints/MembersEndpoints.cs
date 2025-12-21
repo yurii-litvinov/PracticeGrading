@@ -45,13 +45,15 @@ public static class MembersEndpoints
         return Results.Ok(new { Id = memberId });
     }
 
-    private static async Task UpdateMember(UserService service, MemberRequest member)
+    private static async Task<IResult> UpdateMember(UserService service, MemberRequest member)
     {
         await service.UpdateMember(member);
+        return Results.Ok();
     }
 
-    private static async Task DeleteMember(UserService service, int id)
+    private static async Task<IResult> DeleteMember(UserService service, int id)
     {
         await service.DeleteMember(id);
+        return Results.Ok();
     }
 }
