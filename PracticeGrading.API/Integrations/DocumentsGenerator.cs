@@ -85,6 +85,7 @@ public class DocumentsGenerator
             { "[commission_number]", this.commissionNumber },
             { "[major]", this.major },
             { "[date]", this.date },
+            { "[time]", this.time },
             {
                 "[members]",
                 string.Join(
@@ -249,9 +250,9 @@ public class DocumentsGenerator
             { "[time]", this.time },
             { "[student_name]", work.StudentName },
             { "[theme]", work.Theme },
-            { "[supervisor]", work.Supervisor + " " + (string.IsNullOrWhiteSpace(work.SupervisorInfo) ? new string('_', 30) : work.SupervisorInfo) },
+            { "[supervisor]", work.Supervisor + ", " + (string.IsNullOrWhiteSpace(work.SupervisorInfo) ? new string('_', 30) : work.SupervisorInfo) },
             {
-                "[reviewer]", (string.IsNullOrWhiteSpace(work.Reviewer) ? new string('_', 20) : work.Reviewer + " ") +
+                "[reviewer]", (string.IsNullOrWhiteSpace(work.Reviewer) ? new string('_', 20) : work.Reviewer) + ", " +
                 (string.IsNullOrWhiteSpace(work.ReviewerInfo) ? new string('_', 30) : work.ReviewerInfo)
             },
             { "[degree]", Degrees[this.academicDegree] },
