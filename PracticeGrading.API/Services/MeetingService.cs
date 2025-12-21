@@ -5,12 +5,12 @@
 
 namespace PracticeGrading.API.Services;
 
+using System.Text.Json;
 using PracticeGrading.API.Integrations;
 using PracticeGrading.API.Models.DTOs;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.Data.Entities;
 using PracticeGrading.Data.Repositories;
-using System.Text.Json;
 
 /// <summary>
 /// Service for working with meetings.
@@ -74,6 +74,7 @@ public class MeetingService(
     /// Gets meeting by id or all meetings.
     /// </summary>
     /// <param name="id">Meeting id.</param>
+    /// <param name="isMemberRequest">Flag indicating if the requester has member role.</param>
     /// <returns>List of meetings.</returns>
     public async Task<List<MeetingDto>> GetMeeting(int? id = null, bool isMemberRequest = false)
     {

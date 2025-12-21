@@ -22,29 +22,37 @@ export default function Members() {
     }
 
     const handleEditMember = async (member: Member) => {
-        setIsModalRequestLoading(true);
-        if (member.id) {
-            await updateMember(member);
-            setIsModalRequestLoading(false);
+        try {
+            setIsModalRequestLoading(true);
+            if (member.id) {
+                await updateMember(member);
+                setIsModalRequestLoading(false);
 
+                setReloadKey(prev => prev + 1);
+                handleClose();
+                return;
+            }
+
+            await addMember(member);
+
+        }
+        finally {
+            setIsModalRequestLoading(false);
             setReloadKey(prev => prev + 1);
             handleClose();
-            return;
         }
-
-        await addMember(member);
-        setIsModalRequestLoading(false);
-        setReloadKey(prev => prev + 1);
-        handleClose();
     }
 
     const handleDeleteMember = async (id: number) => {
-        setIsModalRequestLoading(true);
-        await deleteMember(id)
-
-        setIsModalRequestLoading(false);
-        setReloadKey(prev => prev + 1);
-        handleClose();
+        try {
+            setIsModalRequestLoading(true);
+            await deleteMember(id)
+        }
+        finally {
+            setIsModalRequestLoading(false);
+            setReloadKey(prev => prev + 1);
+            handleClose();
+        }
     }
 
     return (
