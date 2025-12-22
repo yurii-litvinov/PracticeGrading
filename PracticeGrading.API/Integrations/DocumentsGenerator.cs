@@ -85,7 +85,6 @@ public class DocumentsGenerator
             { "[commission_number]", this.commissionNumber },
             { "[major]", this.major },
             { "[date]", this.date },
-            { "[time]", this.time },
             {
                 "[members]",
                 string.Join(
@@ -101,7 +100,7 @@ public class DocumentsGenerator
         ReplacePlaceholdersInTables(doc, statementData);
         ReplacePlaceholdersInParagraphs(doc, statementData);
 
-        var table = doc.Tables[2];
+        var table = doc.Tables[4];
         CreateStatementTableHeader(table, this.meeting.Members.Count);
         this.FillStatementStudentTable(table, this.meeting.Members.Count);
 
@@ -109,7 +108,7 @@ public class DocumentsGenerator
         table.GetCTTbl().tblPr.AddNewTblW().type = ST_TblWidth.pct;
         table.GetCTTbl().tblPr.tblW.w = "100%";
 
-        var commisionTable = doc.Tables[3];
+        var commisionTable = doc.Tables[5];
         var members = new List<string> { this.chairman.Name };
         members.AddRange(this.meeting.Members.Where(m => m.Id != this.chairman.Id).Select(m => m.Name));
         GenerateMembersList(members, commisionTable.GetRow(0).GetCell(0));
@@ -201,7 +200,6 @@ public class DocumentsGenerator
             { "[educational_program]", this.educationalProgram },
             { "[date]", this.date },
             { "[commission_number]", this.commissionNumber },
-            { "[time]", this.time },
             { "[chairman_initials]", GetSurnameWithInitials(this.chairman.Name) },
         };
 
@@ -247,7 +245,6 @@ public class DocumentsGenerator
             { "[academic_degree]", this.academicDegree },
             { "[major]", this.major },
             { "[educational_program]", this.educationalProgram },
-            { "[time]", this.time },
             { "[student_name]", work.StudentName },
             { "[theme]", work.Theme },
             { "[supervisor]", work.Supervisor + ", " + (string.IsNullOrWhiteSpace(work.SupervisorInfo) ? new string('_', 30) : work.SupervisorInfo) },
@@ -291,7 +288,6 @@ public class DocumentsGenerator
             { "[academic_degree]", this.academicDegree },
             { "[major]", this.major },
             { "[educational_program]", this.educationalProgram },
-            { "[time]", this.time },
             { "[chairman_initials]", GetSurnameWithInitials(this.chairman.Name) },
             { "[secretary_initials]", GetSurnameWithInitials(this.secretary) },
         };
@@ -456,22 +452,22 @@ public class DocumentsGenerator
         var nameAndInfoParagraph = cell.AddParagraph();
         var infoBeforeName = number + (isChairman ? " Председатель государственной экзаменационной комиссии:" : string.Empty) + " ";
         var infoBeforeNameRun = nameAndInfoParagraph.CreateRun();
-        infoBeforeNameRun.SetText(infoBeforeName);
+        SetFormattedTextToRun(infoBeforeNameRun, infoBeforeName);
         var nameRun = nameAndInfoParagraph.CreateRun();
         nameRun.IsItalic = true;
-        nameRun.SetText(member.Name + ", ");
+        SetFormattedTextToRun(nameRun, member.Name + ", ");
 
         var infoRun = nameAndInfoParagraph.CreateRun();
         var infoText = !string.IsNullOrWhiteSpace(member.InformationRu)
             ? member.InformationRu + (isChairman ? ',' : '.')
             : new string('_', 90) + (isChairman ? ',' : '.');
-        infoRun.SetText(infoText);
+        SetFormattedTextToRun(infoRun, infoText);
 
         if (isChairman)
         {
             var orderParagraph = cell.AddParagraph();
             var orderRun = orderParagraph.CreateRun();
-            orderRun.SetText($"утвержден приказом от {this.chairmanOrder} (с изменениями и дополнениями).");
+            SetFormattedTextToRun(orderRun, $"утвержден приказом от {this.chairmanOrder} (с изменениями и дополнениями).");
         }
 
         var emailParagraph = cell.AddParagraph();
@@ -480,7 +476,7 @@ public class DocumentsGenerator
             (!string.IsNullOrWhiteSpace(member.Email)
                ? member.Email
                : new string('_', 25));
-        emailRun.SetText(emailText);
+        SetFormattedTextToRun(emailRun, emailText);
 
         var phoneParagraph = cell.AddParagraph();
         var phoneRun = phoneParagraph.CreateRun();
@@ -488,7 +484,7 @@ public class DocumentsGenerator
             (!string.IsNullOrWhiteSpace(member.Phone)
                 ? member.Phone
                 : new string('_', 25));
-        phoneRun.SetText(phoneText);
+        SetFormattedTextToRun(phoneRun, phoneText);
     }
 
     private (string ComissionNumber, string Major, string EducationalProgram, string AcademicDegree) ProcessMeetingInfo()
@@ -562,14 +558,14 @@ public class DocumentsGenerator
         var chairmanParagraph = cell.Paragraphs[0];
 
         var chairmanSpanRun = chairmanParagraph.CreateRun();
-        chairmanSpanRun.SetText($"Председатель: ");
+        SetFormattedTextToRun(chairmanSpanRun, $"Председатель: ");
         var chairmanRun = chairmanParagraph.CreateRun();
         chairmanRun.IsItalic = true;
-        chairmanRun.SetText(this.chairman.Name);
+        SetFormattedTextToRun(chairmanRun, this.chairman.Name);
 
         var membersSpanParagraph = cell.AddParagraph();
         var membersSpanRun = membersSpanParagraph.CreateRun();
-        membersSpanRun.SetText("Члены:");
+        SetFormattedTextToRun(membersSpanRun, "Члены:");
         int currentNumber = 1;
 
         for (int i = 0; i < this.meeting.Members.Count; i++)
@@ -583,7 +579,7 @@ public class DocumentsGenerator
             var currentMemberParagraph = cell.AddParagraph();
             var currentMemberRun = currentMemberParagraph.CreateRun();
             currentMemberRun.IsItalic = true;
-            currentMemberRun.SetText($"{currentNumber++}. {currentMember.Name}");
+            SetFormattedTextToRun(currentMemberRun, $"{currentNumber++}. {currentMember.Name}");
         }
     }
 }
