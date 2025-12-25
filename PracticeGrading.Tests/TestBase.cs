@@ -1,23 +1,24 @@
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using PracticeGrading.API;
+using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data;
 using PracticeGrading.Data.Entities;
 using PracticeGrading.Data.Repositories;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace PracticeGrading.Tests;
 
 public class TestBase
 {
     private WebApplicationFactory<Program> factory;
-    private AppDbContext dbContext;
+    protected AppDbContext dbContext;
 
     protected HttpClient Client;
 
@@ -37,11 +38,14 @@ public class TestBase
     protected MarkService MarkService;
 
     protected StudentWork TestWork = new()
-        { StudentName = string.Empty, Theme = string.Empty, Supervisor = string.Empty, AverageCriteriaMarks = [] };
+    { StudentName = string.Empty, Theme = string.Empty, Supervisor = string.Empty, AverageCriteriaMarks = [] };
 
     protected Criteria TestCriteria = new() { Name = string.Empty };
-    
+
     protected CriteriaGroup TestCriteriaGroup = new() { Name = string.Empty };
+
+    protected int MeetingId = 1;
+    protected int MemberId = 0;
 
     [SetUp]
     public void SetUp()
@@ -71,8 +75,8 @@ public class TestBase
 
         dbContext.Database.EnsureCreated();
 
-        UserRepository = new UserRepository(dbContext);
         MeetingRepository = new MeetingRepository(dbContext);
+        UserRepository = new UserRepository(dbContext, MeetingRepository);
         CriteriaGroupRepository = new CriteriaGroupRepository(dbContext);
         CriteriaRepository = new CriteriaRepository(dbContext);
         MarkRepository = new MarkRepository(dbContext);
@@ -108,11 +112,14 @@ public class TestBase
 
     protected async Task CreateTestMeeting()
     {
+        var user = new User { UserName = "member", RoleId = (int)RolesEnum.Member };
+        MemberId = await UserRepository.Create(user);
+        user.Id = MemberId;
         var meeting = new Meeting
         {
             Id = 1,
             DateAndTime = DateTime.Now,
-            CriteriaGroup = new CriteriaGroup{Id = 12, Name = string.Empty},
+            CriteriaGroup = new CriteriaGroup { Id = 12, Name = string.Empty },
             StudentWorks =
             [
                 new StudentWork
@@ -121,7 +128,7 @@ public class TestBase
                     AverageCriteriaMarks = []
                 }
             ],
-            Members = [new User { Id = 4, UserName = "member" }]
+            Members = [user!]
         };
 
         await MeetingRepository.Create(meeting);

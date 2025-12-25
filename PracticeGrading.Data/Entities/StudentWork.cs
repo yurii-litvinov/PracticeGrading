@@ -36,6 +36,11 @@ public class StudentWork
     public required string Supervisor { get; set; }
 
     /// <summary>
+    /// Gets or sets supervisor information (position, academic degree, etc.).
+    /// </summary>
+    public string? SupervisorInfo { get; set; }
+
+    /// <summary>
     /// Gets or sets consultant.
     /// </summary>
     public string? Consultant { get; set; }
@@ -44,6 +49,11 @@ public class StudentWork
     /// Gets or sets reviewer.
     /// </summary>
     public string? Reviewer { get; set; }
+
+    /// <summary>
+    /// Gets or sets reviewer information (position, academic degree, etc.).
+    /// </summary>
+    public string? ReviewerInfo { get; set; }
 
     /// <summary>
     /// Gets or sets supervisor's mark.

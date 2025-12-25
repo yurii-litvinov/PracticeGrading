@@ -79,7 +79,7 @@ public class ScheduleParser
         return (from cell in cells
                 where !GetCellValue(cell).Contains("Секретарь")
                 select new User
-                    { UserName = GetCellValue(cell).Replace("Председатель: ", string.Empty).Trim(), RoleId = 2, })
+                { UserName = GetCellValue(cell).Replace("Председатель: ", string.Empty).Trim(), RoleId = 2, })
             .ToList();
     }
 
@@ -163,7 +163,7 @@ public class ScheduleParser
             { DataFields.CallLink, string.Empty },
         };
 
-        var meeting = new Meeting { StudentWorks = [], CriteriaGroup = null };
+        var meeting = new Meeting { StudentWorks = [], CriteriaGroup = null! };
 
         foreach (var (row, index) in cells.Select((row, index) => (row, index)))
         {

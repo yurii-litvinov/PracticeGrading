@@ -10,7 +10,7 @@ public class MarkRepositoryTests : TestBase
     {
         await CreateTestMeeting();
     }
-    
+
     [Test]
     public async Task TestMarkCreation()
     {
@@ -29,7 +29,7 @@ public class MarkRepositoryTests : TestBase
     {
         var mark = new MemberMark
         {
-            MemberId = 5, 
+            MemberId = 5,
             StudentWorkId = 3,
             CriteriaMarks = [new CriteriaMark { CriteriaId = 2, SelectedRules = [], Mark = 5 }],
             Mark = 5
@@ -44,7 +44,7 @@ public class MarkRepositoryTests : TestBase
         newMark.Mark.Should().Be(mark.Mark);
         newMark.CriteriaMarks.Should().HaveCount(1);
     }
-    
+
     [Test]
     public async Task TestMarkUpdate()
     {
@@ -61,7 +61,7 @@ public class MarkRepositoryTests : TestBase
         newMark.Should().NotBeNull();
         newMark.Mark.Should().Be(mark.Mark);
     }
-    
+
     [Test]
     public async Task TestMarkDeletion()
     {

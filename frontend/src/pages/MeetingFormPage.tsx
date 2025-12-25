@@ -1,23 +1,27 @@
-import React, {useEffect, useState, useRef} from 'react';
-import {useParams} from 'react-router-dom';
-import DatePicker, {registerLocale} from 'react-datepicker';
+import React, { useEffect, useState, useRef } from 'react';
+import { useParams } from 'react-router-dom';
+import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import {ru} from 'date-fns/locale/ru';
-import {StudentWorkModal} from '../components/StudentWorkModal';
-import {createMeeting, getCriteriaGroup, getMeetings, updateMeeting} from '../services/ApiService';
-import {SignalRService} from '../services/SignalRService';
-import {Actions} from '../models/Actions';
-import {StudentWork} from '../models/StudentWork';
-import {Meeting} from '../models/Meeting';
-import {CriteriaGroup} from '../models/CriteriaGroup';
+import { ru } from 'date-fns/locale/ru';
+import { StudentWorkModal } from '../components/StudentWorkModal';
+import { createMeeting, getCriteriaGroup, getMeetings, updateMeeting } from '../services/ApiService';
+import { SignalRService } from '../services/SignalRService';
+import { Actions } from '../models/Actions';
+import { StudentWork } from '../models/StudentWork';
+import { Meeting } from '../models/Meeting';
+import { CriteriaGroup } from '../models/CriteriaGroup';
+import { Member } from '../models/Member';
+import { MemberSearchDropdown } from '../components/MemberSearchDropdown';
+import { MemberList } from '../components/MemberList';
 
 registerLocale('ru', ru);
 
 export function MeetingFormPage() {
-    const {id} = useParams();
+    const { id } = useParams();
     const [workToEditIndex, setWorkToEditIndex] = useState<number | null>();
     const [criteriaGroups, setCriteriaGroups] = useState<CriteriaGroup[]>();
     const signalRService = useRef<SignalRService | null>(null);
+    const [searchName, setSearchName] = useState('');
 
     const [meeting, setMeeting] = useState<Meeting>({
         id: undefined,
@@ -27,7 +31,7 @@ export function MeetingFormPage() {
         callLink: '',
         materialsLink: '',
         studentWorks: [],
-        members: [{id: undefined, name: ''}],
+        members: [],
         criteriaGroup: undefined
     });
 
@@ -56,7 +60,7 @@ export function MeetingFormPage() {
     }
 
     const handleMeetingChange = (e: { target: { name: any; value: any; }; }) => {
-        const {name, value} = e.target;
+        const { name, value } = e.target;
 
         setMeeting((prev) => ({
             ...prev,
@@ -101,29 +105,6 @@ export function MeetingFormPage() {
         }
     }
 
-    useEffect(() => {
-        if (meeting.members.length === 0 || meeting.members[meeting.members.length - 1].name !== '') {
-            setMeeting((prevMeeting) => ({
-                ...prevMeeting,
-                members: [...prevMeeting.members, {id: undefined, name: ''}]
-            }))
-        }
-    }, [meeting.members]);
-
-    const handleMemberChange = (index: number, value: string) => {
-        const updatedMembers = [...meeting.members];
-        updatedMembers[index].name = value;
-
-        if (value === '') {
-            updatedMembers.splice(index, 1);
-        }
-
-        setMeeting((prevMeeting) => ({
-            ...prevMeeting,
-            members: updatedMembers
-        }));
-    }
-
     const handleStudentWorkDelete = (index: number) => {
         setMeeting((prevMeeting) => ({
             ...prevMeeting,
@@ -144,6 +125,34 @@ export function MeetingFormPage() {
         }
     });
 
+    const handleAddMember = (member: Member) => {
+        if (meeting.members.some(m => m.id === member.id)) {
+            alert('Этот пользователь уже добавлен в комиссию');
+            return;
+        }
+
+        setMeeting({
+            ...meeting,
+            members: [...meeting.members, member]
+        });
+    }
+
+    const handleRemoveMember = (id: number | undefined) => {
+        if (!id) {
+            alert("Не удалось удалить пользователя");
+            return;
+        }
+        const updatedMembers = [...meeting.members];
+
+        const index = updatedMembers.findIndex(m => m.id == id)
+        updatedMembers.splice(index, 1);
+
+        setMeeting({
+            ...meeting,
+            members: updatedMembers
+        });
+    }
+
     return (
         <>
             <form onSubmit={handleSubmit}>
@@ -152,10 +161,10 @@ export function MeetingFormPage() {
                         {id ? "Редактирование заседания" : "Новое заседание"}</h2>
                     <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
                         <button type="submit" className="btn btn-primary btn-lg mb-2 mb-sm-0 me-sm-2" id="save-meeting"
-                                disabled={meeting.studentWorks.length === 0}>Сохранить
+                            disabled={meeting.studentWorks.length === 0}>Сохранить
                         </button>
                         <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
-                                onClick={handleBack}>Назад
+                            onClick={handleBack}>Назад
                         </button>
                     </div>
                 </div>
@@ -166,181 +175,185 @@ export function MeetingFormPage() {
                         <div className="custom-datepicker">
                             <DatePicker
                                 selected={new Date(meeting.dateAndTime)}
-                                onChange={(date) => date && setMeeting({...meeting, dateAndTime: new Date(date)})}
+                                onChange={(date) => date && setMeeting({ ...meeting, dateAndTime: new Date(date) })}
                                 dateFormat="d MMMM yyyy, HH:mm"
                                 showTimeSelect
                                 timeIntervals={60}
                                 timeCaption=""
                                 timeFormat="HH:mm"
-                                locale="ru"/>
+                                locale="ru" />
                         </div>
                     </div>
 
                     <div className="d-flex mb-2 align-items-center flex-wrap">
                         <label className="me-3 fw-bold text-end label-custom">Аудитория</label>
                         <input
-                            style={{maxWidth: '60em'}}
+                            style={{ maxWidth: '60em' }}
                             type="text"
                             className="form-control"
                             name="auditorium"
                             value={meeting.auditorium}
                             onChange={handleMeetingChange}
-                            placeholder="3381"/>
+                            placeholder="3381" />
                     </div>
 
                     <div className="d-flex mb-2 align-items-center flex-wrap">
                         <label className="me-3 fw-bold text-end label-custom">Информация о
                             заседании</label>
                         <input
-                            style={{maxWidth: '60em'}}
+                            style={{ maxWidth: '60em' }}
                             type="text"
                             className="form-control"
                             value={meeting.info}
                             name="info"
                             required
                             onChange={handleMeetingChange}
-                            placeholder="СП, бакалавры ПИ, ГЭК 5080-01"/>
+                            placeholder="СП, бакалавры ПИ, ГЭК 5080-01 2025" />
                     </div>
 
                     <div className="d-flex mb-2 align-items-center flex-wrap">
                         <label className="me-3 fw-bold text-end label-custom">Ссылка на созвон</label>
                         <input
-                            style={{maxWidth: '60em'}}
+                            style={{ maxWidth: '60em' }}
                             type="url"
                             className="form-control"
                             value={meeting.callLink}
                             name="callLink"
                             onChange={handleMeetingChange}
-                            placeholder="https://..."/>
+                            placeholder="https://..." />
                     </div>
 
                     <div className="d-flex align-items-center flex-wrap">
                         <label className="me-3 fw-bold text-end label-custom">Ссылка на материалы</label>
                         <input
-                            style={{maxWidth: '60em'}}
+                            style={{ maxWidth: '60em' }}
                             type="url"
                             className="form-control"
                             value={meeting.materialsLink}
                             name="materialsLink"
                             onChange={handleMeetingChange}
-                            placeholder="https://..."/>
+                            placeholder="https://..." />
                     </div>
                 </div>
 
-                <hr className="my-4"/>
+                <hr className="my-4" />
 
                 <div>
                     <div className="d-flex p-2 align-items-center">
                         <h4>Список защищающихся студентов</h4>
                         <button type="button" className="btn btn-outline-primary ms-auto" data-bs-toggle="modal"
-                                data-bs-target="#studentWorkModal" id="add-student"
-                                onClick={() => setWorkToEditIndex(null)}>
+                            data-bs-target="#studentWorkModal" id="add-student"
+                            onClick={() => setWorkToEditIndex(null)}>
                             Добавить студента
                         </button>
                     </div>
                     <div className="table-responsive">
                         <table className="table table-striped">
                             <thead>
-                            <tr>
-                                <th></th>
-                                <th>ФИО</th>
-                                {meeting.studentWorks.some((work) => work.info) ?
-                                    (<th>Курс, направление</th>) : (<></>)}
-                                <th>Тема</th>
-                                <th>Научник</th>
-                                {meeting.studentWorks.some((work) => work.consultant) ? (
-                                    <th>Консультант</th>) : (<></>)}
-                                {meeting.studentWorks.some((work) => work.reviewer) ? (<th>Рецензент</th>) : (<></>)}
-                                <th>Оценка научника</th>
-                                {meeting.studentWorks.some((work) => work.reviewerMark) ?
-                                    (<th>Оценка рецезента</th>) : (<></>)}
-                                {meeting.studentWorks.some((work) => work.codeLink) ?
-                                    (<th>Код</th>) : (<></>)}
-                            </tr>
+                                <tr>
+                                    <th></th>
+                                    <th>ФИО</th>
+                                    {meeting.studentWorks.some((work) => work.info) ?
+                                        (<th>Курс, направление</th>) : (<></>)}
+                                    <th>Тема</th>
+                                    <th>Научник</th>
+                                    {meeting.studentWorks.some((work) => work.consultant) ? (
+                                        <th>Консультант</th>) : (<></>)}
+                                    {meeting.studentWorks.some((work) => work.reviewer) ? (<th>Рецензент</th>) : (<></>)}
+                                    <th>Оценка научника</th>
+                                    {meeting.studentWorks.some((work) => work.reviewerMark) ?
+                                        (<th>Оценка рецезента</th>) : (<></>)}
+                                    {meeting.studentWorks.some((work) => work.codeLink) ?
+                                        (<th>Код</th>) : (<></>)}
+                                </tr>
                             </thead>
                             <tbody>
-                            {meeting.studentWorks.length === 0 ? (
-                                <tr>
-                                    <td colSpan={9} className="text-center">Добавьте работы студентов</td>
-                                </tr>
-                            ) : (
-                                meeting.studentWorks.map((work, index) => (
-                                    <tr key={index}>
-                                        <td style={{minWidth: '95px'}}>
-                                            <button type="button" className="btn btn-sm btn-link"
+                                {meeting.studentWorks.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={9} className="text-center">Добавьте работы студентов</td>
+                                    </tr>
+                                ) : (
+                                    meeting.studentWorks.map((work, index) => (
+                                        <tr key={index}>
+                                            <td style={{ minWidth: '95px' }}>
+                                                <button type="button" className="btn btn-sm btn-link"
                                                     onClick={() => handleStudentWorkDelete(index)}>
-                                                <i className="bi bi-x-lg fs-5" style={{color: '#dc3545'}}></i>
-                                            </button>
-                                            <button type="button" className="btn btn-sm btn-link"
+                                                    <i className="bi bi-x-lg fs-5" style={{ color: '#dc3545' }}></i>
+                                                </button>
+                                                <button type="button" className="btn btn-sm btn-link"
                                                     data-bs-toggle="modal" data-bs-target="#studentWorkModal"
                                                     onClick={() => setWorkToEditIndex(index)}>
-                                                <i className="bi bi-pencil fs-5" style={{color: '#007bff'}}></i>
-                                            </button>
-                                        </td>
-                                        <td>{work.studentName}</td>
-                                        {meeting.studentWorks.some((work) => work.info) ?
-                                            (<td>{work.info || "—"}</td>) : (<></>)}
-                                        <td style={{maxWidth: '600px'}}>{work.theme}</td>
-                                        <td>{work.supervisor}</td>
-                                        {meeting.studentWorks.some((work) => work.consultant) ? (
-                                            <td>{work.consultant || "—"}</td>) : (<></>)}
-                                        {meeting.studentWorks.some((work) => work.reviewer) ?
-                                            (<td>{work.reviewer || "—"}</td>) : (<></>)}
-                                        <td>{work.supervisorMark || "—"}</td>
-                                        {meeting.studentWorks.some((work) => work.reviewerMark) ?
-                                            (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
-                                        {meeting.studentWorks.some((work) => work.codeLink) ?
-                                            (<td style={{minWidth: '87px'}}>{work.codeLink ? (
-                                                work.codeLink !== 'NDA' ? (
-                                                    work.codeLink.split(' ').map((link, linkIndex) => (
-                                                        <div key={linkIndex} className="mb-2">
-                                                            <a href={link} target="_blank" rel="noopener noreferrer">
-                                                                Ссылка {work.codeLink && work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
-                                                            </a>
-                                                        </div>
-                                                    ))
-                                                ) : (<span className="fst-italic">NDA</span>)
-                                            ) : (
-                                                <span>—</span>
-                                            )}</td>) : (<></>)}
-                                    </tr>
-                                ))
-                            )}
+                                                    <i className="bi bi-pencil fs-5" style={{ color: '#007bff' }}></i>
+                                                </button>
+                                            </td>
+                                            <td>{work.studentName}</td>
+                                            {meeting.studentWorks.some((work) => work.info) ?
+                                                (<td>{work.info || "—"}</td>) : (<></>)}
+                                            <td style={{ maxWidth: '600px' }}>{work.theme}</td>
+                                            <td>{work.supervisor}</td>
+                                            {meeting.studentWorks.some((work) => work.consultant) ? (
+                                                <td>{work.consultant || "—"}</td>) : (<></>)}
+                                            {meeting.studentWorks.some((work) => work.reviewer) ?
+                                                (<td>{work.reviewer || "—"}</td>) : (<></>)}
+                                            <td>{work.supervisorMark || "—"}</td>
+                                            {meeting.studentWorks.some((work) => work.reviewerMark) ?
+                                                (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
+                                            {meeting.studentWorks.some((work) => work.codeLink) ?
+                                                (<td style={{ minWidth: '87px' }}>{work.codeLink ? (
+                                                    work.codeLink !== 'NDA' ? (
+                                                        work.codeLink.split(' ').map((link, linkIndex) => (
+                                                            <div key={linkIndex} className="mb-2">
+                                                                <a href={link} target="_blank" rel="noopener noreferrer">
+                                                                    Ссылка {work.codeLink && work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                                </a>
+                                                            </div>
+                                                        ))
+                                                    ) : (<span className="fst-italic">NDA</span>)
+                                                ) : (
+                                                    <span>—</span>
+                                                )}</td>) : (<></>)}
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>
 
-                    <hr className="my-4"/>
+                    <hr className="my-4" />
 
                     <div className="d-flex flex-wrap">
-                        <div className="flex-grow-1 pe-4 mb-3">
+                        <div style={{ width: '50%' }}>
                             <h4 className="p-2">Список членов комиссии</h4>
-                            {meeting.members.map((member, index) => (
-                                <div key={index} className="pt-3 px-3">
-                                    <input
-                                        type="text"
-                                        style={{minWidth: '15em'}}
-                                        className="form-control"
-                                        value={member.name}
-                                        id="member"
-                                        onChange={(e) => handleMemberChange(index, e.target.value)}
-                                        placeholder="Иванов Иван Иванович"/>
+                            <div className='d-flex align-items-center gap-2 mb-3'>
+                                <div style={{ width: '100%' }}>
+                                    <MemberSearchDropdown
+                                        onSelect={handleAddMember}
+                                        onChange={(name) => setSearchName(name)}
+                                        value={searchName}
+                                    />
                                 </div>
-                            ))}
+                            </div>
+
+                            <MemberList
+                                members={meeting.members}
+                                removable={true}
+                                onMemberRemove={handleRemoveMember}
+                            />
+
                         </div>
 
-                        <div className="flex-grow-1">
+                        <div className="flex-grow-1 ps-4">
                             <h4 className="p-2">Группа критериев</h4>
-                            <ul className="list-group p-2">
+                            <ul className="list-group">
                                 {criteriaGroups?.map((group, index) => (
                                     <li className="list-group-item d-flex align-items-center" key={group.id}>
                                         <input className="form-check-input me-3" type="radio"
-                                               name={`criteria-${index}`}
-                                               checked={meeting.criteriaGroup?.id === group.id}
-                                               id={String(group.id)}
-                                               onChange={() => setMeeting({...meeting, criteriaGroup: group})}/>
+                                            name={`criteria-${index}`}
+                                            checked={meeting.criteriaGroup?.id === group.id}
+                                            id={String(group.id)}
+                                            onChange={() => setMeeting({ ...meeting, criteriaGroup: group })} />
                                         <label className="form-check-label stretched-link"
-                                               htmlFor={String(group.id)}> {group.name}
+                                            htmlFor={String(group.id)}> {group.name}
                                         </label>
                                     </li>
                                 ))}
@@ -348,11 +361,11 @@ export function MeetingFormPage() {
                         </div>
                     </div>
                 </div>
-            </form>
+            </form >
 
             <StudentWorkModal
                 studentWorkData={workToEditIndex != null ? meeting.studentWorks[workToEditIndex] : undefined}
-                onSave={addOrUpdateStudentWork}/>
+                onSave={addOrUpdateStudentWork} />
         </>
     );
 }

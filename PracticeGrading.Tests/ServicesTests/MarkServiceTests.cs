@@ -11,7 +11,7 @@ public class MarkServiceTests : TestBase
     {
         await CreateTestMeeting();
     }
-    
+
     [Test]
     public async Task TestAddMark()
     {

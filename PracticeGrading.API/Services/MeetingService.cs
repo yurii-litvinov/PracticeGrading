@@ -7,7 +7,6 @@ namespace PracticeGrading.API.Services;
 
 using System.Text.Json;
 using PracticeGrading.API.Integrations;
-using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.DTOs;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.Data.Entities;
@@ -27,6 +26,7 @@ public class MeetingService(
     /// Adds new meeting.
     /// </summary>
     /// <param name="request">Meeting creation request.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task AddMeeting(MeetingRequest request)
     {
         var group = await criteriaGroupRepository.GetById(request.CriteriaGroupId) ??
@@ -47,8 +47,10 @@ public class MeetingService(
                     Info = workRequest.Info,
                     Theme = workRequest.Theme,
                     Supervisor = workRequest.Supervisor,
+                    SupervisorInfo = workRequest.SupervisorInfo,
                     Consultant = workRequest.Consultant,
                     Reviewer = workRequest.Reviewer,
+                    ReviewerInfo = workRequest.ReviewerInfo,
                     SupervisorMark = workRequest.SupervisorMark,
                     ReviewerMark = workRequest.ReviewerMark,
                     CodeLink = workRequest.CodeLink,
@@ -61,13 +63,7 @@ public class MeetingService(
                         .Select(criteria => new AverageCriteriaMark { CriteriaId = criteria.Id })
                         .ToList(),
                 }).ToList(),
-            Members = request.Members.Select(
-                memberRequest => new User
-                {
-                    UserName = memberRequest.Name,
-                    PasswordHash = string.Empty,
-                    RoleId = (int)RolesEnum.Member,
-                }).ToList(),
+            Members = await userRepository.GetUsersByIdsAsync(request.MemberIds),
             CriteriaGroup = group,
         };
 
@@ -78,8 +74,9 @@ public class MeetingService(
     /// Gets meeting by id or all meetings.
     /// </summary>
     /// <param name="id">Meeting id.</param>
+    /// <param name="isMemberRequest">Flag indicating if the requester has member role.</param>
     /// <returns>List of meetings.</returns>
-    public async Task<List<MeetingDto>> GetMeeting(int? id = null)
+    public async Task<List<MeetingDto>> GetMeeting(int? id = null, bool isMemberRequest = false)
     {
         List<Meeting> meetings;
         if (id == null)
@@ -106,8 +103,10 @@ public class MeetingService(
                     work.Info,
                     work.Theme,
                     work.Supervisor,
+                    work.SupervisorInfo,
                     work.Consultant,
                     work.Reviewer,
+                    work.ReviewerInfo,
                     work.SupervisorMark,
                     work.ReviewerMark,
                     work.CodeLink,
@@ -120,16 +119,19 @@ public class MeetingService(
                         .Select(mark => new AverageCriteriaMarkDto(mark.CriteriaId, mark.AverageMark)).ToList(),
                     work.FinalMark)).ToList();
 
-            var members = (meeting.Members ?? []).Select(
-                member =>
-                    new MemberDto(member.Id, member.UserName)).ToList();
+            var members = (meeting.Members ?? []).Select(UserService.GetMemberDtoFromUser).ToList();
+
+            if (isMemberRequest)
+            {
+                members = members.Select(m => new MemberDto(m.Id, m.Name, string.Empty, string.Empty, string.Empty, string.Empty)).ToList();
+            }
 
             var group = meeting.CriteriaGroup;
 
             var scaleDto = (group?.MarkScales ?? [])
                 .Select(scale => new MarkScaleDto(scale.Id, scale.Min, scale.Max, scale.Mark)).ToList();
 
-            var groupDto = new CriteriaGroupDto(group.Id, group.Name, group.MetricType, [], scaleDto);
+            var groupDto = new CriteriaGroupDto(group!.Id, group.Name, group.MetricType, [], scaleDto);
 
             meetingsDto.Add(
                 new MeetingDto(
@@ -151,6 +153,7 @@ public class MeetingService(
     /// Updates meeting.
     /// </summary>
     /// <param name="request">Meeting updating request.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task UpdateMeeting(MeetingRequest request)
     {
         if (request.Id != null)
@@ -180,8 +183,10 @@ public class MeetingService(
                     existingWork.Info = work.Info;
                     existingWork.Theme = work.Theme;
                     existingWork.Supervisor = work.Supervisor;
+                    existingWork.SupervisorInfo = work.SupervisorInfo;
                     existingWork.Consultant = work.Consultant;
                     existingWork.Reviewer = work.Reviewer;
+                    existingWork.ReviewerInfo = work.ReviewerInfo;
                     existingWork.SupervisorMark = work.SupervisorMark;
                     existingWork.ReviewerMark = work.ReviewerMark;
                     existingWork.CodeLink = work.CodeLink;
@@ -215,8 +220,10 @@ public class MeetingService(
                             Info = work.Info,
                             Theme = work.Theme,
                             Supervisor = work.Supervisor,
+                            SupervisorInfo = work.SupervisorInfo,
                             Consultant = work.Consultant,
                             Reviewer = work.Reviewer,
+                            ReviewerInfo = work.ReviewerInfo,
                             SupervisorMark = work.SupervisorMark,
                             ReviewerMark = work.ReviewerMark,
                             CodeLink = work.CodeLink,
@@ -242,31 +249,9 @@ public class MeetingService(
                 meeting.StudentWorks?.Remove(work);
             }
 
-            foreach (var memberRequest in request.Members)
-            {
-                var existingMember = (meeting.Members ?? [])
-                    .FirstOrDefault(member => member.Id == memberRequest.Id);
-
-                if (existingMember != null)
-                {
-                    existingMember.UserName = memberRequest.Name;
-                }
-                else
-                {
-                    meeting.Members?.Add(
-                        new User
-                        {
-                            UserName = memberRequest.Name,
-                            PasswordHash = string.Empty,
-                            RoleId = (int)RolesEnum.Member,
-                        });
-                }
-            }
-
-            var membersToRemove = (meeting.Members ?? [])
-                .Where(
-                    member => request.Members.All(
-                        memberRequest => memberRequest.Id != null && memberRequest.Id != member.Id)).ToList();
+            var membersToRemove = meeting.Members!
+                .Where(member => !request.MemberIds.Contains(member.Id))
+                .ToList();
 
             foreach (var member in membersToRemove)
             {
@@ -275,8 +260,24 @@ public class MeetingService(
                 {
                     await markRepository.Delete(mark);
                 }
+            }
 
-                await userRepository.Delete(member);
+            meeting.Members = meeting.Members!
+                .Where(m => !membersToRemove.Select(mr => mr.Id).Contains(m.Id))
+                .ToList();
+
+            var newMemberIds = request.MemberIds.Except(meeting.Members.Select(m => m.Id));
+
+            foreach (var newMemberId in newMemberIds)
+            {
+                var newMember = await userRepository.GetUserById(newMemberId);
+
+                if (newMember == null)
+                {
+                    throw new InvalidOperationException("Unable to add new member for the meeting");
+                }
+
+                meeting.Members.Add(newMember);
             }
 
             await meetingRepository.Update(meeting);
@@ -287,6 +288,7 @@ public class MeetingService(
     /// Deletes meeting.
     /// </summary>
     /// <param name="id">Meeting id.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task DeleteMeeting(int id)
     {
         var meeting = await meetingRepository.GetById(id) ??
@@ -299,12 +301,13 @@ public class MeetingService(
     /// Gets meeting members.
     /// </summary>
     /// <param name="id">Meeting id.</param>
+    /// <returns>A list of member DTOs representing the meeting participants.</returns>
     public async Task<List<MemberDto>> GetMembers(int id)
     {
         var meeting = await meetingRepository.GetById(id) ??
                       throw new InvalidOperationException($"Meeting with ID {id} was not found.");
 
-        return (meeting.Members ?? []).Select(member => new MemberDto(member.Id, member.UserName)).ToList();
+        return (meeting.Members ?? []).Select(UserService.GetMemberDtoFromUser).ToList();
     }
 
     /// <summary>
@@ -313,6 +316,7 @@ public class MeetingService(
     /// <param name="meetingId">Meeting id.</param>
     /// <param name="workId">Student work id.</param>
     /// <param name="mark">Final mark.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task SetFinalMark(int meetingId, int workId, string mark)
     {
         var meeting = await meetingRepository.GetById(meetingId) ??
@@ -330,6 +334,7 @@ public class MeetingService(
     /// Creates meetings from file.
     /// </summary>
     /// <param name="request">Schedule parsing request.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
     public async Task CreateMeetingsFromFile(ParseScheduleRequest request)
     {
         var parser = new ScheduleParser(

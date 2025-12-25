@@ -25,27 +25,25 @@ public class UserRepositoryTests : TestBase
     [Test]
     public async Task TestUserGetting()
     {
-        var meeting = new Meeting { Id = 15, StudentWorks = [TestWork], CriteriaGroup = TestCriteriaGroup};
-
-        await MeetingRepository.Create(meeting);
-
         var user = new User
         {
             UserName = "some_user",
-            MeetingId = meeting.Id,
-            RoleId = 1
+            RoleId = 2
         };
 
-        await UserRepository.Create(user);
+        int userId = await UserRepository.Create(user);
 
-        var newUser = await UserRepository.GetByUserName(user.UserName, meeting.Id);
+        var newUser = await UserRepository.GetUserById(userId);
+        var meeting = new Meeting { Id = 15, StudentWorks = [TestWork], CriteriaGroup = TestCriteriaGroup, Members = [newUser!] };
+        await MeetingRepository.Create(meeting);
+
 
         newUser.Should().NotBeNull();
         newUser.Role.Should().NotBeNull();
-        newUser.Meeting.Should().NotBeNull();
+        newUser.Meetings.Should().NotBeNull();
 
         newUser.Role.Id.Should().Be(user.RoleId);
-        newUser.Meeting.Id.Should().Be(user.MeetingId);
+        newUser.Meetings.Should().ContainSingle(meeting => meeting.Id == 15);
     }
 
     [Test]

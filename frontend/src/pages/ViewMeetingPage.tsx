@@ -1,19 +1,20 @@
-import {useEffect, useState, useRef, ChangeEvent} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
-import {getMeetings, setFinalMark, getCriteriaGroup} from '../services/ApiService';
+import { useEffect, useState, useRef, ChangeEvent } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { getMeetings, setFinalMark, getCriteriaGroup } from '../services/ApiService';
 import 'react-datepicker/dist/react-datepicker.css';
-import {formatDate} from './MeetingsPage';
-import {SignalRService} from '../services/SignalRService';
-import {Actions} from '../models/Actions';
-import {Meeting} from '../models/Meeting';
-import {CriteriaGroup} from '../models/CriteriaGroup';
-import {StudentWork} from '../models/StudentWork';
-import {MetricTypes} from '../models/MetricTypes'
-import {MarkScale} from '../models/MarkScale'
+import { formatDate } from './MeetingsPage';
+import { SignalRService } from '../services/SignalRService';
+import { Actions } from '../models/Actions';
+import { Meeting } from '../models/Meeting';
+import { CriteriaGroup } from '../models/CriteriaGroup';
+import { StudentWork } from '../models/StudentWork';
+import { MetricTypes } from '../models/MetricTypes'
+import { MarkScale } from '../models/MarkScale'
 import Tooltip from 'bootstrap/js/dist/tooltip.js';
 import copy from 'copy-to-clipboard';
-import {DocumentsModel} from '../components/DocumentsModel';
-import {BASENAME} from "../App"
+import { DocumentsModel } from '../components/DocumentsModel';
+import { BASENAME } from "../App"
+import { MemberList } from '../components/MemberList';
 
 export const calculateFinalMark = (mark: number, scales: MarkScale[] | undefined) => {
     const matchedScale = scales?.find(scale =>
@@ -26,7 +27,7 @@ export const calculateFinalMark = (mark: number, scales: MarkScale[] | undefined
 };
 
 export function ViewMeetingPage() {
-    const {id} = useParams();
+    const { id } = useParams();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("works");
     const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null);
@@ -168,13 +169,13 @@ export function ViewMeetingPage() {
                 <h2 className="me-auto w-100 mb-3 mb-sm-0 text-center text-sm-start">Просмотр заседания</h2>
                 <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
                     <button type="button" className="btn btn-outline-primary btn-lg mb-2 mb-sm-0 me-sm-2"
-                            onClick={handleEditMeeting}>Редактировать
+                        onClick={handleEditMeeting}>Редактировать
                     </button>
                     <button type="button" className="btn btn-outline-success btn-lg mb-2 mb-sm-0 me-sm-2"
-                            onClick={handleFinishMeeting}>Завершить
+                        onClick={handleFinishMeeting}>Завершить
                     </button>
                     <button type="button" className="btn btn-light btn-lg mb-2 mb-sm-0 me-sm-2"
-                            id="back" onClick={handleBack}>Назад
+                        id="back" onClick={handleBack}>Назад
                     </button>
                 </div>
             </div>
@@ -184,15 +185,15 @@ export function ViewMeetingPage() {
                     <label className="me-3 fw-bold text-end label-custom">Ссылка для членов
                         комиссии</label>
                     <a href="#" id="copy" data-bs-custom-class="tooltip-light" data-bs-toggle="tooltip"
-                       data-bs-trigger="hover" data-bs-placement="top" title="Копировать ссылку"
-                       className="icon-link icon-link-hover form-control-plaintext text-primary text-decoration-underline w-auto"
-                       style={{'--bs-icon-link-transform': 'translate3d(0, -.125rem, 0)'} as any}
-                       onClick={(e) => {
-                           e.preventDefault();
-                           handleCopyLink();
-                       }}>
+                        data-bs-trigger="hover" data-bs-placement="top" title="Копировать ссылку"
+                        className="icon-link icon-link-hover form-control-plaintext text-primary text-decoration-underline w-auto"
+                        style={{ '--bs-icon-link-transform': 'translate3d(0, -.125rem, 0)' } as any}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            handleCopyLink();
+                        }}>
                         {`${window.location.origin}${BASENAME}/meetings/${id}/member`}
-                        <i className="bi bi-clipboard mb-2"/>
+                        <i className="bi bi-clipboard mb-2" />
                     </a>
                 </div>
 
@@ -216,9 +217,9 @@ export function ViewMeetingPage() {
                     <div className="d-flex mb-2 align-items-center">
                         <label className="me-3 fw-bold text-end label-custom">Ссылка на созвон</label>
                         <a href={meeting.callLink}
-                           className="form-control-plaintext text-primary text-decoration-underline w-auto span-custom"
-                           target="_blank"
-                           rel="noopener noreferrer">
+                            className="form-control-plaintext text-primary text-decoration-underline w-auto span-custom"
+                            target="_blank"
+                            rel="noopener noreferrer">
                             {meeting.callLink}
                         </a>
                     </div>
@@ -228,9 +229,9 @@ export function ViewMeetingPage() {
                     <div className="d-flex mb-2 align-items-center">
                         <label className="me-3 fw-bold text-end label-custom">Ссылка на материалы</label>
                         <a href={meeting.materialsLink}
-                           className="form-control-plaintext text-primary text-decoration-underline w-auto"
-                           target="_blank"
-                           rel="noopener noreferrer">
+                            className="form-control-plaintext text-primary text-decoration-underline w-auto"
+                            target="_blank"
+                            rel="noopener noreferrer">
                             {meeting.materialsLink}
                         </a>
                     </div>
@@ -239,14 +240,14 @@ export function ViewMeetingPage() {
 
             <div className="d-flex flex-column flex-sm-row justify-content-end w-100">
                 <button type="button" className="btn btn-outline-primary btn-lg mb-2 mb-sm-0 me-sm-2"
-                        data-bs-toggle="modal"
-                        data-bs-target="#docsModal">Сгенерировать документы
+                    data-bs-toggle="modal"
+                    data-bs-target="#docsModal">Сгенерировать документы
                 </button>
             </div>
 
-            <DocumentsModel meeting={meeting}/>
+            <DocumentsModel meeting={meeting} />
 
-            <hr className="my-4"/>
+            <hr className="my-4" />
 
             <div>
                 <div className="d-flex p-2 align-items-center">
@@ -279,67 +280,67 @@ export function ViewMeetingPage() {
                             <div className="table-responsive">
                                 <table className="table table-striped">
                                     <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th>ФИО</th>
-                                        {meeting.studentWorks.some((work) => work.info) ?
-                                            (<th>Курс, направление</th>) : (<></>)}
-                                        <th>Тема</th>
-                                        <th>Научник</th>
-                                        {meeting.studentWorks.some((work) => work.consultant) ? (
-                                            <th>Консультант</th>) : (<></>)}
-                                        {meeting.studentWorks.some((work) => work.reviewer) ? (
-                                            <th>Рецензент</th>) : (<></>)}
-                                        <th>Оценка научника</th>
-                                        {meeting.studentWorks.some((work) => work.reviewerMark) ?
-                                            (<th>Оценка рецезента</th>) : (<></>)}
-                                        {meeting.studentWorks.some((work) => work.codeLink) ?
-                                            (<th>Код</th>) : (<></>)}
-                                    </tr>
+                                        <tr>
+                                            <th></th>
+                                            <th>ФИО</th>
+                                            {meeting.studentWorks.some((work) => work.info) ?
+                                                (<th>Курс, направление</th>) : (<></>)}
+                                            <th>Тема</th>
+                                            <th>Научник</th>
+                                            {meeting.studentWorks.some((work) => work.consultant) ? (
+                                                <th>Консультант</th>) : (<></>)}
+                                            {meeting.studentWorks.some((work) => work.reviewer) ? (
+                                                <th>Рецензент</th>) : (<></>)}
+                                            <th>Оценка научника</th>
+                                            {meeting.studentWorks.some((work) => work.reviewerMark) ?
+                                                (<th>Оценка рецезента</th>) : (<></>)}
+                                            {meeting.studentWorks.some((work) => work.codeLink) ?
+                                                (<th>Код</th>) : (<></>)}
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    {meeting.studentWorks.map((work) => (
-                                        <tr key={work.id} onClick={() => handleRowClick(work.id!)}
-                                            className={selectedStudentId === work.id ? "table-info" : ""}
-                                            style={{cursor: "pointer"}}>
-                                            <td style={{width: '30px'}}>
-                                                <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleIconClick(work.id!);
-                                                }}>
-                                                    <i className="bi bi-arrows-angle-expand fs-5"
-                                                       style={{color: '#007bff'}}></i>
-                                                </button>
-                                            </td>
-                                            <td>{work.studentName}</td>
-                                            {meeting.studentWorks.some((work) => work.info) ?
-                                                (<td>{work.info || "—"}</td>) : (<></>)}
-                                            <td style={{maxWidth: '600px'}}>{work.theme}</td>
-                                            <td>{work.supervisor}</td>
-                                            {meeting.studentWorks.some((work) => work.consultant) ? (
-                                                <td>{work.consultant || "—"}</td>) : (<></>)}
-                                            {meeting.studentWorks.some((work) => work.reviewer) ?
-                                                (<td>{work.reviewer || "—"}</td>) : (<></>)}
-                                            <td>{work.supervisorMark || "—"}</td>
-                                            {meeting.studentWorks.some((work) => work.reviewerMark) ?
-                                                (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
-                                            {meeting.studentWorks.some((work) => work.codeLink) ?
-                                                (<td style={{minWidth: '87px'}}>{work.codeLink ? (
-                                                    work.codeLink !== 'NDA' ? (
-                                                        work.codeLink.split(' ').map((link, linkIndex) => (
-                                                            <div key={linkIndex} className="mb-2">
-                                                                <a href={link} target="_blank"
-                                                                   rel="noopener noreferrer">
-                                                                    Ссылка {work.codeLink && work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
-                                                                </a>
-                                                            </div>
-                                                        ))
-                                                    ) : (<span className="fst-italic">NDA</span>)
-                                                ) : (
-                                                    <span>—</span>
-                                                )}</td>) : (<></>)}
-                                        </tr>
-                                    ))}
+                                        {meeting.studentWorks.map((work) => (
+                                            <tr key={work.id} onClick={() => handleRowClick(work.id!)}
+                                                className={selectedStudentId === work.id ? "table-info" : ""}
+                                                style={{ cursor: "pointer" }}>
+                                                <td style={{ width: '30px' }}>
+                                                    <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleIconClick(work.id!);
+                                                    }}>
+                                                        <i className="bi bi-arrows-angle-expand fs-5"
+                                                            style={{ color: '#007bff' }}></i>
+                                                    </button>
+                                                </td>
+                                                <td>{work.studentName}</td>
+                                                {meeting.studentWorks.some((work) => work.info) ?
+                                                    (<td>{work.info || "—"}</td>) : (<></>)}
+                                                <td style={{ maxWidth: '600px' }}>{work.theme}</td>
+                                                <td>{work.supervisor}</td>
+                                                {meeting.studentWorks.some((work) => work.consultant) ? (
+                                                    <td>{work.consultant || "—"}</td>) : (<></>)}
+                                                {meeting.studentWorks.some((work) => work.reviewer) ?
+                                                    (<td>{work.reviewer || "—"}</td>) : (<></>)}
+                                                <td>{work.supervisorMark || "—"}</td>
+                                                {meeting.studentWorks.some((work) => work.reviewerMark) ?
+                                                    (<td>{work.reviewerMark || "—"}</td>) : (<></>)}
+                                                {meeting.studentWorks.some((work) => work.codeLink) ?
+                                                    (<td style={{ minWidth: '87px' }}>{work.codeLink ? (
+                                                        work.codeLink !== 'NDA' ? (
+                                                            work.codeLink.split(' ').map((link, linkIndex) => (
+                                                                <div key={linkIndex} className="mb-2">
+                                                                    <a href={link} target="_blank"
+                                                                        rel="noopener noreferrer">
+                                                                        Ссылка {work.codeLink && work.codeLink.split(' ').length > 1 ? linkIndex + 1 : ''}
+                                                                    </a>
+                                                                </div>
+                                                            ))
+                                                        ) : (<span className="fst-italic">NDA</span>)
+                                                    ) : (
+                                                        <span>—</span>
+                                                    )}</td>) : (<></>)}
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             </div>
@@ -349,45 +350,45 @@ export function ViewMeetingPage() {
                             <div className="table-responsive">
                                 <table className="table table-striped">
                                     <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th>ФИО</th>
-                                        {criteriaGroup?.criteria?.map((criteria) => (
-                                            <th key={criteria.id}>{criteria.name}</th>
-                                        ))}
-                                        <th>Средняя оценка</th>
-                                        <th>Итоговая оценка</th>
-                                    </tr>
+                                        <tr>
+                                            <th></th>
+                                            <th>ФИО</th>
+                                            {criteriaGroup?.criteria?.map((criteria) => (
+                                                <th key={criteria.id}>{criteria.name}</th>
+                                            ))}
+                                            <th>Средняя оценка</th>
+                                            <th>Итоговая оценка</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
-                                    {meeting.studentWorks.map((work) => (
-                                        <tr key={work.id}
-                                            className={selectedStudentId === work.id ? "table-info" : ""}>
-                                            <td style={{width: '30px'}}>
-                                                <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleIconClick(work.id!);
-                                                }}>
-                                                    <i className="bi bi-arrows-angle-expand fs-5"
-                                                       style={{color: '#007bff'}}></i>
-                                                </button>
-                                            </td>
-                                            <td>{work.studentName}</td>
-                                            {work.averageCriteriaMarks.map((mark) => (
-                                                <td key={mark.criteriaId}
-                                                    className="text-center">{mark.averageMark ?? "—"}</td>
-                                            ))}
-                                            <td className="text-center">{marks.find(mark => mark.id === work.id).averageMark || "—"}</td>
-                                            <td>
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    value={marks.find(mark => mark.id === work.id).finalMark || ""}
-                                                    onChange={(e) => handleMarkEdit(e, work.id!)}
-                                                />
-                                            </td>
-                                        </tr>
-                                    ))}
+                                        {meeting.studentWorks.map((work) => (
+                                            <tr key={work.id}
+                                                className={selectedStudentId === work.id ? "table-info" : ""}>
+                                                <td style={{ width: '30px' }}>
+                                                    <button type="button" className="btn btn-sm btn-link" onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleIconClick(work.id!);
+                                                    }}>
+                                                        <i className="bi bi-arrows-angle-expand fs-5"
+                                                            style={{ color: '#007bff' }}></i>
+                                                    </button>
+                                                </td>
+                                                <td>{work.studentName}</td>
+                                                {work.averageCriteriaMarks.map((mark) => (
+                                                    <td key={mark.criteriaId}
+                                                        className="text-center">{mark.averageMark ?? "—"}</td>
+                                                ))}
+                                                <td className="text-center">{marks.find(mark => mark.id === work.id).averageMark || "—"}</td>
+                                                <td>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        value={marks.find(mark => mark.id === work.id).finalMark || ""}
+                                                        onChange={(e) => handleMarkEdit(e, work.id!)}
+                                                    />
+                                                </td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             </div>
@@ -395,17 +396,15 @@ export function ViewMeetingPage() {
                     )}
                 </div>
 
-                <hr className="my-4"/>
+                <hr className="my-4" />
 
                 <div className="d-flex flex-wrap">
-                    <div className="flex-grow-1 pe-4 mb-2" style={{minWidth: '20em'}}>
+                    <div className="flex-grow-1 pe-4 mb-2" style={{ minWidth: '20em' }}>
                         <h4 className="p-2">Список членов комиссии</h4>
-                        {meeting.members.map((member, index) => (
-                            <div key={index} className="px-3">
-                                <input type="text" readOnly className="form-control-plaintext"
-                                       value={member.name}/>
-                            </div>
-                        ))}
+                        <MemberList
+                            members={meeting.members}
+                        >
+                        </MemberList>
                     </div>
 
                     <div className="flex-grow-1">
@@ -421,22 +420,22 @@ export function ViewMeetingPage() {
                                 {criteriaGroup?.markScales.length !== 0 ? (<>
                                     <strong className="card-text p-2 pt-0">Таблица перевода оценок</strong>
 
-                                    <div className="table-responsive" style={{maxWidth: '300px'}}>
+                                    <div className="table-responsive" style={{ maxWidth: '300px' }}>
                                         <table className="table table-light table-striped-columns m-2">
                                             <thead>
-                                            <tr>
-                                                <th className="text-center">Сумма баллов</th>
-                                                <th className="text-center">Оценка</th>
-                                            </tr>
+                                                <tr>
+                                                    <th className="text-center">Сумма баллов</th>
+                                                    <th className="text-center">Оценка</th>
+                                                </tr>
                                             </thead>
                                             <tbody>
-                                            {criteriaGroup?.markScales.sort((a, b) =>
-                                                (b.min ?? 0) - (a.min ?? 0)).map((scale, index) => (
-                                                <tr key={index}>
-                                                    <td className="text-center">{scale.min}-{scale.max}</td>
-                                                    <td className="text-center">{scale.mark}</td>
-                                                </tr>
-                                            ))}
+                                                {criteriaGroup?.markScales.sort((a, b) =>
+                                                    (b.min ?? 0) - (a.min ?? 0)).map((scale, index) => (
+                                                        <tr key={index}>
+                                                            <td className="text-center">{scale.min}-{scale.max}</td>
+                                                            <td className="text-center">{scale.mark}</td>
+                                                        </tr>
+                                                    ))}
                                             </tbody>
                                         </table>
                                     </div>

@@ -62,7 +62,6 @@ builder.Services.AddCustomAuth(builder.Configuration.GetSection("JwtOptions").Bi
 
 Env.Load(Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"));
 
-
 var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production";
 var host = Environment.GetEnvironmentVariable("HOST") ?? "localhost";
 
@@ -79,7 +78,8 @@ builder.Services.AddCors(
                 .WithOrigins(origin)
                 .AllowAnyMethod()
                 .AllowCredentials()
-                .AllowAnyHeader());
+                .AllowAnyHeader()
+                .WithExposedHeaders("Content-Disposition"));
     });
 
 var app = builder.Build();
@@ -108,8 +108,13 @@ app.MapCriteriaEndpoints();
 
 app.MapUserEndpoints();
 
+app.MapMemberEndpoints();
+
 app.MapMarkEndpoints();
 
 app.Run();
 
+/// <summary>
+/// Entry point class for the PracticeGrading application.
+/// </summary>
 public partial class Program;

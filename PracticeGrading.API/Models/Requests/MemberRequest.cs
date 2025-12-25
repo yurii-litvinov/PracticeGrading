@@ -8,6 +8,7 @@ namespace PracticeGrading.API.Models.Requests;
 /// <summary>
 /// Class for member request.
 /// </summary>
-public record MemberRequest(
-    int? Id,
-    string Name);
+public record MemberRequest(int Id, string Name, string? Email = null,
+    string? Phone = null,
+    string? InformationRu = null,
+    string? InformationEn = null);

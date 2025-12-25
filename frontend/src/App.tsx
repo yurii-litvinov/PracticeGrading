@@ -10,6 +10,7 @@ import {MemberLoginPage} from './pages/MemberLoginPage';
 import {MemberPage} from './pages/MemberPage';
 import {StudentWorkPage} from './pages/StudentWorkPage';
 import {FinishMeetingPage} from './pages/FinishMeetingPage';
+import Members from './pages/Members'
 
 export const BASENAME = "/practice-grading";
 
@@ -22,6 +23,10 @@ export function App() {
                     {
                         path: "/",
                         element: <Navigate to="/meetings" replace/>,
+                    },
+                    {
+                        path: "/members",
+                        element: <Members/>
                     },
                     {
                         path: "/meetings",

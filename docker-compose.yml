@@ -27,7 +27,7 @@
       timeout: 5s
     volumes:
       - ./PracticeGrading.Data/init_database.sql:/docker-entrypoint-initdb.d/init_database.sql
-      - ./pg-data:/var/lib/postgresql/data
+      - ./pg-data:/var/lib/postgresql/18/docker
 
   frontend:
     build:

@@ -1,8 +1,8 @@
-using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.Data.Entities;
+using System.Text.Json;
 
 namespace PracticeGrading.Tests.ServicesTests;
 
@@ -27,6 +27,8 @@ public class MeetingServiceTests : TestBase
                 null,
                 null,
                 null,
+                null,
+                null,
                 null),
         };
 
@@ -39,9 +41,9 @@ public class MeetingServiceTests : TestBase
             null,
             works,
             [
-                new MemberRequest(null, "member1"),
-                new MemberRequest(null, "member2"),
-                new MemberRequest(null, "member3")
+                await UserRepository.Create(new User { UserName = "member1" }),
+                await UserRepository.Create(new User { UserName = "member2" }),
+                await UserRepository.Create(new User { UserName = "member3" }),
             ],
             1);
 
@@ -52,7 +54,7 @@ public class MeetingServiceTests : TestBase
         meetings.Should().HaveCount(1);
         meetings.First().Auditorium.Should().BeEquivalentTo(request.Auditorium);
         meetings.First().StudentWorks.Should().HaveCount(works.Count);
-        meetings.First().Members.Should().HaveCount(request.Members.Count);
+        meetings.First().Members.Should().HaveCount(request.MemberIds.Count);
     }
 
     [Test]
@@ -96,6 +98,8 @@ public class MeetingServiceTests : TestBase
             string.Empty,
             string.Empty,
             string.Empty,
+            null,
+            null,
             null,
             null,
             null,
@@ -226,7 +230,7 @@ public class MeetingServiceTests : TestBase
 
         var request = new ParseScheduleRequest(file, JsonSerializer.Serialize(headers),
             JsonSerializer.Serialize(separator), membersColumn);
-        
+
         await MeetingService.CreateMeetingsFromFile(request);
 
         var meetings = await MeetingService.GetMeeting();
