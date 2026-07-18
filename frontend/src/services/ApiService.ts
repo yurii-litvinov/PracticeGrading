@@ -160,3 +160,27 @@ export const addMember = async (member: Member) => {
 export const deleteMember = async (id: number) => {
     await axiosService.delete(`members?id=${id}`);
 }
+
+export const changePassword = async (
+    currentPassword: string,
+    newPassword: string,
+) =>
+    await axiosService.put(
+        'users/me/password',
+        {
+            currentPassword,
+            newPassword,
+        },
+    );
+
+export const createAdmin = async (
+    userName: string,
+    password: string,
+    currentPassword: string,
+) => {
+    await axiosService.post('admins', {
+        userName,
+        password,
+        currentPassword,
+    });
+};

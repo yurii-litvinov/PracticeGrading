@@ -18,6 +18,8 @@ using PracticeGrading.Data.Repositories;
 /// <param name="jwtService">Service for generating JWT tokens.</param>
 public class UserService(UserRepository userRepository, JwtService jwtService)
 {
+    private const int MinimumPasswordLength = 12;
+
     /// <summary>
     /// Logins admin.
     /// </summary>
@@ -34,6 +36,120 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
         }
 
         return string.Empty;
+    }
+
+    /// <summary>
+    /// Changes the password of the specified user.
+    /// </summary>
+    /// <param name="userId">The identifier of the user.</param>
+    /// <param name="request">
+    /// The request containing the current and new passwords.
+    /// </param>
+    /// <returns>
+    /// <see cref="ChangePasswordResult.Success"/> if the password was changed successfully;
+    /// <see cref="ChangePasswordResult.UserNotFound"/> if the user does not exist;
+    /// <see cref="ChangePasswordResult.InvalidCurrentPassword"/> if the current password is invalid;
+    /// or <see cref="ChangePasswordResult.InvalidNewPassword"/> if the new password does not meet the requirements.
+    /// </returns>
+    public async Task<ChangePasswordResult> ChangePassword(
+        int userId,
+        ChangePasswordRequest request)
+    {
+        var user = await userRepository.GetUserById(userId);
+
+        if (user is null)
+        {
+            return ChangePasswordResult.UserNotFound;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) ||
+            string.IsNullOrWhiteSpace(user.PasswordHash) ||
+            !BCrypt.Net.BCrypt.Verify(
+                request.CurrentPassword,
+                user.PasswordHash))
+        {
+            return ChangePasswordResult.InvalidCurrentPassword;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.NewPassword) ||
+            request.NewPassword.Length < MinimumPasswordLength ||
+            BCrypt.Net.BCrypt.Verify(
+                request.NewPassword,
+                user.PasswordHash))
+        {
+            return ChangePasswordResult.InvalidNewPassword;
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+
+        await userRepository.Update(user);
+
+        return ChangePasswordResult.Success;
+    }
+
+    /// <summary>
+    /// Creates a new administrator.
+    /// </summary>
+    /// <param name="currentAdminId">
+    /// The identifier of the administrator performing the operation.
+    /// </param>
+    /// <param name="request">
+    /// The request containing the new administrator credentials
+    /// and the current administrator password.
+    /// </param>
+    /// <returns>
+    /// <see cref="CreateAdminResult.Success"/> if the administrator was created successfully;
+    /// otherwise, a result describing why the operation failed.
+    /// </returns>
+    public async Task<CreateAdminResult> CreateAdmin(
+        int currentAdminId,
+        CreateAdminRequest request)
+    {
+        var currentAdmin = await userRepository.GetUserById(currentAdminId);
+
+        if (currentAdmin is null)
+        {
+            return CreateAdminResult.CurrentAdminNotFound;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) ||
+            string.IsNullOrWhiteSpace(currentAdmin.PasswordHash) ||
+            !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, currentAdmin.PasswordHash))
+        {
+            return CreateAdminResult.InvalidCurrentPassword;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.UserName))
+        {
+            return CreateAdminResult.InvalidUserName;
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Password) ||
+            request.Password.Length < MinimumPasswordLength)
+        {
+            return CreateAdminResult.InvalidNewAdminPassword;
+        }
+
+        var userName = request.UserName.Trim();
+
+        var existingUser = await userRepository.GetByUserName(userName);
+
+        if (existingUser is not null)
+        {
+            return CreateAdminResult.UserNameAlreadyExists;
+        }
+
+        var newAdmin = new User
+        {
+            UserName = userName,
+            PasswordHash =
+                BCrypt.Net.BCrypt.HashPassword(request.Password),
+            RoleId = (int)RolesEnum.Admin,
+        };
+
+        await userRepository.Create(newAdmin);
+
+        return CreateAdminResult.Success;
     }
 
     /// <summary>

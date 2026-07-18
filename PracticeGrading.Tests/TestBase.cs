@@ -145,4 +145,33 @@ public class TestBase
 
         Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
+
+    protected async Task LoginMember()
+    {
+        await CreateTestMeeting();
+
+        var loginRequest = new LoginMemberRequest(
+            MemberId,
+            null!,
+            MeetingId);
+
+        var response = await Client.PostAsJsonAsync(
+            "/member/login",
+            loginRequest);
+
+        response.EnsureSuccessStatusCode();
+
+        var responseContent =
+            await response.Content.ReadAsStringAsync();
+
+        using var jsonDocument =
+            JsonDocument.Parse(responseContent);
+
+        var token = jsonDocument.RootElement
+            .GetProperty("token")
+            .GetString();
+
+        Client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+    }
 }

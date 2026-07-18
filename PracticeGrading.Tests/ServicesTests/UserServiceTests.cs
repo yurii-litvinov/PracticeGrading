@@ -164,4 +164,276 @@ public class UserServiceTests : TestBase
             UserRepository.Delete(users[index])));
         
     }
+
+    [Test]
+    public async Task TestChangePasswordSuccessfully()
+    {
+        var request = new ChangePasswordRequest(
+            CurrentPassword: "admin",
+            NewPassword: "new-admin-password");
+
+        var result = await UserService.ChangePassword(
+            userId: 1,
+            request);
+
+        result.Should().Be(ChangePasswordResult.Success);
+
+        dbContext.ChangeTracker.Clear();
+
+        var user = await UserRepository.GetUserById(1);
+
+        user.Should().NotBeNull();
+        user.PasswordHash.Should().NotBeNullOrEmpty();
+
+        BCrypt.Net.BCrypt.Verify(
+            request.NewPassword,
+            user.PasswordHash)
+        .Should()
+        .BeTrue();
+
+        BCrypt.Net.BCrypt.Verify(
+            request.CurrentPassword,
+            user.PasswordHash)
+        .Should()
+        .BeFalse();
+    }
+
+    [Test]
+    public async Task TestChangePasswordWithInvalidCurrentPassword()
+    {
+        var userBefore = await UserRepository.GetUserById(1);
+
+        userBefore.Should().NotBeNull();
+
+        var passwordHashBefore = userBefore!.PasswordHash;
+
+        var request = new ChangePasswordRequest(
+            CurrentPassword: "wrong-password",
+            NewPassword: "new-admin-password");
+
+        var result = await UserService.ChangePassword(
+            userId: 1,
+            request);
+
+        result.Should().Be(
+            ChangePasswordResult.InvalidCurrentPassword);
+
+        var userAfter = await UserRepository.GetUserById(1);
+
+        userAfter.Should().NotBeNull();
+        userAfter!.PasswordHash.Should().Be(passwordHashBefore);
+
+        BCrypt.Net.BCrypt.Verify(
+                "admin",
+                userAfter.PasswordHash!)
+            .Should()
+            .BeTrue();
+    }
+
+    [Test]
+    public async Task TestChangePasswordWithTooShortNewPassword()
+    {
+        var userBefore = await UserRepository.GetUserById(1);
+
+        userBefore.Should().NotBeNull();
+
+        var passwordHashBefore = userBefore!.PasswordHash;
+
+        var request = new ChangePasswordRequest(
+            CurrentPassword: "admin",
+            NewPassword: "short");
+
+        var result = await UserService.ChangePassword(
+            userId: 1,
+            request);
+
+        result.Should().Be(
+            ChangePasswordResult.InvalidNewPassword);
+
+        dbContext.ChangeTracker.Clear();
+
+        var userAfter = await UserRepository.GetUserById(1);
+
+        userAfter.Should().NotBeNull();
+        userAfter!.PasswordHash.Should().Be(passwordHashBefore);
+
+        BCrypt.Net.BCrypt.Verify(
+                "admin",
+                userAfter.PasswordHash!)
+            .Should()
+            .BeTrue();
+    }
+
+    [Test]
+    public async Task TestChangePasswordWithSamePassword()
+    {
+        const string currentPassword = "current-password-123";
+
+        var user = new User
+        {
+            UserName = "second-admin",
+            PasswordHash =
+                BCrypt.Net.BCrypt.HashPassword(currentPassword),
+            RoleId = (int)RolesEnum.Admin,
+        };
+
+        var userId = await UserRepository.Create(user);
+        var passwordHashBefore = user.PasswordHash;
+
+        dbContext.ChangeTracker.Clear();
+
+        var request = new ChangePasswordRequest(
+            CurrentPassword: currentPassword,
+            NewPassword: currentPassword);
+
+        var result = await UserService.ChangePassword(
+            userId,
+            request);
+
+        result.Should().Be(
+            ChangePasswordResult.InvalidNewPassword);
+
+        dbContext.ChangeTracker.Clear();
+
+        var userAfter = await UserRepository.GetUserById(userId);
+
+        userAfter.Should().NotBeNull();
+        userAfter!.PasswordHash.Should().Be(passwordHashBefore);
+
+        BCrypt.Net.BCrypt.Verify(
+                currentPassword,
+                userAfter.PasswordHash!)
+            .Should()
+            .BeTrue();
+    }
+
+    [Test]
+    public async Task TestChangePasswordForNonexistentUser()
+    {
+        var request = new ChangePasswordRequest(
+            CurrentPassword: "current-password",
+            NewPassword: "new-valid-password");
+
+        var result = await UserService.ChangePassword(
+            userId: int.MaxValue,
+            request);
+
+        result.Should().Be(
+            ChangePasswordResult.UserNotFound);
+    }
+
+    [Test]
+    public async Task TestCreateAdminSuccessfully()
+    {
+        var request = new CreateAdminRequest(
+            UserName: "  new-admin  ",
+            Password: "new-admin-password",
+            CurrentPassword: "admin");
+
+        var result = await UserService.CreateAdmin(
+            currentAdminId: 1,
+            request);
+
+        result.Should().Be(CreateAdminResult.Success);
+
+        dbContext.ChangeTracker.Clear();
+
+        var newAdmin =
+            await UserRepository.GetByUserName("new-admin");
+
+        newAdmin.Should().NotBeNull();
+        newAdmin!.RoleId.Should().Be((int)RolesEnum.Admin);
+
+        BCrypt.Net.BCrypt.Verify(
+                request.Password,
+                newAdmin.PasswordHash!)
+            .Should()
+            .BeTrue();
+    }
+
+    [Test]
+    public async Task TestCreateAdminWithInvalidCurrentPassword()
+    {
+        var request = new CreateAdminRequest(
+            UserName: "new-admin",
+            Password: "new-admin-password",
+            CurrentPassword: "wrong-password");
+
+        var result = await UserService.CreateAdmin(1, request);
+
+        result.Should().Be(
+            CreateAdminResult.InvalidCurrentPassword);
+
+        dbContext.ChangeTracker.Clear();
+
+        var newAdmin =
+            await UserRepository.GetByUserName("new-admin");
+
+        newAdmin.Should().BeNull();
+    }
+
+    [Test]
+    public async Task TestCreateAdminWithInvalidUserName()
+    {
+        var request = new CreateAdminRequest(
+            UserName: "   ",
+            Password: "new-admin-password",
+            CurrentPassword: "admin");
+
+        var result = await UserService.CreateAdmin(1, request);
+
+        result.Should().Be(
+            CreateAdminResult.InvalidUserName);
+    }
+
+    [Test]
+    public async Task TestCreateAdminWithInvalidPassword()
+    {
+        var request = new CreateAdminRequest(
+            UserName: "new-admin",
+            Password: "short",
+            CurrentPassword: "admin");
+
+        var result = await UserService.CreateAdmin(1, request);
+
+        result.Should().Be(
+            CreateAdminResult.InvalidNewAdminPassword);
+
+        dbContext.ChangeTracker.Clear();
+
+        var newAdmin =
+            await UserRepository.GetByUserName("new-admin");
+
+        newAdmin.Should().BeNull();
+    }
+
+    [Test]
+    public async Task TestCreateAdminWithExistingUserName()
+    {
+        var request = new CreateAdminRequest(
+            UserName: "admin",
+            Password: "new-admin-password",
+            CurrentPassword: "admin");
+
+        var result = await UserService.CreateAdmin(1, request);
+
+        result.Should().Be(
+            CreateAdminResult.UserNameAlreadyExists);
+    }
+
+    [Test]
+    public async Task TestCreateAdminByNonexistentAdmin()
+    {
+        var request = new CreateAdminRequest(
+            UserName: "new-admin",
+            Password: "new-admin-password",
+            CurrentPassword: "some-password");
+
+        var result = await UserService.CreateAdmin(
+            int.MaxValue,
+            request);
+
+        result.Should().Be(
+            CreateAdminResult.CurrentAdminNotFound);
+    }
 }
