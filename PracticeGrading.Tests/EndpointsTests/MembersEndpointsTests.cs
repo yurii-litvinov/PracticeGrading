@@ -1,5 +1,8 @@
 ﻿using FluentAssertions;
+using Microsoft.AspNetCore.Mvc;
+using PracticeGrading.API.Models.DTOs;
 using PracticeGrading.API.Models.Requests;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -80,5 +83,98 @@ public class MemberEndpointsTests : TestBase
         updatedMember.Phone.Should().Be(newMember.Phone);
         updatedMember.InformationRu.Should().Be(newMember.InformationRu);
         updatedMember.InformationEn.Should().Be(newMember.InformationEn);
+    }
+
+    [Test]
+    public async Task TestIssueTrustedAccess()
+    {
+        var memberId = await AddMemberAndGetId();
+
+        var response = await this.Client.PostAsync(
+            $"/members/{memberId}/trusted-access",
+            content: null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var responseBody =
+            await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        var token = responseBody
+            .GetProperty("token")
+            .GetString();
+
+        token.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Test]
+    public async Task TestGetTrustedAccessStatus()
+    {
+        var memberId = await AddMemberAndGetId();
+
+        await this.Client.PostAsync(
+            $"/members/{memberId}/trusted-access",
+            content: null);
+
+        var response = await Client.GetAsync(
+            $"/members/{memberId}/trusted-access");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var status = await response.Content
+            .ReadFromJsonAsync<TrustedMemberAccessStatusDto>();
+
+        status.Should().NotBeNull();
+        status.IsIssued.Should().BeTrue();
+        status.IsActive.Should().BeTrue();
+        status.CreatedAt.Should().NotBeNull();
+        status.RevokedAt.Should().BeNull();
+    }
+
+
+    [Test]
+    public async Task TestRevokeTrustedAccess()
+    {
+        var memberId = await AddMemberAndGetId();
+
+        await this.Client.PostAsync(
+            $"/members/{memberId}/trusted-access",
+            content: null);
+
+        var response = await Client.DeleteAsync(
+            $"/members/{memberId}/trusted-access");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Test]
+    public async Task TestIssueTrustedAccessWithoutAuthorization()
+    {
+        var memberId = await AddMemberAndGetId();
+
+        Client.DefaultRequestHeaders.Authorization = null;
+
+        var response = await Client.PostAsync(
+            $"/members/{memberId}/trusted-access",
+            content: null);
+        Console.WriteLine(response.RequestMessage?.RequestUri);
+        Console.WriteLine(response.StatusCode);
+        Console.WriteLine(await response.Content.ReadAsStringAsync());
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    private async Task<int> AddMemberAndGetId()
+    {
+        var response =
+            await this.Client.PostAsJsonAsync("/members", this.member);
+
+        response.EnsureSuccessStatusCode();
+
+        var responseBody =
+            await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        return responseBody
+            .GetProperty("id")
+            .GetInt32();
     }
 }

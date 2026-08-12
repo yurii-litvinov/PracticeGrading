@@ -19,17 +19,24 @@ public class UserServiceTests : TestBase
     }
 
     [Test]
-    public async Task TestLoginMemberAsAdmin()
+    public async Task TestMemberCannotLoginAsAdmin()
     {
+        const string password = "password";
+
         var member = new User
         {
             UserName = "member",
-            RoleId = 2
+            RoleId = (int)RolesEnum.Member,
+            PasswordHash =
+                BCrypt.Net.BCrypt.HashPassword(password),
         };
 
         await UserRepository.Create(member);
 
-        var request = new LoginAdminRequest(member.UserName, "password");
+        var request = new LoginAdminRequest(
+            member.UserName,
+            password);
+
         var token = await UserService.LoginAdmin(request);
 
         token.Should().BeEmpty();
@@ -53,28 +60,6 @@ public class UserServiceTests : TestBase
 
         await action.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage($"User with UserName {request.UserName} was not found.");
-    }
-
-    [Test]
-    public async Task TestLoginMember()
-    {
-        await CreateTestMeeting();
-
-        var request = new LoginMemberRequest(MemberId, null!, 1);
-        var token = await UserService.LoginMember(request);
-
-        token.Should().NotBeEmpty();
-    }
-
-    [Test]
-    public async Task TestLoginNonexistentMember()
-    {
-        await CreateTestMeeting();
-
-        var request = new LoginMemberRequest(0, "nonexistent", 1);
-        var token = await UserService.LoginMember(request);
-
-        token.Should().NotBeEmpty();
     }
 
     [Test]

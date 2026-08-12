@@ -228,51 +228,6 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
     }
 
     /// <summary>
-    /// Logins member.
-    /// </summary>
-    /// <param name="request">Member login request.</param>
-    /// <returns>JWT token.</returns>
-    public async Task<string> LoginMember(LoginMemberRequest request)
-    {
-        User? member = null;
-
-        if (request.MemberId != 0)
-        {
-            member = await userRepository.GetUserById(request.MemberId);
-
-            if (member == null)
-            {
-                throw new InvalidOperationException($"User with ID {request.MemberId} not found.");
-            }
-
-            if (member.Meetings?.Any(m => m.Id == request.MeetingId) == false)
-            {
-                throw new InvalidOperationException($"User with ID {request.MemberId} is not a member of meeting {request.MeetingId}.");
-            }
-        }
-
-        if (member == null)
-        {
-            if (string.IsNullOrWhiteSpace(request.UserName))
-            {
-                throw new InvalidOperationException("Neither an existing user id nor a username for adding a new one are specified.");
-            }
-
-            int memberId = await userRepository.Create(new User { UserName = request.UserName, RoleId = (int)RolesEnum.Member });
-            member = await userRepository.GetUserById(memberId);
-
-            if (member == null)
-            {
-                throw new InvalidOperationException("Failed to create new user.");
-            }
-
-            await userRepository.AddUserToMeeting(memberId, request.MeetingId);
-        }
-
-        return jwtService.GenerateToken(member);
-    }
-
-    /// <summary>
     /// Converts a User entity to a MemberDto.
     /// </summary>
     /// <param name="user">The user entity to convert.</param>

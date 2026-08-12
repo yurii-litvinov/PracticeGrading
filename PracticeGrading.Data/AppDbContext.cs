@@ -44,9 +44,24 @@ public class AppDbContext : DbContext
     public DbSet<Criteria> Criteria { get; set; }
 
     /// <summary>
+    /// Gets or sets student works table.
+    /// </summary>
+    public DbSet<StudentWork> StudentWorks { get; set; }
+
+    /// <summary>
     /// Gets or sets MemberMarks table.
     /// </summary>
     public DbSet<MemberMark> MemberMarks { get; set; }
+
+    /// <summary>
+    /// Gets or sets trusted member accesses table.
+    /// </summary>
+    public DbSet<TrustedMemberAccess> TrustedMemberAccesses { get; set; }
+
+    /// <summary>
+    /// Gets or sets meeting member accesses table.
+    /// </summary>
+    public DbSet<MeetingMemberAccess> MeetingMemberAccesses { get; set; }
 
     /// <summary>
     /// Sets configurations of database tables.
@@ -68,6 +83,10 @@ public class AppDbContext : DbContext
         modelBuilder.ApplyConfiguration(new RuleConfiguration());
         modelBuilder.ApplyConfiguration(new CriteriaMarkConfiguration());
         modelBuilder.ApplyConfiguration(new SelectedRuleConfiguration());
+
+        modelBuilder.ApplyConfiguration(new TrustedMemberAccessConfiguration());
+
+        modelBuilder.ApplyConfiguration(new MeetingMemberAccessConfiguration());
 
         modelBuilder.Entity("CriteriaCriteriaGroup").HasData(
             new { CriteriaGroupsId = 1, CriteriaId = 1 },

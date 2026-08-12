@@ -1,8 +1,10 @@
 using FluentAssertions;
 using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.Requests;
+using PracticeGrading.Data.Entities;
 using System.Net;
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace PracticeGrading.Tests.EndpointsTests;
 
@@ -11,39 +13,33 @@ public class UserEndpointsTests : TestBase
     [Test]
     public async Task TestLoginAdmin()
     {
-        var loginRequest = new LoginAdminRequest("admin", "admin");
+        var loginRequest =
+            new LoginAdminRequest("admin", "admin");
 
-        var response = await Client.PostAsJsonAsync("/login", loginRequest);
+        var response = await Client.PostAsJsonAsync(
+            "/login",
+            loginRequest);
 
         response.EnsureSuccessStatusCode();
 
-        var responseBody = await response.Content.ReadAsStringAsync();
+        var responseBody =
+            await response.Content.ReadAsStringAsync();
+
         responseBody.Should().Contain("token");
     }
 
     [Test]
     public async Task TestLoginAdminWithWrongPassword()
     {
-        var loginRequest = new LoginAdminRequest("admin", "123");
+        var loginRequest =
+            new LoginAdminRequest("admin", "123");
 
-        var response = await Client.PostAsJsonAsync("/login", loginRequest);
+        var response = await Client.PostAsJsonAsync(
+            "/login",
+            loginRequest);
 
-        response.StatusCode.Should().Be(System.Net.HttpStatusCode.Unauthorized);
-    }
-
-    [Test]
-    public async Task TestLoginMember()
-    {
-        await CreateTestMeeting();
-
-        var loginRequest = new LoginMemberRequest(MemberId, null!, MeetingId);
-
-        var response = await Client.PostAsJsonAsync("member/login", loginRequest);
-
-        response.EnsureSuccessStatusCode();
-
-        var responseBody = await response.Content.ReadAsStringAsync();
-        responseBody.Should().Contain("token");
+        response.StatusCode.Should().Be(
+            HttpStatusCode.Unauthorized);
     }
 
     [Test]
@@ -64,7 +60,8 @@ public class UserEndpointsTests : TestBase
 
         dbContext.ChangeTracker.Clear();
 
-        var user = await UserRepository.GetUserById(1);
+        var user =
+            await UserRepository.GetUserById(1);
 
         user.Should().NotBeNull();
 
@@ -93,7 +90,8 @@ public class UserEndpointsTests : TestBase
     [Test]
     public async Task TestChangePasswordAsMember()
     {
-        await LoginMember();
+        await CreateTestMeeting();
+        await LoginApprovedMember();
 
         var request = new ChangePasswordRequest(
             CurrentPassword: "some-password",
@@ -144,10 +142,13 @@ public class UserEndpointsTests : TestBase
         dbContext.ChangeTracker.Clear();
 
         var newAdmin =
-            await UserRepository.GetByUserName("new-admin");
+            await UserRepository.GetByUserName(
+                "new-admin");
 
         newAdmin.Should().NotBeNull();
-        newAdmin!.RoleId.Should().Be((int)RolesEnum.Admin);
+
+        newAdmin!.RoleId.Should().Be(
+            (int)RolesEnum.Admin);
 
         BCrypt.Net.BCrypt.Verify(
                 request.Password,
@@ -175,7 +176,8 @@ public class UserEndpointsTests : TestBase
     [Test]
     public async Task TestCreateAdminAsMember()
     {
-        await LoginMember();
+        await CreateTestMeeting();
+        await LoginApprovedMember();
 
         var request = new CreateAdminRequest(
             UserName: "new-admin",
@@ -224,5 +226,112 @@ public class UserEndpointsTests : TestBase
 
         response.StatusCode.Should().Be(
             HttpStatusCode.Conflict);
+    }
+
+    [Test]
+    public async Task TestTrustedMemberLogin()
+    {
+        var member = await CreateMember();
+
+        var meeting =
+            await CreateMeetingWithoutMembers();
+
+        var trustedAccessToken =
+            await TrustedMemberAccessService
+                .IssueAccess(member.Id);
+
+        dbContext.ChangeTracker.Clear();
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/meetings/{meeting.Id}/trusted-login");
+
+        request.Headers.Add(
+            "X-Trusted-Access-Token",
+            trustedAccessToken);
+
+        var response =
+            await Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(
+            HttpStatusCode.OK);
+
+        var responseBody =
+            await response.Content
+                .ReadFromJsonAsync<JsonElement>();
+
+        var jwtToken = responseBody
+            .GetProperty("token")
+            .GetString();
+
+        jwtToken.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Test]
+    public async Task TestTrustedMemberLoginWithInvalidToken()
+    {
+        var meeting =
+            await CreateMeetingWithoutMembers();
+
+        using var request = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/meetings/{meeting.Id}/trusted-login");
+
+        request.Headers.Add(
+            "X-Trusted-Access-Token",
+            "invalid-token");
+
+        var response =
+            await Client.SendAsync(request);
+
+        response.StatusCode.Should().Be(
+            HttpStatusCode.Unauthorized);
+    }
+
+    [Test]
+    public async Task TestTrustedMemberLoginWithoutToken()
+    {
+        var meeting =
+            await CreateMeetingWithoutMembers();
+
+        var response = await Client.PostAsync(
+            $"/meetings/{meeting.Id}/trusted-login",
+            content: null);
+
+        response.StatusCode.Should().Be(
+            HttpStatusCode.Unauthorized);
+    }
+
+    private async Task<User> CreateMember()
+    {
+        var member = new User
+        {
+            UserName = "trusted-member",
+            RoleId = (int)RolesEnum.Member,
+        };
+
+        member.Id =
+            await UserRepository.Create(member);
+
+        return member;
+    }
+
+    private async Task<Meeting>
+        CreateMeetingWithoutMembers()
+    {
+        var meeting = new Meeting
+        {
+            DateAndTime = DateTime.UtcNow,
+            CriteriaGroup = new CriteriaGroup
+            {
+                Name = "Test criteria group",
+            },
+            StudentWorks = [],
+            Members = [],
+        };
+
+        await MeetingRepository.Create(meeting);
+
+        return meeting;
     }
 }

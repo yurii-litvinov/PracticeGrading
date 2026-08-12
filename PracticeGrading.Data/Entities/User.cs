@@ -66,4 +66,9 @@ public class User
     /// Gets or sets marks.
     /// </summary>
     public ICollection<MemberMark>? Marks { get; set; }
+
+    /// <summary>
+    /// Gets or sets the permanent trusted access issued to this member.
+    /// </summary>
+    public TrustedMemberAccess? TrustedMemberAccess { get; set; }
 }

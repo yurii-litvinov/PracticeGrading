@@ -66,7 +66,8 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
     {
         return await context.Users.Where(u => u.Id == id)
             .Include(u => u.Role)
-            .Include(u => u.Meetings).FirstOrDefaultAsync();
+            .Include(u => u.Meetings)
+            .FirstOrDefaultAsync();
     }
 
     /// <summary>

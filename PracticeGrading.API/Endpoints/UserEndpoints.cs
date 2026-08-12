@@ -6,6 +6,7 @@
 namespace PracticeGrading.API.Endpoints;
 
 using System.Security.Claims;
+using Microsoft.AspNetCore.Mvc;
 using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
@@ -23,23 +24,20 @@ public static class UserEndpoints
         var userGroup = app.MapGroup(string.Empty);
 
         userGroup.MapPost("/login", LoginAdmin);
-        userGroup.MapPost("/member/login", LoginMember);
         userGroup.MapPut("/users/me/password", ChangePassword)
             .RequireAuthorization("RequireAdminRole");
         userGroup.MapPost("/admins", CreateAdmin)
             .RequireAuthorization("RequireAdminRole");
+        userGroup.MapPost(
+            "/meetings/{meetingId:int}/trusted-login",
+            LoginTrustedMember)
+            .AllowAnonymous();
     }
 
     private static async Task<IResult> LoginAdmin(LoginAdminRequest request, UserService userService)
     {
         var token = await userService.LoginAdmin(request);
         return token == string.Empty ? Results.Unauthorized() : Results.Ok(new { Token = token });
-    }
-
-    private static async Task<IResult> LoginMember(LoginMemberRequest request, UserService userService)
-    {
-        var token = await userService.LoginMember(request);
-        return Results.Ok(new { Token = token });
     }
 
     private static async Task<IResult> CreateAdmin(
@@ -136,5 +134,27 @@ public static class UserEndpoints
 
             _ => Results.StatusCode(StatusCodes.Status500InternalServerError),
         };
+    }
+
+    private static async Task<IResult> LoginTrustedMember(
+        int meetingId,
+        [FromHeader(Name = "X-Trusted-Access-Token")]
+        string? trustedAccessToken,
+        TrustedMemberAccessService trustedMemberAccessService)
+    {
+        try
+        {
+            var jwtToken =
+                await trustedMemberAccessService.LoginTrustedMember(meetingId, trustedAccessToken);
+
+            return jwtToken is null
+                ? Results.Unauthorized()
+                : Results.Ok(new { Token = jwtToken });
+        }
+        catch (KeyNotFoundException exception)
+        {
+            return Results.NotFound(
+                new { Error = exception.Message });
+        }
     }
 }

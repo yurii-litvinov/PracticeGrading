@@ -112,6 +112,8 @@ app.MapMemberEndpoints();
 
 app.MapMarkEndpoints();
 
+app.MapMeetingMemberAccessEndpoints();
+
 app.Run();
 
 /// <summary>

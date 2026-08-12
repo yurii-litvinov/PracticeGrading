@@ -24,6 +24,18 @@ public static class MembersEndpoints
         app.MapPost("/members", AddNewMember).RequireAuthorization("RequireAdminRole");
         app.MapPut("/members", UpdateMember).RequireAuthorization("RequireAdminRole");
         app.MapDelete("/members", DeleteMember).RequireAuthorization("RequireAdminRole");
+        app.MapPost(
+            "/members/{memberId:int}/trusted-access",
+            IssueTrustedAccess)
+            .RequireAuthorization("RequireAdminRole");
+        app.MapDelete(
+            "/members/{memberId:int}/trusted-access",
+            RevokeTrustedAccess)
+            .RequireAuthorization("RequireAdminRole");
+        app.MapGet(
+            "/members/{memberId:int}/trusted-access",
+            GetTrustedAccessStatus)
+            .RequireAuthorization("RequireAdminRole");
     }
 
     private static async Task<IResult> SearchMembers(UserService service, string searchName, int offset = 0, int limit = 0)
@@ -55,5 +67,49 @@ public static class MembersEndpoints
     {
         await service.DeleteMember(id);
         return Results.Ok();
+    }
+
+    private static async Task<IResult> IssueTrustedAccess(
+        int memberId,
+        TrustedMemberAccessService service)
+    {
+        try
+        {
+            var token = await service.IssueAccess(memberId);
+
+            return Results.Ok(
+                new
+                {
+                    Token = token,
+                });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.BadRequest(
+                new
+                {
+                    Error = ex.Message,
+                });
+        }
+    }
+
+    private static async Task<IResult> RevokeTrustedAccess(
+        int memberId,
+        TrustedMemberAccessService service)
+    {
+        var revoked = await service.RevokeAccess(memberId);
+
+        return revoked
+            ? Results.NoContent()
+            : Results.NotFound();
+    }
+
+    private static async Task<IResult> GetTrustedAccessStatus(
+        int memberId,
+        TrustedMemberAccessService service)
+    {
+        var status = await service.GetAccessStatus(memberId);
+
+        return Results.Ok(status);
     }
 }

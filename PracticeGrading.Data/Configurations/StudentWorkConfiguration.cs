@@ -19,6 +19,8 @@ public class StudentWorkConfiguration : IEntityTypeConfiguration<StudentWork>
     /// </summary>
     public void Configure(EntityTypeBuilder<StudentWork> builder)
     {
+        builder.ToTable("StudentWork");
+
         builder.HasKey(work => work.Id);
 
         builder.HasMany<MemberMark>(work => work.MemberMarks)
