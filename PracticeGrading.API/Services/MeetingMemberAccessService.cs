@@ -5,6 +5,8 @@
 
 namespace PracticeGrading.API.Services;
 
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.DTOs;
 using PracticeGrading.API.Repositories;
@@ -310,10 +312,17 @@ public class MeetingMemberAccessService(
         access.StatusChangedByUserId =
             statusChangedByUserId;
 
-        await meetingMemberAccessRepository
-            .SaveChanges();
+        return await this.SaveStatusChange();
+    }
 
-        return ProcessMeetingMemberAccessResult.Success;
+    private static bool IsDuplicateMeetingMember(
+        DbUpdateException exception)
+    {
+        return exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation,
+            ConstraintName: "PK_MeetingUser",
+        };
     }
 
     private async Task<ProcessMeetingMemberAccessResult> ChangeStatus(
@@ -355,8 +364,26 @@ public class MeetingMemberAccessService(
         access.StatusChangedAt = DateTime.UtcNow;
         access.StatusChangedByUserId = changedByUserId;
 
-        await meetingMemberAccessRepository.SaveChanges();
+        return await this.SaveStatusChange();
+    }
 
-        return ProcessMeetingMemberAccessResult.Success;
+    private async Task<ProcessMeetingMemberAccessResult>
+        SaveStatusChange()
+    {
+        try
+        {
+            await meetingMemberAccessRepository.SaveChanges();
+
+            return ProcessMeetingMemberAccessResult.Success;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return ProcessMeetingMemberAccessResult.AlreadyProcessed;
+        }
+        catch (DbUpdateException exception)
+            when (IsDuplicateMeetingMember(exception))
+        {
+            return ProcessMeetingMemberAccessResult.AlreadyProcessed;
+        }
     }
 }

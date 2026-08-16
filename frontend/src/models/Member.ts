@@ -11,4 +11,5 @@ export interface Member {
     informationEn?: string,
     phone?: string,
     email?: string,
+    hasActiveTrustedAccess?: boolean;
 }

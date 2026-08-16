@@ -15,6 +15,7 @@ interface MemberModalProps {
     onClose: () => void;
     onSave?: (member: Member) => Promise<void> | void;
     onDelete?: (memberId: number) => Promise<void> | void;
+    onTrustedAccessChanged?: () => void;
     isLoading?: boolean;
     readOnly?: boolean;
 }
@@ -25,6 +26,7 @@ export function MemberModal({
     onClose,
     onSave,
     onDelete,
+    onTrustedAccessChanged,
     isLoading = false,
     readOnly = false,
 }: MemberModalProps) {
@@ -210,12 +212,17 @@ export function MemberModal({
             `${window.location.origin}` +
             `${import.meta.env.BASE_URL}`;
 
-        return new URL(
-            `trusted-access?token=${
-                encodeURIComponent(token)
-            }`,
+        const activationUrl = new URL(
+            'trusted-access',
             applicationBaseUrl,
-        ).toString();
+        );
+
+        activationUrl.hash =
+            new URLSearchParams({
+                token,
+            }).toString();
+
+        return activationUrl.toString();
     };
 
     const handleIssueTrustedAccess = async () => {
@@ -253,6 +260,8 @@ export function MemberModal({
                     new Date().toISOString(),
                 revokedAt: null,
             });
+
+            onTrustedAccessChanged?.();
         } catch {
             setTrustedAccessError(
                 'Не удалось выдать доверенный доступ',
@@ -293,6 +302,7 @@ export function MemberModal({
                         new Date().toISOString(),
                 }),
             );
+            onTrustedAccessChanged?.();
         } catch {
             setTrustedAccessError(
                 'Не удалось отозвать доверенный доступ',

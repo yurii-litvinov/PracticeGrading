@@ -1,5 +1,5 @@
 import axios from "axios";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
     createMeetingAccessRequest,
@@ -49,6 +49,12 @@ export function MemberLoginPage() {
         isTrustedLoginChecked,
         setIsTrustedLoginChecked,
     ] = useState(false);
+
+    const trustedLoginRequestRef = useRef<{
+        meetingId: number;
+        token: string;
+        request: ReturnType<typeof loginTrustedMember>;
+    } | null>(null);
 
     useEffect(() => {
         if (!id || Number.isNaN(meetingId)) {
@@ -108,15 +114,30 @@ export function MemberLoginPage() {
             return;
         }
 
+        const existingRequest =
+            trustedLoginRequestRef.current;
+
+        const trustedLoginRequest =
+            existingRequest?.meetingId === meetingId &&
+            existingRequest.token === trustedAccessToken
+                ? existingRequest.request
+                : loginTrustedMember(
+                    meetingId,
+                    trustedAccessToken,
+                );
+
+        trustedLoginRequestRef.current = {
+            meetingId,
+            token: trustedAccessToken,
+            request: trustedLoginRequest,
+        };
+
         let cancelled = false;
 
         const tryTrustedLogin = async () => {
             try {
                 const response =
-                    await loginTrustedMember(
-                        meetingId,
-                        trustedAccessToken,
-                    );
+                    await trustedLoginRequest;
 
                 if (cancelled) {
                     return;
@@ -340,7 +361,9 @@ export function MemberLoginPage() {
     if (
         accessStatus === MeetingMemberAccessStatus.Pending) {
     return (
-        <div className="container py-4">
+        <div
+            className="container py-4"
+            data-testid="member-access-pending">
             <div className="alert alert-info text-center">
                 <h4>Запрос отправлен</h4>
 
@@ -418,6 +441,7 @@ export function MemberLoginPage() {
                         </h6>
 
                         <input
+                            data-testid="member-name-input"
                             type="text"
                             className="form-control mb-4"
                             placeholder="Введите ФИО"
@@ -426,6 +450,7 @@ export function MemberLoginPage() {
                         />
 
                         <button
+                            data-testid="member-access-submit"
                             type="submit"
                             className="btn btn-primary w-100"
                             disabled={isSubmitting}

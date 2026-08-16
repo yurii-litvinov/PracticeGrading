@@ -21,6 +21,13 @@ export function MeetingAccessRequestsPanel({
         setPendingRequests,
     ] = useState<PendingMeetingMemberAccess[]>([]);
 
+    const [
+        processingRequestIds,
+        setProcessingRequestIds,
+    ] = useState<Set<number>>(
+        () => new Set(),
+    );
+
     useEffect(() => {
         let cancelled = false;
         let timeoutId: number | undefined;
@@ -69,23 +76,81 @@ export function MeetingAccessRequestsPanel({
         };
     }, [meetingId]);
 
+    const setRequestProcessing = (
+        accessId: number,
+        isProcessing: boolean,
+    ) => {
+        setProcessingRequestIds(currentIds => {
+            const updatedIds =
+                new Set(currentIds);
+
+            if (isProcessing) {
+                updatedIds.add(accessId);
+            } else {
+                updatedIds.delete(accessId);
+            }
+
+            return updatedIds;
+        });
+    };
+
+    const removePendingRequest = (
+    accessId: number,
+) => {
+    setPendingRequests(currentRequests =>
+        currentRequests.filter(
+            request => request.id !== accessId,
+        ),
+    );
+};
+
+const handleProcessingError = (
+    error: unknown,
+    accessId: number,
+    defaultMessage: string,
+) => {
+    if (
+        axios.isAxiosError(error) &&
+        error.response?.status === 409
+    ) {
+        removePendingRequest(accessId);
+
+        alert(
+            'Заявка уже обработана другим участником.',
+        );
+
+        return;
+    }
+
+    console.error(error);
+    alert(defaultMessage);
+};
+
     const handleApprove = async (
         accessId: number,
     ) => {
         try {
+            if (processingRequestIds.has(accessId)) {
+                return;
+            }
+
+            setRequestProcessing(accessId, true);
+
             await approveMeetingAccessRequest(
                 meetingId,
                 accessId,
             );
 
-            setPendingRequests(currentRequests =>
-                currentRequests.filter(
-                    request => request.id !== accessId,
-                ),
-            );
+            removePendingRequest(accessId);
+
         } catch (error) {
-            console.error(error);
-            alert('Не удалось подтвердить участника');
+            handleProcessingError(
+                error,
+                accessId,
+                'Не удалось подтвердить участника',
+            );
+        } finally {
+            setRequestProcessing(accessId, false);
         }
     };
 
@@ -93,19 +158,27 @@ export function MeetingAccessRequestsPanel({
         accessId: number,
     ) => {
         try {
+            if (processingRequestIds.has(accessId)) {
+                return;
+            }
+
+            setRequestProcessing(accessId, true);
+
             await rejectMeetingAccessRequest(
                 meetingId,
                 accessId,
             );
 
-            setPendingRequests(currentRequests =>
-                currentRequests.filter(
-                    request => request.id !== accessId,
-                ),
-            );
+            removePendingRequest(accessId);
         } catch (error) {
-            console.error(error);
-            alert('Не удалось отклонить участника');
+            handleProcessingError(
+                error,
+                accessId,
+                'Не удалось подтвердить участника',
+            );
+        } finally
+        {
+            setRequestProcessing(accessId, false);
         }
     };
 
@@ -124,6 +197,7 @@ export function MeetingAccessRequestsPanel({
                     {pendingRequests.map(request => (
                         <div
                             key={request.id}
+                            data-testid="pending-access-request"
                             className="d-flex justify-content-between align-items-center border rounded p-3"
                         >
                             <div>
@@ -143,6 +217,9 @@ export function MeetingAccessRequestsPanel({
                                 <button
                                     type="button"
                                     className="btn btn-success"
+                                    disabled={
+                                        processingRequestIds.has(request.id)
+                                    }
                                     onClick={() =>
                                         handleApprove(
                                             request.id,
@@ -155,6 +232,9 @@ export function MeetingAccessRequestsPanel({
                                 <button
                                     type="button"
                                     className="btn btn-outline-danger"
+                                    disabled={
+                                        processingRequestIds.has(request.id)
+                                    }
                                     onClick={() =>
                                         handleReject(
                                             request.id,

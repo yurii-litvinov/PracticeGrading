@@ -694,4 +694,235 @@ public class MeetingMemberAccessEndpointsTests : TestBase
         responseAfterRevocation.StatusCode.Should().Be(
             HttpStatusCode.Forbidden);
     }
+
+    [Test]
+    public async Task TestApprovedMemberCanGetOnlyAuthorizedMeeting()
+    {
+        await CreateTestMeeting();
+
+        var anotherMeeting = new Meeting
+        {
+            DateAndTime = DateTime.UtcNow,
+            CriteriaGroup = new CriteriaGroup
+            {
+                Name = "Another criteria group",
+            },
+            StudentWorks = [],
+            Members = [],
+        };
+
+        await MeetingRepository.Create(anotherMeeting);
+
+        dbContext.ChangeTracker.Clear();
+
+        await LoginApprovedMember();
+
+        var ownMeetingResponse = await Client.GetAsync(
+            $"/meetings?id={MeetingId}");
+
+        ownMeetingResponse.StatusCode.Should().Be(
+            HttpStatusCode.OK);
+
+        var anotherMeetingResponse = await Client.GetAsync(
+            $"/meetings?id={anotherMeeting.Id}");
+
+        anotherMeetingResponse.StatusCode.Should().Be(
+            HttpStatusCode.Forbidden);
+
+        var allMeetingsResponse = await Client.GetAsync(
+            "/meetings");
+
+        allMeetingsResponse.StatusCode.Should().Be(
+            HttpStatusCode.Forbidden);
+    }
+
+    [Test]
+    public async Task TestConcurrentApprovalReturnsConflict()
+    {
+        await CreateTestMeeting();
+
+        var creationResponse =
+            await Client.PostAsJsonAsync(
+                $"/meetings/{MeetingId}/access-requests",
+                new CreateMeetingMemberAccessRequest(
+                    MemberId,
+                    null));
+
+        creationResponse.StatusCode.Should().Be(
+            HttpStatusCode.OK);
+
+        await LoginAdmin();
+
+        var pendingResponse = await Client.GetAsync(
+            $"/meetings/{MeetingId}/access-requests/pending");
+
+        pendingResponse.StatusCode.Should().Be(
+            HttpStatusCode.OK);
+
+        var pendingRequests =
+            await pendingResponse.Content.ReadFromJsonAsync<
+                List<PendingMeetingMemberAccessDto>>();
+
+        pendingRequests.Should().NotBeNull();
+        pendingRequests.Should().ContainSingle();
+
+        var accessId = pendingRequests!.Single().Id;
+
+        var endpoint =
+            $"/meetings/{MeetingId}/access-requests/" +
+            $"{accessId}/approve";
+
+        var firstApproval =
+            Client.PostAsync(endpoint, content: null);
+
+        var secondApproval =
+            Client.PostAsync(endpoint, content: null);
+
+        var responses = await Task.WhenAll(
+            firstApproval,
+            secondApproval);
+
+        var statusCodes = responses
+            .Select(response => response.StatusCode)
+            .ToList();
+
+        statusCodes.Should().ContainSingle(
+            status => status == HttpStatusCode.OK);
+
+        statusCodes.Should().ContainSingle(
+            status => status == HttpStatusCode.Conflict);
+
+        dbContext.ChangeTracker.Clear();
+
+        var savedAccess =
+            await MeetingMemberAccessRepository.GetById(
+                accessId);
+
+        savedAccess.Should().NotBeNull();
+        savedAccess!.Status.Should().Be(
+            MeetingMemberAccessStatus.Approved);
+    }
+
+    [Test]
+    public async Task TestConcurrentRevocationReturnsConflict()
+    {
+        await CreateTestMeeting();
+
+        var access =
+            await CreateApprovedMeetingAccess();
+
+        await LoginAdmin();
+
+        var endpoint =
+            $"/meetings/{MeetingId}/access-requests/" +
+            $"{access.Id}/revoke";
+
+        var firstRevocation =
+            Client.PostAsync(endpoint, content: null);
+
+        var secondRevocation =
+            Client.PostAsync(endpoint, content: null);
+
+        var responses = await Task.WhenAll(
+            firstRevocation,
+            secondRevocation);
+
+        var statusCodes = responses
+            .Select(response => response.StatusCode)
+            .ToList();
+
+        statusCodes.Should().ContainSingle(
+            status => status == HttpStatusCode.OK);
+
+        statusCodes.Should().ContainSingle(
+            status => status == HttpStatusCode.Conflict);
+
+        dbContext.ChangeTracker.Clear();
+
+        var savedAccess =
+            await MeetingMemberAccessRepository.GetById(
+                access.Id);
+
+        savedAccess.Should().NotBeNull();
+        savedAccess!.Status.Should().Be(
+            MeetingMemberAccessStatus.Revoked);
+    }
+
+    [Test]
+    public async Task TestConcurrentApprovalAndRejection()
+    {
+        await CreateTestMeeting();
+
+        const string memberName =
+            "Concurrent Decision Member";
+
+        var creationResponse =
+            await Client.PostAsJsonAsync(
+                $"/meetings/{MeetingId}/access-requests",
+                new CreateMeetingMemberAccessRequest(
+                    0,
+                    memberName));
+
+        creationResponse.StatusCode.Should().Be(
+            HttpStatusCode.OK);
+
+        await LoginAdmin();
+
+        var pendingResponse = await Client.GetAsync(
+            $"/meetings/{MeetingId}/access-requests/pending");
+
+        pendingResponse.StatusCode.Should().Be(
+            HttpStatusCode.OK);
+
+        var pendingRequests =
+            await pendingResponse.Content.ReadFromJsonAsync<
+                List<PendingMeetingMemberAccessDto>>();
+
+        pendingRequests.Should().NotBeNull();
+
+        var accessId = pendingRequests!
+            .Single(request =>
+                request.MemberName == memberName)
+            .Id;
+
+        var endpoint =
+            $"/meetings/{MeetingId}/access-requests/" +
+            $"{accessId}";
+
+        var approval =
+            Client.PostAsync(
+                $"{endpoint}/approve",
+                content: null);
+
+        var rejection =
+            Client.PostAsync(
+                $"{endpoint}/reject",
+                content: null);
+
+        var responses = await Task.WhenAll(
+            approval,
+            rejection);
+
+        var statusCodes = responses
+            .Select(response => response.StatusCode)
+            .ToList();
+
+        statusCodes.Should().ContainSingle(
+            status => status == HttpStatusCode.OK);
+
+        statusCodes.Should().ContainSingle(
+            status => status == HttpStatusCode.Conflict);
+
+        dbContext.ChangeTracker.Clear();
+
+        var savedAccess =
+            await MeetingMemberAccessRepository.GetById(
+                accessId);
+
+        savedAccess.Should().NotBeNull();
+
+        savedAccess!.Status.Should().BeOneOf(
+            MeetingMemberAccessStatus.Approved,
+            MeetingMemberAccessStatus.Rejected);
+    }
 }

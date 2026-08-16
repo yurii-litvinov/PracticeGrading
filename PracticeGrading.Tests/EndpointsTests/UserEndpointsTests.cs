@@ -3,6 +3,7 @@ using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.Data.Entities;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -265,6 +266,90 @@ public class UserEndpointsTests : TestBase
             .GetString();
 
         jwtToken.Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Test]
+    public async Task TestRevokedTrustedAccessInvalidatesIssuedJwt()
+    {
+        var member = await CreateMember();
+
+        var meeting =
+            await CreateMeetingWithoutMembers();
+
+        await LoginAdmin();
+
+        var issueResponse = await Client.PostAsync(
+            $"/members/{member.Id}/trusted-access",
+            content: null);
+
+        issueResponse.StatusCode.Should().Be(
+            HttpStatusCode.OK);
+
+        var issueJson =
+            await issueResponse.Content
+                .ReadFromJsonAsync<JsonElement>();
+
+        var trustedAccessToken = issueJson
+            .GetProperty("token")
+            .GetString();
+
+        trustedAccessToken.Should().NotBeNullOrWhiteSpace();
+
+        Client.DefaultRequestHeaders.Authorization = null;
+
+        using var loginRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/meetings/{meeting.Id}/trusted-login");
+
+        loginRequest.Headers.Add(
+            "X-Trusted-Access-Token",
+            trustedAccessToken);
+
+        var loginResponse =
+            await Client.SendAsync(loginRequest);
+
+        loginResponse.StatusCode.Should().Be(
+            HttpStatusCode.OK);
+
+        var loginJson =
+            await loginResponse.Content
+                .ReadFromJsonAsync<JsonElement>();
+
+        var memberJwt = loginJson
+            .GetProperty("token")
+            .GetString();
+
+        memberJwt.Should().NotBeNullOrWhiteSpace();
+
+        Client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                memberJwt);
+
+        var responseBeforeRevocation = await Client.GetAsync(
+            $"/meetings/{meeting.Id}/access-requests/pending");
+
+        responseBeforeRevocation.StatusCode.Should().Be(
+            HttpStatusCode.OK);
+
+        await LoginAdmin();
+
+        var revokeResponse = await Client.DeleteAsync(
+            $"/members/{member.Id}/trusted-access");
+
+        revokeResponse.StatusCode.Should().Be(
+            HttpStatusCode.NoContent);
+
+        Client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                memberJwt);
+
+        var responseAfterRevocation = await Client.GetAsync(
+            $"/meetings/{meeting.Id}/access-requests/pending");
+
+        responseAfterRevocation.StatusCode.Should().Be(
+            HttpStatusCode.Forbidden);
     }
 
     [Test]

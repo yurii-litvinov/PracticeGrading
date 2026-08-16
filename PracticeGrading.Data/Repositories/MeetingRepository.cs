@@ -69,6 +69,54 @@ public class MeetingRepository(AppDbContext context)
     }
 
     /// <summary>
+    /// Adds a commission member to a meeting if the relationship
+    /// does not already exist.
+    /// </summary>
+    /// <param name="meetingId">Meeting identifier.</param>
+    /// <param name="memberId">Commission member identifier.</param>
+    /// <returns>
+    /// A task representing the asynchronous operation.
+    /// </returns>
+    public async Task AddMemberIfMissing(
+        int meetingId,
+        int memberId)
+    {
+        if (context.Database.IsRelational())
+        {
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"""
+             INSERT INTO "MeetingUser" (
+                 "MeetingsId",
+                 "MembersId"
+             )
+             VALUES (
+                 {meetingId},
+                 {memberId}
+             )
+             ON CONFLICT ON CONSTRAINT "PK_MeetingUser"
+             DO NOTHING;
+             """);
+
+            return;
+        }
+
+        var meeting = await this.GetById(meetingId)
+            ?? throw new InvalidOperationException(
+                $"Meeting with ID {meetingId} was not found.");
+
+        var member = await context.Users.FindAsync(memberId)
+            ?? throw new InvalidOperationException(
+                $"Member with ID {memberId} was not found.");
+
+        if (meeting.Members.All(existingMember =>
+            existingMember.Id != memberId))
+        {
+            meeting.Members.Add(member);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    /// <summary>
     /// Removes a user from a specific meeting.
     /// </summary>
     /// <param name="meetingId">The ID of the meeting to remove the user from.</param>

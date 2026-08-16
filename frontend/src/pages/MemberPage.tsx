@@ -145,7 +145,10 @@ export function MemberPage() {
 
     return (
         <>
-            <div className="d-flex flex-column p-2">
+            <div
+                className="d-flex flex-column p-2"
+                data-testid="member-meeting-page"
+            >
                 <div className="d-flex mb-2 align-items-center">
                     <label className="me-3 fw-bold text-end label-custom">
                         Дата и время

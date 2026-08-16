@@ -10,12 +10,12 @@ type ActivationState =
 export function TrustedAccessActivationPage() {
     const [activationToken] = useState(
         () => {
-            const searchParameters =
+            const hashParameters =
                 new URLSearchParams(
-                    window.location.search,
+                    window.location.hash.slice(1),
                 );
 
-            return searchParameters.get('token');
+            return hashParameters.get('token');
         },
     );
 

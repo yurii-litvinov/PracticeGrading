@@ -5,14 +5,13 @@
 
 namespace PracticeGrading.API.Endpoints;
 
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using NPOI.OpenXmlFormats.Dml;
 using PracticeGrading.API.Auth;
 using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data.Entities;
-using System.Security.Claims;
 
 /// <summary>
 /// Contains endpoints for meeting member access requests.

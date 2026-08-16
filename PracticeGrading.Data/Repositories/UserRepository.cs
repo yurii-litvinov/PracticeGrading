@@ -49,8 +49,12 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
     public async Task<User[]> SearchMembersByNameAsync(string searchName, int offset, int limit)
     {
         return await context.Users
-            .Where(u => u.UserName.ToLower().Contains(searchName.ToLower().Trim()) && u.RoleId == 2)
-            .OrderBy(u => u.UserName)
+            .Include(user => user.TrustedMemberAccess)
+            .Where(user =>
+                user.UserName.ToLower().Contains(
+                    searchName.ToLower().Trim()) &&
+                user.RoleId == 2)
+            .OrderBy(user => user.UserName)
             .Skip(offset)
             .Take(limit)
             .ToArrayAsync();

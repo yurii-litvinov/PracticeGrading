@@ -71,6 +71,9 @@ export default function Members() {
                 isLoading={isModalRequestLoading}
                 onSave={handleEditMember}
                 onDelete={handleDeleteMember}
+                onTrustedAccessChanged={() =>
+                    setReloadKey(previous => previous + 1)
+                }
             >
 
             </MemberModal>

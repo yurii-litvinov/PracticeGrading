@@ -234,13 +234,20 @@ public class UserService(UserRepository userRepository, JwtService jwtService)
     /// <returns>A MemberDto containing the user's data.</returns>
     internal static MemberDto GetMemberDtoFromUser(User user)
     {
+        var hasActiveTrustedAccess =
+            user.TrustedMemberAccess is
+            {
+                RevokedAt: null,
+            };
+
         return new MemberDto(
             Id: user.Id,
             Name: user.UserName,
             Email: user.Email,
             Phone: user.Phone,
             InformationRu: user.InformationRu,
-            InformationEn: user.InformationEn);
+            InformationEn: user.InformationEn,
+            HasActiveTrustedAccess: hasActiveTrustedAccess);
     }
 
     /// <summary>

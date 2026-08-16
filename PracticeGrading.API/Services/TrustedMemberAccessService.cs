@@ -206,14 +206,9 @@ public class TrustedMemberAccessService(
             ?? throw new KeyNotFoundException(
                 $"Meeting with ID {meetingId} was not found.");
 
-        meeting.Members ??= [];
-
-        if (meeting.Members.All(existingMember =>
-            existingMember.Id != trustedMember.Id))
-        {
-            meeting.Members.Add(trustedMember);
-            await meetingRepository.Update(meeting);
-        }
+        await meetingRepository.AddMemberIfMissing(
+            meeting.Id,
+            trustedMember.Id);
 
         return jwtService.GenerateToken(
             trustedMember,

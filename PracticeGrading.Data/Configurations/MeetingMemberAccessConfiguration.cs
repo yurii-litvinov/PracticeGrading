@@ -33,7 +33,8 @@ public class MeetingMemberAccessConfiguration
         builder.Property(access => access.Status)
             .HasConversion<int>()
             .HasDefaultValue(
-                MeetingMemberAccessStatus.Pending);
+                MeetingMemberAccessStatus.Pending)
+            .IsConcurrencyToken();
 
         builder.HasIndex(access => access.TokenHash)
             .IsUnique();

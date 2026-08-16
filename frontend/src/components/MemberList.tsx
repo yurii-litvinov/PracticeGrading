@@ -1,19 +1,25 @@
-import { Member } from "../models/Member";
-import { useState } from "react";
+import { Member } from '../models/Member';
+import { useState } from 'react';
 
 interface MemberListProps {
-    members: Member[],
-    isLoading?: boolean,
-    hasMore?: boolean,
+    members: Member[];
+    isLoading?: boolean;
+    hasMore?: boolean;
     onLoadMore?: () => void;
 
-    clickable?: boolean
+    clickable?: boolean;
     onMemberClick?: (member: Member) => void;
 
-    removable?: boolean,
-    onMemberRemove?: (id: number | undefined) => void;
+    removable?: boolean;
+    onMemberRemove?: (
+        id: number | undefined,
+    ) => void;
 
-    maxHeight?: string | number | 'unlimited';
+    maxHeight?:
+        | string
+        | number
+        | 'unlimited';
+
     showLoadMore?: boolean;
 }
 
@@ -32,9 +38,14 @@ export function MemberList({
     maxHeight = '300px',
     showLoadMore = true,
 }: MemberListProps) {
-    const [hoveredMemberId, setHoveredMemberId] = useState<number | null>(null);
+    const [
+        hoveredMemberId,
+        setHoveredMemberId,
+    ] = useState<number | null>(null);
 
-    const getInitials = (name: string): string => {
+    const getInitials = (
+        name: string,
+    ): string => {
         return name
             .split(' ')
             .map(part => part[0])
@@ -43,92 +54,251 @@ export function MemberList({
             .toUpperCase();
     };
 
-    const getAvatarColor = (id: number): string => {
-        const colors = ['#0d6efd', '#198754', '#dc3545', '#6f42c1', '#fd7e14'];
+    const getAvatarColor = (
+        id: number,
+    ): string => {
+        const colors = [
+            '#0d6efd',
+            '#198754',
+            '#dc3545',
+            '#6f42c1',
+            '#fd7e14',
+        ];
+
         return colors[id % colors.length];
     };
 
-    const handleMemberClick = (member: Member, e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!isLoading && clickable && onMemberClick) {
+    const handleMemberClick = (
+        member: Member,
+        event: React.MouseEvent,
+    ) => {
+        event.stopPropagation();
+
+        if (
+            !isLoading &&
+            clickable &&
+            onMemberClick
+        ) {
             onMemberClick(member);
         }
     };
 
-    const handleRemoveClick = (member: Member, e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!isLoading && removable && onMemberRemove) {
+    const handleRemoveClick = (
+        member: Member,
+        event: React.MouseEvent,
+    ) => {
+        event.stopPropagation();
+
+        if (
+            !isLoading &&
+            removable &&
+            onMemberRemove
+        ) {
             onMemberRemove(member.id);
         }
     };
 
-    if (isLoading && members.length === 0) {
+    if (
+        isLoading &&
+        members.length === 0
+    ) {
         return (
             <div className="text-center py-5">
-                <div className="spinner-border text-primary"></div>
-                <p className="mt-3">Загрузка...</p>
+                <div
+                    className={
+                        'spinner-border ' +
+                        'text-primary'
+                    }
+                />
+
+                <p className="mt-3">
+                    Загрузка...
+                </p>
             </div>
         );
     }
 
     if (members.length === 0) {
         return (
-            <div className="text-center py-5 text-muted">
+            <div
+                className={
+                    'text-center py-5 ' +
+                    'text-muted'
+                }
+            >
                 Нет членов комиссии
             </div>
         );
     }
 
-    const containerStyle = maxHeight === 'unlimited'
-        ? {}
-        : { maxHeight, overflowY: 'auto' as const };
+    const containerStyle =
+        maxHeight === 'unlimited'
+            ? {}
+            : {
+                maxHeight,
+                overflowY: 'auto' as const,
+            };
 
     return (
         <div className="member-list">
             <div style={containerStyle}>
                 {members.map(member => {
-                    const isHovered = hoveredMemberId === member.id;
+                    const isHovered =
+                        hoveredMemberId ===
+                        member.id;
 
                     return (
                         <div
                             key={member.id}
-                            className={`card mb-2 ${clickable ? 'cursor-pointer' : ''} ${isHovered && clickable ? 'border-primary shadow-sm' : ''
-                                }`}
-                            onClick={(e) => handleMemberClick(member, e)}
-                            onMouseEnter={() => clickable && setHoveredMemberId(member.id!)}
-                            onMouseLeave={() => clickable && setHoveredMemberId(null)}
+                            className={
+                                `card mb-2 ` +
+                                `${
+                                    clickable
+                                        ? 'cursor-pointer'
+                                        : ''
+                                } ` +
+                                `${
+                                    isHovered &&
+                                    clickable
+                                        ? 'border-primary shadow-sm'
+                                        : ''
+                                }`
+                            }
+                            onClick={event =>
+                                handleMemberClick(
+                                    member,
+                                    event,
+                                )
+                            }
+                            onMouseEnter={() => {
+                                if (clickable) {
+                                    setHoveredMemberId(
+                                        member.id!,
+                                    );
+                                }
+                            }}
+                            onMouseLeave={() => {
+                                if (clickable) {
+                                    setHoveredMemberId(
+                                        null,
+                                    );
+                                }
+                            }}
                             style={{
-                                cursor: clickable ? 'pointer' : 'default',
-                                transition: 'all 0.2s ease',
-                                transform: isHovered && clickable ? 'translateY(-1px)' : 'none',
-                                borderLeft: isHovered && clickable ? '4px solid #0d6efd' : 'none'
+                                cursor: clickable
+                                    ? 'pointer'
+                                    : 'default',
+
+                                transition:
+                                    'all 0.2s ease',
+
+                                transform:
+                                    isHovered &&
+                                    clickable
+                                        ? 'translateY(-1px)'
+                                        : 'none',
+
+                                borderLeft:
+                                    isHovered &&
+                                    clickable
+                                        ? '4px solid #0d6efd'
+                                        : 'none',
                             }}
                         >
-                            <div className="card-body py-2 d-flex align-items-center justify-content-between">
-                                <div className="d-flex align-items-center">
+                            <div
+                                className={
+                                    'card-body py-2 ' +
+                                    'd-flex ' +
+                                    'align-items-center ' +
+                                    'justify-content-between'
+                                }
+                            >
+                                <div
+                                    className={
+                                        'd-flex ' +
+                                        'align-items-center'
+                                    }
+                                >
                                     <div
-                                        className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                                        className={
+                                            'rounded-circle ' +
+                                            'd-flex ' +
+                                            'align-items-center ' +
+                                            'justify-content-center ' +
+                                            'me-3'
+                                        }
                                         style={{
                                             width: '32px',
                                             height: '32px',
                                             fontSize: '12px',
                                             color: 'white',
-                                            fontWeight: 'bold',
-                                            backgroundColor: getAvatarColor(member.id!),
-                                            transition: 'all 0.2s ease',
-                                            transform: isHovered && clickable ? 'scale(1.1)' : 'scale(1)'
+                                            fontWeight:
+                                                'bold',
+
+                                            backgroundColor:
+                                                getAvatarColor(
+                                                    member.id!,
+                                                ),
+
+                                            transition:
+                                                'all 0.2s ease',
+
+                                            transform:
+                                                isHovered &&
+                                                clickable
+                                                    ? 'scale(1.1)'
+                                                    : 'scale(1)',
                                         }}
                                     >
-                                        {getInitials(member.name)}
+                                        {getInitials(
+                                            member.name,
+                                        )}
                                     </div>
 
                                     <div>
-                                        <h6 className={`card-title mb-0 ${isHovered && clickable ? 'text-primary' : ''}`}>
-                                            {member.name}
-                                        </h6>
+                                        <div
+                                            className={
+                                                'd-flex ' +
+                                                'align-items-center'
+                                            }
+                                        >
+                                            <h6
+                                                className={
+                                                    `card-title mb-0 ` +
+                                                    `${
+                                                        isHovered &&
+                                                        clickable
+                                                            ? 'text-primary'
+                                                            : ''
+                                                    }`
+                                                }
+                                            >
+                                                {
+                                                    member.name
+                                                }
+                                            </h6>
+                                            {member.hasActiveTrustedAccess && (
+                                            <i
+                                                className="bi bi-shield-fill-check text-success ms-2"
+                                                title="Доверенный доступ активен"
+                                                aria-label="Доверенный доступ активен"
+                                                data-testid={`trusted-access-icon-${member.id}`}
+                                            />
+                                        )}
+                                        </div>
+
                                         {member.email && (
-                                            <small className={`${isHovered && clickable ? 'text-primary' : 'text-muted'}`}>
-                                                {member.email}
+                                            <small
+                                                className={
+                                                    isHovered &&
+                                                    clickable
+                                                        ? 'text-primary'
+                                                        : 'text-muted'
+                                                }
+                                            >
+                                                {
+                                                    member.email
+                                                }
                                             </small>
                                         )}
                                     </div>
@@ -137,15 +307,30 @@ export function MemberList({
                                 {removable && (
                                     <button
                                         type="button"
-                                        className="btn btn-outline-danger btn-sm"
-                                        onClick={(e) => handleRemoveClick(member, e)}
+                                        className={
+                                            'btn ' +
+                                            'btn-outline-danger ' +
+                                            'btn-sm'
+                                        }
+                                        onClick={event =>
+                                            handleRemoveClick(
+                                                member,
+                                                event,
+                                            )
+                                        }
                                         title="Удалить"
                                         style={{
                                             width: '30px',
                                             height: '30px',
                                             padding: 0,
-                                            opacity: isHovered ? 1 : 0.7,
-                                            transition: 'opacity 0.2s ease'
+
+                                            opacity:
+                                                isHovered
+                                                    ? 1
+                                                    : 0.7,
+
+                                            transition:
+                                                'opacity 0.2s ease',
                                         }}
                                     >
                                         ×
@@ -157,29 +342,47 @@ export function MemberList({
                 })}
             </div>
 
-            {showLoadMore && hasMore && onLoadMore && (
-                <div className="text-center mt-3">
-                    <button
-                        className="btn btn-outline-primary btn-sm"
-                        onClick={onLoadMore}
-                        disabled={isLoading}
+            {showLoadMore &&
+                hasMore &&
+                onLoadMore && (
+                    <div
+                        className={
+                            'text-center mt-3'
+                        }
                     >
-                        {isLoading ? (
-                            <>
-                                <span className="spinner-border spinner-border-sm me-2"></span>
-                                Загрузка...
-                            </>
-                        ) : (
-                            'Показать еще'
-                        )}
-                    </button>
-                </div>
-            )}
+                        <button
+                            className={
+                                'btn ' +
+                                'btn-outline-primary ' +
+                                'btn-sm'
+                            }
+                            onClick={onLoadMore}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? (
+                                <>
+                                    <span
+                                        className={
+                                            'spinner-border ' +
+                                            'spinner-border-sm ' +
+                                            'me-2'
+                                        }
+                                    />
+
+                                    Загрузка...
+                                </>
+                            ) : (
+                                'Показать еще'
+                            )}
+                        </button>
+                    </div>
+                )}
 
             <style>{`
                 .cursor-pointer:hover {
                     transition: all 0.2s ease;
                 }
+
                 .card {
                     transition: all 0.2s ease;
                 }
