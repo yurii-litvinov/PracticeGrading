@@ -6,6 +6,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      HOST: localhost
+      E2E_API_URL: http://localhost:5001
+
     steps:
       - uses: actions/checkout@v4
 

@@ -128,18 +128,35 @@ const createCriteria = async (page: Page, name: string, comment: string) => {
     await expect(getCriteriaCard(page, name)).toHaveCount(1);
 };
 
-const deleteCriteriaIfExists = async (page: Page, criteriaName: string) => {
+const deleteCriteriaIfExists = async (
+    page: Page,
+    criteriaName: string,
+) => {
     await page.goto(`${BASENAME}/criteria`);
 
-    const criteriaCard = getCriteriaCard(page, criteriaName);
+    await page
+        .getByRole('tab', {
+            name: 'Все критерии',
+            exact: true,
+        })
+        .click();
 
-    if ((await criteriaCard.count()) === 0) {
+    const criteriaCard =
+        getCriteriaCard(page, criteriaName);
+
+    if (await criteriaCard.count() === 0) {
         return;
     }
 
-    await expect(criteriaCard).toHaveCount(1);
+    await expect(criteriaCard).toBeVisible();
 
-    await criteriaCard.locator("#delete-criteria").click();
+    page.once('dialog', async dialog => {
+        await dialog.accept();
+    });
+
+    await criteriaCard
+        .locator('#delete-criteria')
+        .click();
 
     await expect(criteriaCard).toHaveCount(0);
 };

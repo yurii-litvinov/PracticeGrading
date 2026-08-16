@@ -244,12 +244,12 @@ const createMeeting = async (
     await memberOption.click();
 
     const criteriaGroup = page
-        .locator(
-            'input[name^="criteria-"] + label',
-        )
-        .first();
+        .locator('input[name^="criteria-"] + label')
+        .filter({
+            hasText: 'Критерии для учебных практик',
+        });
 
-    await expect(criteriaGroup).toBeVisible();
+    await expect(criteriaGroup).toHaveCount(1);
     await criteriaGroup.click();
 
     await page
@@ -685,17 +685,13 @@ test(
                     await expect(myMarkCard)
                         .toBeVisible();
 
-                    const scaleRules = myMarkCard
-                        .locator('input[type="radio"]');
+                    const firstScaleRule = myMarkCard
+                        .locator('input[type="radio"]')
+                        .first();
 
-                    const scaleRuleCount =
-                        await scaleRules.count();
-
-                    expect(scaleRuleCount)
-                        .toBeGreaterThan(0);
-
-                    const firstScaleRule =
-                        scaleRules.first();
+                    await expect(firstScaleRule).toBeVisible({
+                        timeout: 15_000,
+                    });
 
                     const markCreationResponsePromise =
                         memberPage.waitForResponse(
