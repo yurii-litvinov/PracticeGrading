@@ -36,6 +36,7 @@ axiosService.interceptors.response.use(
         const requestUrl = error.config?.url ?? '';
 
         const isAccessAuthenticationRequest =
+            requestUrl === "login" ||
             requestUrl.includes('trusted-login') ||
             requestUrl.includes('member-login') ||
             requestUrl.includes('access-requests/status') ||

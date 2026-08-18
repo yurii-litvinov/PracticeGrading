@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ru } from 'date-fns/locale/ru';
@@ -17,6 +17,7 @@ import { MemberList } from '../components/MemberList';
 registerLocale('ru', ru);
 
 export function MeetingFormPage() {
+    const navigate = useNavigate();
     const { id } = useParams();
     const [workToEditIndex, setWorkToEditIndex] = useState<number | null>();
     const [criteriaGroups, setCriteriaGroups] = useState<CriteriaGroup[]>();
@@ -94,13 +95,13 @@ export function MeetingFormPage() {
 
             if (response.status === 200) {
                 await signalRService.current?.sendNotification(Actions.Update);
-                window.history.back();
+                navigate("/meetings");
             }
         } else {
             const response = await createMeeting(meeting);
 
             if (response.status === 200) {
-                window.history.back();
+                navigate("/meetings");
             }
         }
     }

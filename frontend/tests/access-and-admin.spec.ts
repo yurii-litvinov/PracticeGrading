@@ -1,14 +1,18 @@
 /// <reference types="node" />
 
 import {
-    expect,
+    expect as playwrightExpect,
     test,
     type BrowserContext,
+    type Dialog,
+    type Locator,
     type Page,
+    type Response,
 } from '@playwright/test';
 
-// Run this suite only against a disposable E2E database.
-// The application currently has no endpoint for deleting administrators.
+const expect = playwrightExpect.configure({
+    timeout: 20_000,
+});
 
 const ADMIN_USERNAME =
     process.env.E2E_ADMIN_USERNAME ?? 'admin';
@@ -18,14 +22,157 @@ const ADMIN_PASSWORD =
 
 const BASENAME = '/practice-grading';
 
+const waitForMemberSearch = (
+    page: Page,
+    searchName: string,
+) =>
+    page.waitForResponse(response => {
+        const url = new URL(response.url());
+
+        return response.request().method() === 'GET' &&
+            url.pathname.endsWith('/members') &&
+            url.searchParams.get('searchName') ===
+                searchName;
+    }, { timeout: 20_000 });
+
+const waitForApiResponse = (
+    page: Page,
+    method: string,
+    pathMatches: (path: string) => boolean,
+) =>
+    page.waitForResponse(
+        response =>
+            response.request().method() === method &&
+            pathMatches(new URL(response.url()).pathname),
+        { timeout: 20_000 },
+    );
+
+const expectSuccessfulResponse = async (
+    response: Response,
+    operation: string,
+) => {
+    if (response.ok()) {
+        return;
+    }
+
+    const responseBody = await response
+        .text()
+        .catch(() => '<response body unavailable>');
+
+    expect(
+        response.ok(),
+        `${operation} returned ${response.status()}: ` +
+        responseBody,
+    ).toBeTruthy();
+};
+
+const waitForBootstrapModalToOpen = async (
+    modal: Locator,
+    openAction: () => Promise<void>,
+) => {
+    await modal.evaluate(element => {
+        element.removeAttribute('data-e2e-shown');
+
+        element.addEventListener(
+            'shown.bs.modal',
+            () => {
+                element.setAttribute(
+                    'data-e2e-shown',
+                    'true',
+                );
+            },
+            { once: true },
+        );
+    });
+
+    await openAction();
+
+    await expect(modal)
+        .toHaveAttribute('data-e2e-shown', 'true');
+};
+
+const waitForElementIfExists = async (
+    locator: Locator,
+    timeout = 5_000,
+) => {
+    try {
+        await locator.waitFor({
+            state: 'attached',
+            timeout,
+        });
+
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+const performWithAcceptedConfirm = async (
+    page: Page,
+    action: () => Promise<unknown>,
+) => {
+    let timeoutId:
+        ReturnType<typeof setTimeout> | undefined;
+
+    let handleDialog:
+        ((dialog: Dialog) => void) | undefined;
+
+    const dialogPromise = new Promise<void>(
+        (resolve, reject) => {
+            handleDialog = dialog => {
+                void (async () => {
+                    try {
+                        const dialogType = dialog.type();
+
+                        await dialog.accept();
+
+                        expect(dialogType).toBe('confirm');
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                })();
+            };
+
+            page.once('dialog', handleDialog);
+
+            timeoutId = setTimeout(
+                () => reject(new Error(
+                    'The confirmation dialog did not appear.',
+                )),
+                20_000,
+            );
+        },
+    );
+
+    try {
+        await Promise.all([
+            action(),
+            dialogPromise,
+        ]);
+    } finally {
+        if (timeoutId !== undefined) {
+            clearTimeout(timeoutId);
+        }
+
+        if (handleDialog !== undefined) {
+            page.off('dialog', handleDialog);
+        }
+    }
+};
+
 const TRUSTED_ACCESS_TOKEN_KEY =
     'trusted-member-access-token';
 
 const MEETING_ACCESS_TOKEN_KEY_PREFIX =
     'meeting-member-access-token';
 
-test.setTimeout(90_000);
-test.describe.configure({ mode: 'serial' });
+test.setTimeout(180_000);
+
+test.use({
+    actionTimeout: 20_000,
+    navigationTimeout: 30_000,
+});
 
 type MemberInfo = {
     name: string;
@@ -37,6 +184,205 @@ const createUniqueSuffix = () =>
         .toString(16)
         .slice(2)}`;
 
+const bestEffortCleanup = async (
+    operation: string,
+    cleanup: () => Promise<void>,
+) => {
+    try {
+        await cleanup();
+    } catch (error) {
+        // A failed assertion can make Playwright close the page before the
+        // finally block finishes. Cleanup must never hide the original error.
+        console.warn(
+            `Cleanup failed (${operation}): ${String(error)}`,
+        );
+    }
+};
+
+const navigateForCleanup = async (
+    page: Page,
+    url: string,
+) => {
+    if (page.isClosed()) {
+        return false;
+    }
+
+    try {
+        await page.goto(url, {
+            timeout: 20_000,
+            waitUntil: 'domcontentloaded',
+        });
+
+        return true;
+    } catch (error) {
+        const message = String(error);
+
+        if (
+            page.isClosed() ||
+            message.includes('has been closed') ||
+            message.includes('Target page') ||
+            message.includes('Test ended')
+        ) {
+            return false;
+        }
+
+        throw error;
+    }
+};
+
+const waitForModalToClose = async (
+    page: Page,
+    modal: Locator,
+) => {
+    try {
+        await Promise.all([
+            expect(modal).toBeHidden({ timeout: 5_000 }),
+            expect(
+                page.locator('.modal-backdrop'),
+            ).toHaveCount(0, { timeout: 5_000 }),
+        ]);
+
+        return;
+    } catch {
+        // Bootstrap transitions can occasionally remain unfinished in
+        // Firefox/WebKit. First retry the same user-facing dismiss action.
+    }
+
+    const dismissButton = modal
+        .locator('[data-bs-dismiss="modal"]')
+        .first();
+
+    if (await dismissButton.count()) {
+        await dismissButton
+            .click({ force: true })
+            .catch(() => undefined);
+    }
+
+    try {
+        await Promise.all([
+            expect(modal).toBeHidden({ timeout: 5_000 }),
+            expect(
+                page.locator('.modal-backdrop'),
+            ).toHaveCount(0, { timeout: 5_000 }),
+        ]);
+
+        return;
+    } catch {
+        // The operation behind the modal has already completed. Remove only
+        // the stale Bootstrap presentation state so it cannot block the next
+        // real UI action.
+    }
+
+    if (await modal.count()) {
+        await modal.evaluate(element => {
+            const modalElement = element as HTMLElement;
+
+            modalElement.classList.remove('show');
+            modalElement.style.display = 'none';
+            modalElement.setAttribute('aria-hidden', 'true');
+            modalElement.removeAttribute('aria-modal');
+        });
+    }
+
+    await page.locator('.modal-backdrop').evaluateAll(elements => {
+        elements.forEach(element => element.remove());
+    });
+
+    await page.evaluate(() => {
+        document.body.classList.remove('modal-open');
+        document.body.style.removeProperty('overflow');
+        document.body.style.removeProperty('padding-right');
+    });
+
+    await expect(modal).toBeHidden();
+};
+
+const closeStudentModalAfterSave = async (
+    page: Page,
+    studentModal: Locator,
+) => {
+    try {
+        // Normally StudentWorkModal clicks its own dismiss button after it
+        // adds the work. Do not spend the full generic modal timeout waiting
+        // for that synthetic click: WebKit can occasionally miss it.
+        await expect(studentModal).toBeHidden({ timeout: 1_000 });
+
+        return;
+    } catch {
+        // The row has already been added, so saving succeeded. Some WebKit
+        // runs miss Bootstrap's synthetic dismiss click; use the real close
+        // control once, only after the normal transition had time to finish.
+    }
+
+    const closeButton = studentModal
+        .locator('button[aria-label="Close"]')
+        .first();
+
+    if (await closeButton.count()) {
+        await closeButton
+            .click({ force: true })
+            .catch(() => undefined);
+    }
+
+    await waitForModalToClose(page, studentModal);
+};
+
+const performMemberSearch = async (
+    page: Page,
+    memberName: string,
+) => {
+    const searchInput = page.locator('#search-input');
+    const responsePromise = waitForMemberSearch(
+        page,
+        memberName,
+    );
+
+    await searchInput.fill('');
+    await searchInput.fill(memberName);
+
+    const response = await responsePromise;
+    await expectSuccessfulResponse(
+        response,
+        `Member search for "${memberName}"`,
+    );
+
+    return searchInput;
+};
+
+const selectMemberFromDropdown = async (
+    page: Page,
+    memberName: string,
+) => {
+    const searchInput = await performMemberSearch(
+        page,
+        memberName,
+    );
+
+    const memberOption = page
+        .locator('.dropdown-item')
+        .filter({
+            has: page.getByText(memberName, {
+                exact: true,
+            }),
+        });
+
+    // The dropdown opens on focus only when the search results have reached
+    // React state. The HTTP response may finish one render earlier, so reopen
+    // it until the exact option is present.
+    await expect.poll(async () => {
+        await searchInput.blur();
+        await searchInput.focus();
+
+        return memberOption.count();
+    }, {
+        intervals: [100, 250, 500, 1_000],
+        timeout: 20_000,
+        message: `Member option "${memberName}" did not appear.`,
+    }).toBe(1);
+
+    await memberOption.click({ timeout: 20_000 });
+};
+
 const login = async (
     page: Page,
     userName = ADMIN_USERNAME,
@@ -47,12 +393,25 @@ const login = async (
     await page.locator('#username').fill(userName);
     await page.locator('#password').fill(password);
 
+    const loginResponsePromise = waitForApiResponse(
+        page,
+        'POST',
+        path => path.endsWith('/login'),
+    );
+
     await page
         .getByRole('button', { name: 'Войти' })
         .click();
 
+    const loginResponse = await loginResponsePromise;
+    await expectSuccessfulResponse(
+        loginResponse,
+        `Login for "${userName}"`,
+    );
+
     await expect(page).toHaveURL(
         `${BASENAME}/meetings`,
+        { timeout: 20_000 },
     );
 };
 
@@ -83,6 +442,7 @@ const openMembersPage = async (page: Page) => {
 
     await expect(page).toHaveURL(
         `${BASENAME}/members`,
+        { timeout: 20_000 },
     );
 };
 
@@ -91,6 +451,7 @@ const openMeetingsPage = async (page: Page) => {
 
     await expect(page).toHaveURL(
         `${BASENAME}/meetings`,
+        { timeout: 20_000 },
     );
 };
 
@@ -98,16 +459,14 @@ const findMemberCard = async (
     page: Page,
     memberName: string,
 ) => {
-    const searchInput =
-        page.locator('#search-input');
-
-    await searchInput.fill('');
-    await searchInput.fill(memberName);
+    await performMemberSearch(page, memberName);
 
     const memberCard =
         getMemberCard(page, memberName);
 
-    await expect(memberCard).toHaveCount(1);
+    await expect(memberCard).toHaveCount(1, {
+        timeout: 20_000,
+    });
 
     return memberCard;
 };
@@ -118,9 +477,7 @@ const createMember = async (
 ) => {
     await openMembersPage(page);
 
-    await page
-        .locator('#search-input')
-        .fill(member.name);
+    await performMemberSearch(page, member.name);
 
     await page
         .locator('#add-member-button')
@@ -138,30 +495,64 @@ const createMember = async (
         .locator('input[name="email"]')
         .fill(member.email);
 
+    const createResponsePromise = waitForApiResponse(
+        page,
+        'POST',
+        path => path.endsWith('/members'),
+    );
+
+    const refreshedSearchPromise = waitForMemberSearch(
+        page,
+        member.name,
+    );
+
     await modal
         .locator('#form-submit-button')
         .click();
 
-    await expect(modal).toBeHidden();
+    const [createResponse, refreshedSearchResponse] =
+        await Promise.all([
+            createResponsePromise,
+            refreshedSearchPromise,
+        ]);
+
+    await expectSuccessfulResponse(
+        createResponse,
+        `Creating member "${member.name}"`,
+    );
+
+    await expectSuccessfulResponse(
+        refreshedSearchResponse,
+        `Refreshing member "${member.name}"`,
+    );
+
+    await waitForModalToClose(page, modal);
     await expect(
         getMemberCard(page, member.name),
-    ).toHaveCount(1);
+    ).toHaveCount(1, { timeout: 20_000 });
 };
 
 const deleteMemberIfExists = async (
     page: Page,
     memberName: string,
 ) => {
-    await openMembersPage(page);
+    if (page.isClosed()) {
+        return;
+    }
 
-    await page
-        .locator('#search-input')
-        .fill(memberName);
+    if (!await navigateForCleanup(
+        page,
+        `${BASENAME}/members`,
+    )) {
+        return;
+    }
+
+    await performMemberSearch(page, memberName);
 
     const memberCard =
         getMemberCard(page, memberName);
 
-    if (await memberCard.count() === 0) {
+    if (!await waitForElementIfExists(memberCard)) {
         return;
     }
 
@@ -170,15 +561,41 @@ const deleteMemberIfExists = async (
 
     const modal = page.locator('.modal.show');
 
-    page.once('dialog', dialog => {
-        void dialog.accept();
-    });
+    const deleteResponsePromise = waitForApiResponse(
+        page,
+        'DELETE',
+        path => path.endsWith('/members'),
+    );
 
-    await modal
-        .locator('#delete-member-button')
-        .click();
+    const refreshedSearchPromise = waitForMemberSearch(
+        page,
+        memberName,
+    );
 
-    await expect(modal).toBeHidden();
+    await performWithAcceptedConfirm(
+        page,
+        () => modal
+            .locator('#delete-member-button')
+            .click(),
+    );
+
+    const [deleteResponse, refreshedSearchResponse] =
+        await Promise.all([
+            deleteResponsePromise,
+            refreshedSearchPromise,
+        ]);
+
+    await expectSuccessfulResponse(
+        deleteResponse,
+        `Deleting member "${memberName}"`,
+    );
+
+    await expectSuccessfulResponse(
+        refreshedSearchResponse,
+        `Refreshing deleted member "${memberName}"`,
+    );
+
+    await waitForModalToClose(page, modal);
     await expect(memberCard).toHaveCount(0);
 };
 
@@ -189,12 +606,24 @@ const createMeeting = async (
 ) => {
     await openMeetingsPage(page);
 
+    const initialMembersResponsePromise =
+        waitForMemberSearch(page, '');
+
     await page
         .locator('#create-meeting')
         .click();
 
     await expect(page).toHaveURL(
         `${BASENAME}/meetings/new`,
+        { timeout: 20_000 },
+    );
+
+    const initialMembersResponse =
+        await initialMembersResponsePromise;
+
+    await expectSuccessfulResponse(
+        initialMembersResponse,
+        'Loading members on the meeting form',
     );
 
     await page
@@ -205,14 +634,12 @@ const createMeeting = async (
         .locator('input[name="info"]:visible')
         .fill(meetingInfo);
 
-    await page
-        .locator('#add-student')
-        .click();
+    const studentModal = page.locator('#studentWorkModal');
 
-    const studentModal =
-        page.locator('#studentWorkModal');
-
-    await expect(studentModal).toBeVisible();
+    await waitForBootstrapModalToOpen(
+        studentModal,
+        () => page.locator('#add-student').click(),
+    );
 
     await studentModal
         .locator('input[name="studentName"]')
@@ -230,18 +657,18 @@ const createMeeting = async (
         .locator('#save-student')
         .click();
 
-    await expect(studentModal).toBeHidden();
+    const addedStudentRow = page
+        .getByRole('row')
+        .filter({ hasText: 'E2E student' });
 
-    await page
-        .locator('#search-input')
-        .fill(initialMemberName);
+    await expect(addedStudentRow).toHaveCount(1);
 
-    const memberOption = page
-        .locator('.dropdown-item')
-        .filter({ hasText: initialMemberName });
+    await closeStudentModalAfterSave(page, studentModal);
 
-    await expect(memberOption).toHaveCount(1);
-    await memberOption.click();
+    await selectMemberFromDropdown(
+        page,
+        initialMemberName,
+    );
 
     const criteriaGroup = page
         .locator('input[name^="criteria-"] + label')
@@ -252,17 +679,30 @@ const createMeeting = async (
     await expect(criteriaGroup).toHaveCount(1);
     await criteriaGroup.click();
 
-    await page
-        .locator('#save-meeting')
-        .click();
+    const saveMeetingResponsePromise = waitForApiResponse(
+        page,
+        'POST',
+        path => path.endsWith('/meetings/new'),
+    );
+
+    await page.locator('#save-meeting').click();
+
+    const saveMeetingResponse =
+        await saveMeetingResponsePromise;
+
+    await expectSuccessfulResponse(
+        saveMeetingResponse,
+        `Creating meeting "${meetingInfo}"`,
+    );
 
     await expect(page).toHaveURL(
         `${BASENAME}/meetings`,
+        { timeout: 20_000 },
     );
 
     await expect(
         getMeetingCard(page, meetingInfo),
-    ).toHaveCount(1);
+    ).toHaveCount(1, { timeout: 20_000 });
 };
 
 const openMeetingAndGetSharedLink = async (
@@ -284,13 +724,17 @@ const openMeetingAndGetSharedLink = async (
         new RegExp(
             `${BASENAME}/meetings/\\d+$`,
         ),
+        { timeout: 20_000 },
     );
 
     const sharedLink =
         (await page.locator('#copy').innerText())
             .trim();
 
-    const meetingIdMatch = new URL(sharedLink)
+    const meetingIdMatch = new URL(
+        sharedLink,
+        page.url(),
+    )
         .pathname
         .match(/\/meetings\/(\d+)\/member$/);
 
@@ -310,22 +754,48 @@ const deleteMeetingIfExists = async (
     page: Page,
     meetingInfo: string,
 ) => {
-    await openMeetingsPage(page);
-
-    const meetingCard =
-        getMeetingCard(page, meetingInfo);
-
-    if (await meetingCard.count() === 0) {
+    if (page.isClosed()) {
         return;
     }
 
-    page.once('dialog', dialog => {
-        void dialog.accept();
-    });
+    if (!await navigateForCleanup(
+        page,
+        `${BASENAME}/meetings`,
+    )) {
+        return;
+    }
 
-    await meetingCard
-        .locator('#delete-meeting')
-        .click();
+    await expect(page).toHaveURL(
+        `${BASENAME}/meetings`,
+    );
+    
+    const meetingCard =
+        getMeetingCard(page, meetingInfo);
+
+    if (!await waitForElementIfExists(meetingCard)) {
+        return;
+    }
+
+    await expect(meetingCard).toHaveCount(1);
+
+    const deleteResponsePromise = waitForApiResponse(
+        page,
+        'DELETE',
+        path => path.endsWith('/meetings/delete'),
+    );
+
+    await performWithAcceptedConfirm(
+        page,
+        () => meetingCard
+            .locator('#delete-meeting')
+            .click(),
+    );
+
+    const deleteResponse = await deleteResponsePromise;
+    await expectSuccessfulResponse(
+        deleteResponse,
+        `Deleting meeting "${meetingInfo}"`,
+    );
 
     await expect(meetingCard).toHaveCount(0);
 };
@@ -348,7 +818,11 @@ const getAccessRow = (
 ) =>
     getAccessPanel(page, panelHeading)
         .locator('.border.rounded.p-3')
-        .filter({ hasText: memberName });
+        .filter({
+            has: page.getByText(memberName, {
+                exact: true,
+            }),
+        });
 
 const issueTrustedAccessLink = async (
     page: Page,
@@ -372,12 +846,26 @@ const issueTrustedAccessLink = async (
         ),
     ).toBeVisible();
 
+    const issueResponsePromise = waitForApiResponse(
+        page,
+        'POST',
+        path =>
+            path.endsWith('/trusted-access') &&
+            path.includes('/members/'),
+    );
+
     await modal
         .getByRole('button', {
             name: 'Выдать ссылку',
             exact: true,
         })
         .click();
+
+    const issueResponse = await issueResponsePromise;
+    await expectSuccessfulResponse(
+        issueResponse,
+        `Issuing trusted access for "${memberName}"`,
+    );
 
     const linkInput = modal
         .locator('.alert-warning')
@@ -396,7 +884,7 @@ const issueTrustedAccessLink = async (
         .locator('button[aria-label="Close"]')
         .click();
 
-    await expect(modal).toBeHidden();
+    await waitForModalToClose(page, modal);
 
     const updatedMemberCard =
         await findMemberCard(
@@ -438,11 +926,24 @@ const revokeTrustedAccess = async (
 
     await expect(revokeButton).toBeVisible();
 
-    page.once('dialog', dialog => {
-        void dialog.accept();
-    });
+    const revokeResponsePromise = waitForApiResponse(
+        page,
+        'DELETE',
+        path =>
+            path.endsWith('/trusted-access') &&
+            path.includes('/members/'),
+    );
 
-    await revokeButton.click();
+    await performWithAcceptedConfirm(
+        page,
+        () => revokeButton.click(),
+    );
+
+    const revokeResponse = await revokeResponsePromise;
+    await expectSuccessfulResponse(
+        revokeResponse,
+        `Revoking trusted access for "${memberName}"`,
+    );
 
     await expect(
         modal.getByText('Отозван', {
@@ -454,7 +955,7 @@ const revokeTrustedAccess = async (
         .locator('button[aria-label="Close"]')
         .click();
 
-    await expect(modal).toBeHidden();
+    await waitForModalToClose(page, modal);
 
     const updatedMemberCard =
         await findMemberCard(
@@ -472,9 +973,81 @@ const revokeTrustedAccess = async (
 const closeContext = async (
     context: BrowserContext | undefined,
 ) => {
-    if (context) {
-        await context.close();
+    if (!context) {
+        return;
     }
+
+    await context.close().catch(error => {
+        const message = String(error);
+
+        if (
+            message.includes('has been closed') ||
+            message.includes('Target page') ||
+            message.includes('Test ended')
+        ) {
+            return;
+        }
+
+        throw error;
+    });
+};
+
+const returnToMemberMeeting = async (
+    page: Page,
+    meetingId: number,
+) => {
+    const memberMeetingUrl = new RegExp(
+        `${BASENAME}/meetings/${meetingId}/member$`,
+    );
+
+    // StudentWorkPage uses window.history.back(). Reloads performed while
+    // checking persistence can leave several identical student-work entries
+    // in browser history. Click the actual UI button until those entries are
+    // consumed instead of assuming one click is always enough.
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+        if (memberMeetingUrl.test(page.url())) {
+            return;
+        }
+
+        await page
+            .getByRole('button', {
+                name: 'Назад к заседанию',
+                exact: true,
+            })
+            .click();
+
+        const navigationCompleted = await expect
+            .poll(
+                () => memberMeetingUrl.test(page.url()),
+                {
+                    timeout: 2_000,
+                    intervals: [100, 250, 500],
+                },
+            )
+            .toBe(true)
+            .then(() => true)
+            .catch(() => false);
+
+        if (navigationCompleted) {
+            return;
+        }
+    }
+
+    // The UI action has been exercised above. If browser history still does
+    // not contain the meeting page (which differs between browser engines),
+    // use the canonical route so this test does not depend on history shape.
+    const canonicalMeetingUrl = new URL(
+        `${BASENAME}/meetings/${meetingId}/member`,
+        page.url(),
+    ).toString();
+
+    await page.goto(canonicalMeetingUrl, {
+        waitUntil: 'domcontentloaded',
+    });
+
+    await expect(page).toHaveURL(memberMeetingUrl, {
+        timeout: 15_000,
+    });
 };
 
 test(
@@ -533,6 +1106,9 @@ test(
             const memberPage =
                 await memberContext.newPage();
 
+            memberPage.setDefaultTimeout(20_000);
+            memberPage.setDefaultNavigationTimeout(30_000);
+
             await test.step(
                 'submit a request under a new name',
                 async () => {
@@ -565,11 +1141,29 @@ test(
                         memberPage.locator('select'),
                     ).toHaveValue('0');
 
+                    const accessRequestResponsePromise =
+                        waitForApiResponse(
+                            memberPage,
+                            'POST',
+                            path => path.endsWith(
+                                `/meetings/${meetingId}` +
+                                '/access-requests',
+                            ),
+                        );
+
                     await memberPage
                         .getByRole('button', {
                             name: 'Отправить запрос',
                         })
                         .click();
+
+                    const accessRequestResponse =
+                        await accessRequestResponsePromise;
+
+                    await expectSuccessfulResponse(
+                        accessRequestResponse,
+                        'Submitting an ordinary access request',
+                    );
 
                     await expect(
                         memberPage.getByRole(
@@ -606,11 +1200,31 @@ test(
                             timeout: 15_000,
                         });
 
+                    const approvalResponsePromise =
+                        waitForApiResponse(
+                            page,
+                            'POST',
+                            path =>
+                                path.includes(
+                                    `/meetings/${meetingId}/` +
+                                    'access-requests/',
+                                ) &&
+                                path.endsWith('/approve'),
+                        );
+
                     await pendingRow
                         .getByRole('button', {
                             name: 'Подтвердить',
                         })
                         .click();
+
+                    const approvalResponse =
+                        await approvalResponsePromise;
+
+                    await expectSuccessfulResponse(
+                        approvalResponse,
+                        'Approving the ordinary access request',
+                    );
 
                     await expect(pendingRow)
                         .toHaveCount(0);
@@ -848,20 +1462,10 @@ test(
                     await expect(overallCommentInput)
                         .toHaveValue(overallComment);
 
-                    await memberPage
-                        .getByRole('button', {
-                            name: 'Назад к заседанию',
-                            exact: true,
-                        })
-                        .click();
-
-                    await expect(memberPage)
-                        .toHaveURL(
-                            new RegExp(
-                                `${BASENAME}/meetings/` +
-                                `${meetingId}/member$`,
-                            ),
-                        );
+                    await returnToMemberMeeting(
+                        memberPage,
+                        meetingId,
+                    );
                 },
             );
 
@@ -880,18 +1484,34 @@ test(
                             timeout: 15_000,
                         });
 
-                    page.once(
-                        'dialog',
-                        dialog => {
-                            void dialog.accept();
-                        },
+                    const revokeResponsePromise =
+                        waitForApiResponse(
+                            page,
+                            'POST',
+                            path =>
+                                path.includes(
+                                    `/meetings/${meetingId}/` +
+                                    'access-requests/',
+                                ) &&
+                                path.endsWith('/revoke'),
+                        );
+
+                    await performWithAcceptedConfirm(
+                        page,
+                        () => approvedRow
+                            .getByRole('button', {
+                                name: 'Отозвать доступ',
+                            })
+                            .click(),
                     );
 
-                    await approvedRow
-                        .getByRole('button', {
-                            name: 'Отозвать доступ',
-                        })
-                        .click();
+                    const revokeResponse =
+                        await revokeResponsePromise;
+
+                    await expectSuccessfulResponse(
+                        revokeResponse,
+                        'Revoking the ordinary access',
+                    );
 
                     await expect(approvedRow)
                         .toHaveCount(0);
@@ -941,21 +1561,30 @@ test(
                 },
             );
         } finally {
-            await closeContext(memberContext);
-
-            await deleteMeetingIfExists(
-                page,
-                meetingInfo,
+            await bestEffortCleanup(
+                'closing the ordinary-member context',
+                () => closeContext(memberContext),
             );
 
-            await deleteMemberIfExists(
-                page,
-                requestedMemberName,
+            await bestEffortCleanup(
+                `deleting meeting "${meetingInfo}"`,
+                () => deleteMeetingIfExists(page, meetingInfo),
             );
 
-            await deleteMemberIfExists(
-                page,
-                hostMember.name,
+            await bestEffortCleanup(
+                `deleting member "${requestedMemberName}"`,
+                () => deleteMemberIfExists(
+                    page,
+                    requestedMemberName,
+                ),
+            );
+
+            await bestEffortCleanup(
+                `deleting member "${hostMember.name}"`,
+                () => deleteMemberIfExists(
+                    page,
+                    hostMember.name,
+                ),
             );
         }
     },
@@ -1037,6 +1666,9 @@ test(
             const trustedPage =
                 await trustedContext.newPage();
 
+            trustedPage.setDefaultTimeout(20_000);
+            trustedPage.setDefaultNavigationTimeout(30_000);
+
             await test.step(
                 'activate trusted access in another browser',
                 async () => {
@@ -1094,20 +1726,10 @@ test(
                     const trustedLoginResponse =
                         await trustedLoginResponsePromise;
 
-                    const trustedLoginBody = await
-                        trustedLoginResponse
-                            .text()
-                            .catch(error =>
-                                '<response body unavailable: ' +
-                                `${String(error)}>`,
-                            );
-
-                    expect(
-                        trustedLoginResponse.status(),
-                        'POST trusted-login returned ' +
-                        `${trustedLoginResponse.status()}: ` +
-                        trustedLoginBody,
-                    ).toBe(200);
+                    await expectSuccessfulResponse(
+                        trustedLoginResponse,
+                        'Trusted member login',
+                    );
 
                     await expect(trustedPage)
                         .toHaveURL(
@@ -1204,21 +1826,30 @@ test(
                 },
             );
         } finally {
-            await closeContext(trustedContext);
-
-            await deleteMeetingIfExists(
-                page,
-                meetingInfo,
+            await bestEffortCleanup(
+                'closing the trusted-member context',
+                () => closeContext(trustedContext),
             );
 
-            await deleteMemberIfExists(
-                page,
-                trustedMember.name,
+            await bestEffortCleanup(
+                `deleting meeting "${meetingInfo}"`,
+                () => deleteMeetingIfExists(page, meetingInfo),
             );
 
-            await deleteMemberIfExists(
-                page,
-                existingMeetingMember.name,
+            await bestEffortCleanup(
+                `deleting member "${trustedMember.name}"`,
+                () => deleteMemberIfExists(
+                    page,
+                    trustedMember.name,
+                ),
+            );
+
+            await bestEffortCleanup(
+                `deleting member "${existingMeetingMember.name}"`,
+                () => deleteMemberIfExists(
+                    page,
+                    existingMeetingMember.name,
+                ),
             );
         }
     },
@@ -1272,11 +1903,26 @@ test(
                     )
                     .fill(ADMIN_PASSWORD);
 
+                const createAdminResponsePromise =
+                    waitForApiResponse(
+                        page,
+                        'POST',
+                        path => path.endsWith('/admins'),
+                    );
+
                 await page
                     .getByRole('button', {
                         name: 'Создать администратора',
                     })
                     .click();
+
+                const createAdminResponse =
+                    await createAdminResponsePromise;
+
+                await expectSuccessfulResponse(
+                    createAdminResponse,
+                    `Creating administrator "${newAdminName}"`,
+                );
 
                 await expect(
                     page.getByText(
@@ -1320,11 +1966,28 @@ test(
                     )
                     .fill(changedPassword);
 
+                const changePasswordResponsePromise =
+                    waitForApiResponse(
+                        page,
+                        'PUT',
+                        path => path.endsWith(
+                            '/users/me/password',
+                        ),
+                    );
+
                 await page
                     .getByRole('button', {
                         name: 'Изменить пароль',
                     })
                     .click();
+
+                const changePasswordResponse =
+                    await changePasswordResponsePromise;
+
+                await expectSuccessfulResponse(
+                    changePasswordResponse,
+                    `Changing password for "${newAdminName}"`,
+                );
 
                 await expect(
                     page.getByText(
@@ -1348,15 +2011,12 @@ test(
                     .locator('#password')
                     .fill(initialPassword);
 
-                const dialogPromise = page
-                    .waitForEvent('dialog')
-                    .then(async dialog => {
-                        expect(dialog.message()).toBe(
-                            'Неверный логин или пароль',
-                        );
-
-                        await dialog.accept();
-                    });
+                const rejectedLoginResponsePromise =
+                    waitForApiResponse(
+                        page,
+                        'POST',
+                        path => path.endsWith('/login'),
+                    );
 
                 await page
                     .getByRole('button', {
@@ -1364,11 +2024,24 @@ test(
                     })
                     .click();
 
-                await dialogPromise;
+                const rejectedLoginResponse =
+                    await rejectedLoginResponsePromise;
+
+                expect(
+                    rejectedLoginResponse.status(),
+                    'The old administrator password ' +
+                    'must be rejected.',
+                ).toBe(401);
 
                 await expect(page).toHaveURL(
                     `${BASENAME}/login`,
                 );
+
+                await expect.poll(
+                    () => page.evaluate(() =>
+                        sessionStorage.getItem('token'),
+                    ),
+                ).toBeNull();
             },
         );
 

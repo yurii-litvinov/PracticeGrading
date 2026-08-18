@@ -1,5 +1,5 @@
 import React, {useEffect, useState, useRef} from 'react';
-import {useParams} from 'react-router-dom';
+import {useParams, useNavigate} from 'react-router-dom';
 import {
     getMeetings,
     getMemberMarks,
@@ -22,6 +22,7 @@ import {MemberMarkCard} from '../components/MemberMarkCard'
 
 export function StudentWorkPage() {
     const {meetingId, workId} = useParams();
+    const navigate = useNavigate();
     const [criteriaGroup, setCriteriaGroup] = useState<CriteriaGroup>();
     const [studentWork, setStudentWork] = useState<StudentWork>();
     const [otherMarks, setOtherMarks] = useState<MemberMark[]>([]);
@@ -155,8 +156,16 @@ export function StudentWorkPage() {
     }
 
     const handleBack = () => {
-        window.history.back();
-    }
+        if (role === 'member') {
+            navigate(
+                `/meetings/${meetingId}/member`,
+            );
+
+            return;
+        }
+
+        navigate(`/meetings/${meetingId}`);
+    };
 
     const handleDeleteMark = async (memberId: number) => {
         const isConfirmed = window.confirm('Вы уверены, что хотите удалить эту оценку?');
