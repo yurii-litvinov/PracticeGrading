@@ -5,6 +5,8 @@
 
 namespace PracticeGrading.API;
 
+using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
@@ -13,8 +15,6 @@ using PracticeGrading.API.Models;
 using PracticeGrading.API.Repositories;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data.Repositories;
-using System.Security.Claims;
-using System.Text;
 
 /// <summary>
 /// Class for extensions.
@@ -46,7 +46,6 @@ public static class Extensions
                             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey ?? string.Empty)),
                         ClockSkew = TimeSpan.Zero,
                     });
-
 
         services.AddScoped<
             IAuthorizationHandler,

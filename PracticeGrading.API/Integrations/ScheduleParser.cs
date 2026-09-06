@@ -26,9 +26,10 @@ public class ScheduleParser
     private readonly List<List<string>> separator;
 
     private readonly int membersColumn;
-    private int rowIndex;
 
     private readonly int year;
+
+    private int rowIndex;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ScheduleParser"/> class.

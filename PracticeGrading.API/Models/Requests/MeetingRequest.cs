@@ -4,6 +4,7 @@
 // </copyright>
 
 namespace PracticeGrading.API.Models.Requests;
+
 /// <summary>
 /// Class for meeting creation or updating request.
 /// </summary>
