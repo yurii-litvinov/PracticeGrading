@@ -98,6 +98,8 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+app.MapHealthEndpoints();
+
 app.MapHub<MeetingHub>("/meetingHub");
 
 app.MapMeetingEndpoints();
