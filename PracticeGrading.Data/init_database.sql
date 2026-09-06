@@ -401,3 +401,21 @@ SELECT setval(
                        (SELECT MAX("Id") FROM "Users") + 1,
                        nextval(pg_get_serial_sequence('"Users"', 'Id'))),
                false);
+
+CREATE TABLE "__SchemaMigrations" (
+    "Version" text NOT NULL,
+    "Name" text NOT NULL,
+    "Checksum" character varying(64) NOT NULL,
+    "AppliedAt" timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PK___SchemaMigrations"
+        PRIMARY KEY ("Version")
+);
+
+INSERT INTO "__SchemaMigrations"
+    ("Version", "Name", "Checksum")
+VALUES (
+    '001',
+    'member_access_authentication',
+    '4d26b827f819aa27dba50cf5d560373538a29eda72f62ee76af57057b967c4c5'
+);
