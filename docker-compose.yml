@@ -13,7 +13,7 @@
       - postgres
 
   postgres:
-    image: postgres:latest
+    image: postgres:17.5-bookworm
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -27,7 +27,7 @@
       timeout: 5s
     volumes:
       - ./PracticeGrading.Data/init_database.sql:/docker-entrypoint-initdb.d/init_database.sql
-      - ./pg-data:/var/lib/postgresql/18/docker
+      - ./pg-data:/var/lib/postgresql/data
 
   frontend:
     build:
