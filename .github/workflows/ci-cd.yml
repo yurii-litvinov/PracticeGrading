@@ -1,8 +1,7 @@
-name: CI and staging deployment
+name: CI and production deployment
 
 on:
   push:
-  pull_request:
 
 permissions:
   contents: read
@@ -54,10 +53,8 @@ jobs:
         if: always()
         run: docker compose -f docker-compose.yml down
 
-  package-staging:
-    if: >-
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/feature/member-access-authentication'
+  package-production:
+    if: github.ref == 'refs/heads/main'
     needs: build-and-test
     runs-on: ubuntu-latest
 
@@ -85,13 +82,11 @@ jobs:
           docker build \
             --file PracticeGrading.API/Dockerfile \
             --tag "$IMAGE_NAME:${GITHUB_SHA}" \
-            --tag "$IMAGE_NAME:staging" \
             .
 
       - name: Push backend image
         run: |
           docker push "$IMAGE_NAME:${GITHUB_SHA}"
-          docker push "$IMAGE_NAME:staging"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -130,27 +125,24 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  deploy-staging:
-    if: >-
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/feature/member-access-authentication'
-    needs: package-staging
+  deploy-production:
+    if: github.ref == 'refs/heads/main'
+    needs: package-production
 
     runs-on:
       - self-hosted
       - Linux
-      - X64
-      - practicegrading-staging
+      - practicegrading-production
 
+    environment: production
     timeout-minutes: 20
 
     concurrency:
-      group: practicegrading-staging-deployment
+      group: practicegrading-production-deployment
       cancel-in-progress: false
 
     permissions:
       actions: read
-      contents: read
 
     steps:
       - name: Download deployment artifact
@@ -162,7 +154,7 @@ jobs:
       - name: Prepare protected deployment input
         env:
           SOURCE_DIR: ${{ runner.temp }}/practicegrading-release
-          INCOMING_DIR: /var/lib/practicegrading-staging/incoming
+          INCOMING_DIR: /var/lib/practicegrading-production/incoming
         run: |
           test -f "$SOURCE_DIR/release-sha"
           test -f "$SOURCE_DIR/api-image"
@@ -176,5 +168,5 @@ jobs:
 
           cp -a "$SOURCE_DIR/." "$INCOMING_DIR/"
 
-      - name: Deploy staging release
+      - name: Deploy production release
         run: sudo -n /usr/local/sbin/practicegrading-deploy

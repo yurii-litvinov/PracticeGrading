@@ -3,9 +3,9 @@
 set -Eeuo pipefail
 umask 077
 
-readonly CONFIG_FILE="/etc/practicegrading/deployment.env"
-readonly BACKUP_SCRIPT="/usr/local/lib/practicegrading/backup-database.sh"
-readonly MIGRATION_SCRIPT="/usr/local/lib/practicegrading/run-migrations.sh"
+readonly CONFIG_FILE="${PRACTICEGRADING_DEPLOY_CONFIG:-/etc/practicegrading/deployment.env}"
+readonly BACKUP_SCRIPT="${PRACTICEGRADING_BACKUP_SCRIPT:-/usr/local/lib/practicegrading/backup-database.sh}"
+readonly MIGRATION_SCRIPT="${PRACTICEGRADING_MIGRATION_SCRIPT:-/usr/local/lib/practicegrading/run-migrations.sh}"
 
 if (( EUID != 0 )); then
     echo "This command must run as root." >&2
@@ -17,8 +17,14 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     exit 1
 fi
 
+# The file is root-owned and is therefore safe to load.
 # shellcheck disable=SC1090
 source "$CONFIG_FILE"
+
+BOOTSTRAP_HEALTH_URL="${BOOTSTRAP_HEALTH_URL:-}"
+BOOTSTRAP_HEALTH_ACCEPT_ANY_HTTP="${BOOTSTRAP_HEALTH_ACCEPT_ANY_HTTP:-0}"
+ALLOW_DEPLOY_TEST_FAILURES="${ALLOW_DEPLOY_TEST_FAILURES:-0}"
+DEPLOY_TEST_FAILPOINT="${DEPLOY_TEST_FAILPOINT:-}"
 
 required_variables=(
     DEPLOYMENT_NAME
@@ -39,6 +45,7 @@ required_variables=(
     HEALTH_URL
     HEALTH_ATTEMPTS
     HEALTH_INTERVAL
+    API_IMAGE_REPOSITORY
 )
 
 for variable_name in "${required_variables[@]}"; do
@@ -47,6 +54,25 @@ for variable_name in "${required_variables[@]}"; do
         exit 1
     fi
 done
+
+if [[ "$BOOTSTRAP_HEALTH_ACCEPT_ANY_HTTP" != "0" && \
+      "$BOOTSTRAP_HEALTH_ACCEPT_ANY_HTTP" != "1" ]]; then
+    echo "BOOTSTRAP_HEALTH_ACCEPT_ANY_HTTP must be 0 or 1." >&2
+    exit 1
+fi
+
+if [[ -n "$DEPLOY_TEST_FAILPOINT" ]]; then
+    if [[ "$ALLOW_DEPLOY_TEST_FAILURES" != "1" || \
+          "$DEPLOYMENT_NAME" != "deployment-test" ]]; then
+        echo "Deployment failpoints are allowed only in the deployment-test environment." >&2
+        exit 1
+    fi
+
+    if [[ "$DEPLOY_TEST_FAILPOINT" != "after_frontend" ]]; then
+        echo "Unsupported deployment test failpoint: $DEPLOY_TEST_FAILPOINT" >&2
+        exit 1
+    fi
+fi
 
 compose=(
     docker compose
@@ -105,13 +131,27 @@ update_api_image() {
 }
 
 wait_for_health() {
+    local health_url="${1:-$HEALTH_URL}"
+    local accept_any_http="${2:-0}"
     local attempt
+    local http_code
 
     for (( attempt = 1; attempt <= HEALTH_ATTEMPTS; attempt++ )); do
-        if curl --fail --silent --show-error \
+        if [[ "$accept_any_http" == "1" ]]; then
+            if http_code="$(
+                curl --silent --show-error \
+                    --output /dev/null \
+                    --write-out '%{http_code}' \
+                    --max-time 5 \
+                    "$health_url"
+            )" && [[ "$http_code" != "000" ]]; then
+                echo "Health check passed with HTTP $http_code."
+                return 0
+            fi
+        elif curl --fail --silent --show-error \
             --output /dev/null \
             --max-time 5 \
-            "$HEALTH_URL"; then
+            "$health_url"; then
             echo "Liveness check passed."
             return 0
         fi
@@ -138,9 +178,23 @@ restore_database() {
     echo "Restoring database from $backup_path..."
 
     docker exec -i "$POSTGRES_CONTAINER" \
+        psql \
+            -v ON_ERROR_STOP=1 \
+            -v target_database="$POSTGRES_DB" \
+            -v target_owner="$POSTGRES_USER" \
+            -U "$POSTGRES_USER" \
+            -d postgres <<'SQL'
+SELECT pg_terminate_backend("pid")
+FROM pg_stat_activity
+WHERE "datname" = :'target_database'
+  AND "pid" <> pg_backend_pid();
+
+DROP DATABASE IF EXISTS :"target_database";
+CREATE DATABASE :"target_database" OWNER :"target_owner";
+SQL
+
+    docker exec -i "$POSTGRES_CONTAINER" \
         pg_restore \
-            --clean \
-            --if-exists \
             --no-owner \
             --no-acl \
             -U "$POSTGRES_USER" \
@@ -155,6 +209,8 @@ frontend_changed=0
 backup_path=""
 previous_image=""
 previous_frontend=""
+rollback_health_url="$HEALTH_URL"
+rollback_health_accept_any_http=0
 
 rollback() {
     local original_status="$1"
@@ -183,7 +239,10 @@ rollback() {
 
         "${compose[@]}" up -d --no-deps "$API_SERVICE" || rollback_ok=0
 
-        if (( rollback_ok )) && wait_for_health; then
+        if (( rollback_ok )) && \
+           wait_for_health \
+               "$rollback_health_url" \
+               "$rollback_health_accept_any_http"; then
             rm -f "$MAINTENANCE_FLAG"
             echo "Rollback completed successfully." >&2
         else
@@ -204,7 +263,7 @@ if [[ ! "$release_sha" =~ ^[0-9a-f]{40}$ ]]; then
     exit 1
 fi
 
-expected_image="ghcr.io/romanlevashev/practicegrading-api:${release_sha}"
+expected_image="${API_IMAGE_REPOSITORY}:${release_sha}"
 
 if [[ "$api_image" != "$expected_image" ]]; then
     echo "Unexpected API image: $api_image" >&2
@@ -238,6 +297,11 @@ if find "$incoming_frontend" "$incoming_migrations" \
 fi
 
 current_release_file="$STATE_DIR/current-release"
+
+if [[ ! -f "$current_release_file" && -n "$BOOTSTRAP_HEALTH_URL" ]]; then
+    rollback_health_url="$BOOTSTRAP_HEALTH_URL"
+    rollback_health_accept_any_http="$BOOTSTRAP_HEALTH_ACCEPT_ANY_HTTP"
+fi
 
 if [[ -f "$current_release_file" ]] && \
    [[ "$(read_value "$current_release_file")" == "$release_sha" ]] && \
@@ -302,6 +366,9 @@ if [[ -z "$backup_path" || ! -s "$backup_path" ]]; then
     false
 fi
 
+docker exec -i "$POSTGRES_CONTAINER" \
+    pg_restore --list < "$backup_path" >/dev/null
+
 database_may_have_changed=1
 
 env \
@@ -334,6 +401,11 @@ fi
 
 frontend_changed=1
 activate_frontend "$release_dir/frontend"
+
+if [[ "$DEPLOY_TEST_FAILPOINT" == "after_frontend" ]]; then
+    echo "Intentional deployment-test failure after frontend activation." >&2
+    false
+fi
 
 printf '%s\n' "$release_sha" > "$current_release_file"
 chmod 0600 "$current_release_file"
