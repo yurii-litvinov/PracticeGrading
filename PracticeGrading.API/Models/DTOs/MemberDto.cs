@@ -8,4 +8,11 @@ namespace PracticeGrading.API.Models.DTOs;
 /// <summary>
 /// Member DTO.
 /// </summary>
-public record MemberDto(int Id, string Name, string? Email, string? Phone, string? InformationRu, string? InformationEn);
+public record MemberDto(
+    int Id,
+    string Name,
+    string? Email,
+    string? Phone,
+    string? InformationRu,
+    string? InformationEn,
+    bool HasActiveTrustedAccess = false);

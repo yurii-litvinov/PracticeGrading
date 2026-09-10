@@ -10,6 +10,7 @@ import {MemberLoginPage} from './pages/MemberLoginPage';
 import {MemberPage} from './pages/MemberPage';
 import {StudentWorkPage} from './pages/StudentWorkPage';
 import {FinishMeetingPage} from './pages/FinishMeetingPage';
+import { TrustedAccessActivationPage } from './pages/TrustedAccessActivationPage';
 import Members from './pages/Members'
 
 export const BASENAME = "/practice-grading";
@@ -69,6 +70,10 @@ export function App() {
             {
                 path: "/login",
                 element: <LoginPage/>,
+            },
+            {
+                path: '/trusted-access',
+                element: <TrustedAccessActivationPage />,
             },
             {
                 path: "/meetings/:id/member/login",

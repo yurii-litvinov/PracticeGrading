@@ -26,6 +26,9 @@ public class ScheduleParser
     private readonly List<List<string>> separator;
 
     private readonly int membersColumn;
+
+    private readonly int year;
+
     private int rowIndex;
 
     /// <summary>
@@ -39,12 +42,14 @@ public class ScheduleParser
         Stream scheduleFile,
         List<string> headers,
         List<List<string>> separator,
-        int membersColumn)
+        int membersColumn,
+        int? year = null)
     {
         this.scheduleFile = scheduleFile;
         this.headers = headers;
         this.separator = separator;
         this.membersColumn = membersColumn;
+        this.year = year ?? DateTime.Now.Year;
         this.rowIndex = membersColumn > 0 ? 1 : 0;
     }
 
@@ -192,7 +197,7 @@ public class ScheduleParser
         }
 
         meeting.DateAndTime = DateTime.Parse(
-            $"{Regex.Replace(data[DataFields.Date], TextInBracketsPattern, DateTime.Now.Year.ToString())}, {data[DataFields.Time]}",
+            $"{Regex.Replace(data[DataFields.Date], TextInBracketsPattern, this.year.ToString())}, {data[DataFields.Time]}",
             new CultureInfo("ru-RU")).ToUniversalTime();
         meeting.Auditorium = data[DataFields.Auditorium];
         meeting.Info = data[DataFields.Info];

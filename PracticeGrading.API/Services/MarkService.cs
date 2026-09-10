@@ -112,6 +112,21 @@ public class MarkService(MarkRepository markRepository)
     }
 
     /// <summary>
+    /// Returns the meeting identifier associated with a student work.
+    /// </summary>
+    /// <param name="studentWorkId">Student work identifier.</param>
+    /// <returns>
+    /// The meeting identifier, or <see langword="null"/> if the work
+    /// was not found.
+    /// </returns>
+    public Task<int?> GetMeetingIdByStudentWorkId(
+        int studentWorkId)
+    {
+        return markRepository.GetMeetingIdByStudentWorkId(
+            studentWorkId);
+    }
+
+    /// <summary>
     /// Gets member mark by id or all marks.
     /// </summary>
     /// <param name="workId">Student work id.</param>

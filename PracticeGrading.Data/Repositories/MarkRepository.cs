@@ -108,6 +108,23 @@ public class MarkRepository(AppDbContext context)
         }
     }
 
+    /// <summary>
+    /// Returns the meeting identifier associated with a student work.
+    /// </summary>
+    /// <param name="studentWorkId">Student work identifier.</param>
+    /// <returns>
+    /// The meeting identifier, or <see langword="null"/> if the work
+    /// was not found.
+    /// </returns>
+    public async Task<int?> GetMeetingIdByStudentWorkId(
+        int studentWorkId)
+    {
+        return await context.StudentWorks
+            .Where(work => work.Id == studentWorkId)
+            .Select(work => (int?)work.MeetingId)
+            .FirstOrDefaultAsync();
+    }
+
     private async Task CalculateAverageCriteriaMarks(StudentWork work)
     {
         var memberMarks = await this.GetStudentMarks(work.Id);

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using PracticeGrading.API;
 using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.Requests;
+using PracticeGrading.API.Repositories;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data;
 using PracticeGrading.Data.Entities;
@@ -27,6 +28,8 @@ public class TestBase
     protected CriteriaGroupRepository CriteriaGroupRepository;
     protected CriteriaRepository CriteriaRepository;
     protected MarkRepository MarkRepository;
+    protected TrustedMemberAccessRepository TrustedMemberAccessRepository;
+    protected MeetingMemberAccessRepository MeetingMemberAccessRepository;
 
     protected IOptions<JwtOptions> JwtOptions;
 
@@ -36,7 +39,9 @@ public class TestBase
     protected CriteriaGroupService CriteriaGroupService;
     protected CriteriaService CriteriaService;
     protected MarkService MarkService;
-
+    protected TrustedMemberAccessService TrustedMemberAccessService;
+    protected MeetingMemberAccessService MeetingMemberAccessService;
+    protected AccessTokenService AccessTokenService;
     protected StudentWork TestWork = new()
     { StudentName = string.Empty, Theme = string.Empty, Supervisor = string.Empty, AverageCriteriaMarks = [] };
 
@@ -80,6 +85,9 @@ public class TestBase
         CriteriaGroupRepository = new CriteriaGroupRepository(dbContext);
         CriteriaRepository = new CriteriaRepository(dbContext);
         MarkRepository = new MarkRepository(dbContext);
+        TrustedMemberAccessRepository = new TrustedMemberAccessRepository(dbContext);
+        MeetingMemberAccessRepository =
+            new MeetingMemberAccessRepository(dbContext);
 
         JwtOptions = Options.Create(new JwtOptions
         {
@@ -95,6 +103,23 @@ public class TestBase
         CriteriaGroupService = new CriteriaGroupService(CriteriaGroupRepository, CriteriaRepository);
         CriteriaService = new CriteriaService(CriteriaRepository, CriteriaGroupRepository);
         MarkService = new MarkService(MarkRepository);
+        AccessTokenService = new AccessTokenService();
+
+        TrustedMemberAccessService =
+            new TrustedMemberAccessService(
+                TrustedMemberAccessRepository,
+                UserRepository,
+                MeetingRepository,
+                AccessTokenService,
+                JwtService);
+
+        MeetingMemberAccessService =
+            new MeetingMemberAccessService(
+                MeetingMemberAccessRepository,
+                MeetingRepository,
+                UserRepository,
+                AccessTokenService,
+                JwtService);
 
         if (!Directory.GetCurrentDirectory().Contains("Debug")) return;
         var projectDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.Parent?.Parent?.FullName;
@@ -144,5 +169,82 @@ public class TestBase
         var token = jsonDoc.RootElement.GetProperty("token").GetString();
 
         Client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+    }
+
+    protected async Task LoginApprovedMember()
+    {
+        var (creationResult, accessToken) =
+            await MeetingMemberAccessService.CreateRequest(
+                MeetingId,
+                MemberId,
+                null);
+
+        if (creationResult !=
+                CreateMeetingMemberAccessResult.Success ||
+            string.IsNullOrWhiteSpace(accessToken))
+        {
+            throw new InvalidOperationException(
+                "Failed to create meeting access request.");
+        }
+
+        var access =
+            await MeetingMemberAccessRepository.GetByTokenHash(
+                AccessTokenService.HashToken(accessToken));
+
+        var admin =
+            await UserRepository.GetByUserName("admin");
+
+        if (access is null || admin is null)
+        {
+            throw new InvalidOperationException(
+                "Failed to prepare meeting access request.");
+        }
+
+        var approvalResult =
+            await MeetingMemberAccessService.ApproveRequest(
+                MeetingId,
+                access.Id,
+                admin.Id);
+
+        if (approvalResult !=
+            ProcessMeetingMemberAccessResult.Success)
+        {
+            throw new InvalidOperationException(
+                "Failed to approve meeting access request.");
+        }
+
+        Client.DefaultRequestHeaders.Authorization = null;
+
+        using var loginRequest = new HttpRequestMessage(
+            HttpMethod.Post,
+            $"/meetings/{MeetingId}/member-login");
+
+        loginRequest.Headers.Add(
+            "X-Meeting-Access-Token",
+            accessToken);
+
+        var loginResponse =
+            await Client.SendAsync(loginRequest);
+
+        loginResponse.EnsureSuccessStatusCode();
+
+        var loginJson =
+            await loginResponse.Content
+                .ReadFromJsonAsync<JsonElement>();
+
+        var jwt = loginJson
+            .GetProperty("token")
+            .GetString();
+
+        if (string.IsNullOrWhiteSpace(jwt))
+        {
+            throw new InvalidOperationException(
+                "Member JWT was not returned.");
+        }
+
+        Client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue(
+                "Bearer",
+                jwt);
     }
 }

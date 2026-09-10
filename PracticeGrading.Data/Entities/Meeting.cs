@@ -43,12 +43,12 @@ public class Meeting
     /// <summary>
     /// Gets or sets student works.
     /// </summary>
-    public required ICollection<StudentWork> StudentWorks { get; set; }
+    public required ICollection<StudentWork> StudentWorks { get; set; } = [];
 
     /// <summary>
     /// Gets or sets members.
     /// </summary>
-    public ICollection<User>? Members { get; set; }
+    public ICollection<User> Members { get; set; } = [];
 
     /// <summary>
     /// Gets or sets criteria group.

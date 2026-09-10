@@ -8,8 +8,11 @@ namespace PracticeGrading.API;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Tokens;
+using PracticeGrading.API.Auth;
 using PracticeGrading.API.Models;
+using PracticeGrading.API.Repositories;
 using PracticeGrading.API.Services;
 using PracticeGrading.Data.Repositories;
 
@@ -38,31 +41,45 @@ public static class Extensions
                         ValidateIssuerSigningKey = true,
                         ValidIssuer = jwtOptions.Issuer,
                         ValidAudience = jwtOptions.Audience,
-                        RoleClaimType = "role",
+                        RoleClaimType = ClaimTypes.Role,
                         IssuerSigningKey =
                             new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey ?? string.Empty)),
                         ClockSkew = TimeSpan.Zero,
                     });
+
+        services.AddScoped<
+            IAuthorizationHandler,
+            ActiveMemberAccessHandler>();
 
         services.AddAuthorizationBuilder()
             .AddPolicy(
                 "RequireAdminRole",
                 policy => policy.RequireClaim(
                     ClaimTypes.Role,
-                    RolesEnum.Admin.ToString().ToLower()));
-        services.AddAuthorizationBuilder()
+                    RolesEnum.Admin.ToString().ToLowerInvariant()))
             .AddPolicy(
                 "RequireMemberRole",
-                policy => policy.RequireClaim(
-                    ClaimTypes.Role,
-                    RolesEnum.Member.ToString().ToLower()));
-        services.AddAuthorizationBuilder()
+                policy =>
+                {
+                    policy.RequireClaim(
+                        ClaimTypes.Role,
+                        RolesEnum.Member.ToString().ToLowerInvariant());
+
+                    policy.AddRequirements(
+                        new ActiveMemberAccessRequirement());
+                })
             .AddPolicy(
                 "RequireAdminOrMemberRole",
-                policy => policy.RequireClaim(
-                    ClaimTypes.Role,
-                    RolesEnum.Admin.ToString().ToLower(),
-                    RolesEnum.Member.ToString().ToLower()));
+                policy =>
+                {
+                    policy.RequireClaim(
+                        ClaimTypes.Role,
+                        RolesEnum.Admin.ToString().ToLowerInvariant(),
+                        RolesEnum.Member.ToString().ToLowerInvariant());
+
+                    policy.AddRequirements(
+                        new ActiveMemberAccessRequirement());
+                });
     }
 
     /// <summary>
@@ -80,5 +97,10 @@ public static class Extensions
         services.AddScoped<CriteriaRepository>();
         services.AddScoped<MarkService>();
         services.AddScoped<MarkRepository>();
+        services.AddScoped<AccessTokenService>();
+        services.AddScoped<TrustedMemberAccessRepository>();
+        services.AddScoped<TrustedMemberAccessService>();
+        services.AddScoped<MeetingMemberAccessRepository>();
+        services.AddScoped<MeetingMemberAccessService>();
     }
 }

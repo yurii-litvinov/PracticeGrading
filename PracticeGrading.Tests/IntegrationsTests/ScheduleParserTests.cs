@@ -15,7 +15,7 @@ public class ScheduleParserTests : TestBase
         var separator = new List<List<string>> { new() { "date" }, new() { "time, auditorium", "info" } };
         const int membersColumn = 5;
 
-        var parser = new ScheduleParser(file, headers, separator, membersColumn);
+        var parser = new ScheduleParser(file, headers, separator, membersColumn, year: 2025);
         var meetings = parser.Parse();
 
         meetings.Should().BeEquivalentTo(expectedMeetings, options => options.WithStrictOrdering());
