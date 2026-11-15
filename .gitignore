@@ -400,3 +400,5 @@ FodyWeavers.xsd
 
 PracticeGrading.Data/Migrations/
 pg-data
+frontend/playwright-report-live/
+frontend/test-results-live/

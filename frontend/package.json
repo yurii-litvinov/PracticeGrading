@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:e2e": "playwright test --project=chromium",
-    "test:e2e:ui": "playwright test --project=chromium --ui"
+    "test:e2e:ui": "playwright test --project=chromium --ui",
+    "test:live": "playwright test --config playwright.live.config.ts",
+    "test:live:ui": "playwright test --config playwright.live.config.ts --ui --ui-host=0.0.0.0 --ui-port=8088"
   },
   "dependencies": {
     "@microsoft/signalr": "^8.0.7",
