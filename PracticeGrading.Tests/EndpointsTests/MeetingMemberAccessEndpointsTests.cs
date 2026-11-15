@@ -1,6 +1,7 @@
 ﻿namespace PracticeGrading.Tests.EndpointsTests;
 
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using PracticeGrading.API.Models;
 using PracticeGrading.API.Models.Requests;
 using PracticeGrading.Data.Entities;
@@ -17,6 +18,76 @@ using PracticeGrading.API.Models.DTOs;
 
 public class MeetingMemberAccessEndpointsTests : TestBase
 {
+    [Test]
+    public async Task TestAnonymousMemberSearchFindsOtherMembersWithoutProfileDetails()
+    {
+        await CreateTestMeeting();
+        var existingId = await UserRepository.Create(new User
+        {
+            UserName = "Иванов  Иван Иванович",
+            RoleId = 2,
+            Email = "private@example.org",
+            Phone = "private-phone",
+            InformationRu = "private-profile",
+        });
+        await UserRepository.Create(new User { UserName = "Иванов Иван Администратор", RoleId = 1 });
+
+        var response = await Client.GetAsync($"/meetings/{MeetingId}/member-candidates?searchName=" + Uri.EscapeDataString(" ИВАНОВ   Иван "));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        json.GetProperty("hasMore").GetBoolean().Should().BeFalse();
+        var members = json.GetProperty("members").EnumerateArray().ToArray();
+        members.Should().ContainSingle();
+        members[0].GetProperty("id").GetInt32().Should().Be(existingId);
+        members[0].EnumerateObject().Select(p => p.Name).Should().BeEquivalentTo("id", "name");
+        (await Client.GetAsync("/members?searchName=Иванов&limit=10")).StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Test]
+    public async Task TestMemberSearchSupportsPagination()
+    {
+        await CreateTestMeeting();
+        var firstId = await UserRepository.Create(new User { UserName = "Candidate A", RoleId = 2 });
+        var secondId = await UserRepository.Create(new User { UserName = "Candidate B", RoleId = 2 });
+        var first = await Client.GetFromJsonAsync<JsonElement>($"/meetings/{MeetingId}/member-candidates?searchName=Candidate&limit=1");
+        first.GetProperty("hasMore").GetBoolean().Should().BeTrue();
+        first.GetProperty("members")[0].GetProperty("id").GetInt32().Should().Be(firstId);
+        var second = await Client.GetFromJsonAsync<JsonElement>($"/meetings/{MeetingId}/member-candidates?searchName=Candidate&limit=1&offset=1");
+        second.GetProperty("hasMore").GetBoolean().Should().BeFalse();
+        second.GetProperty("members")[0].GetProperty("id").GetInt32().Should().Be(secondId);
+    }
+
+    [TestCase("searchName=a")]
+    [TestCase("searchName=%20%20")]
+    [TestCase("searchName=member&limit=0")]
+    [TestCase("searchName=member&limit=21")]
+    [TestCase("searchName=member&offset=-1")]
+    public async Task TestMemberSearchRejectsInvalidQuery(string query)
+    {
+        await CreateTestMeeting();
+        (await Client.GetAsync($"/meetings/{MeetingId}/member-candidates?{query}")).StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Test]
+    public async Task TestMemberSearchRequiresExistingMeeting()
+    {
+        (await Client.GetAsync("/meetings/99999/member-candidates?searchName=member")).StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Test]
+    public async Task TestCreatingDuplicateNameReturnsConflictWithoutChanges()
+    {
+        await CreateTestMeeting();
+        var userCount = await dbContext.Users.CountAsync();
+        var response = await Client.PostAsJsonAsync($"/meetings/{MeetingId}/access-requests", new CreateMeetingMemberAccessRequest(0, " MEMBER "));
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        json.GetProperty("code").GetString().Should().Be("member_already_exists");
+        (await dbContext.Users.CountAsync()).Should().Be(userCount);
+        (await dbContext.MeetingMemberAccesses.CountAsync()).Should().Be(0);
+    }
+
     [Test]
     public async Task TestCreateAccessRequest()
     {

@@ -1,11 +1,72 @@
 ﻿namespace PracticeGrading.Tests.ServicesTests;
 
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using PracticeGrading.API.Models;
 using PracticeGrading.Data.Entities;
 
 public class MeetingMemberAccessServiceTests : TestBase
 {
+    [TestCase("Existing Member")]
+    [TestCase("  EXISTING   member  ")]
+    [TestCase("Existing\tMember")]
+    public async Task TestNameAlreadyExistsDoesNotCreateUserOrAccess(string name)
+    {
+        await CreateTestMeeting();
+        var existingId = await UserRepository.Create(new User
+        {
+            UserName = "Existing Member",
+            RoleId = (int)RolesEnum.Member,
+        });
+        var userCount = await dbContext.Users.CountAsync();
+
+        var (result, token) = await MeetingMemberAccessService.CreateRequest(MeetingId, 0, name);
+
+        result.Should().Be(CreateMeetingMemberAccessResult.MemberAlreadyExists);
+        token.Should().BeNull();
+        (await dbContext.Users.CountAsync()).Should().Be(userCount);
+        (await dbContext.MeetingMemberAccesses.CountAsync()).Should().Be(0);
+        (await MeetingRepository.GetById(MeetingId))!.Members.Should().NotContain(m => m.Id == existingId);
+    }
+
+    [Test]
+    public async Task TestSelectMemberFromAnotherMeetingRequiresApproval()
+    {
+        await CreateTestMeeting();
+        var existingId = await UserRepository.Create(new User
+        {
+            UserName = "Existing Member",
+            RoleId = (int)RolesEnum.Member,
+        });
+        var userCount = await dbContext.Users.CountAsync();
+
+        var (result, token) = await MeetingMemberAccessService.CreateRequest(MeetingId, existingId, null);
+
+        result.Should().Be(CreateMeetingMemberAccessResult.Success);
+        (await dbContext.Users.CountAsync()).Should().Be(userCount);
+        var access = await MeetingMemberAccessRepository.GetByTokenHash(AccessTokenService.HashToken(token!));
+        access!.MemberId.Should().Be(existingId);
+        access.Status.Should().Be(MeetingMemberAccessStatus.Pending);
+        (await MeetingMemberAccessService.LoginApprovedMember(MeetingId, token)).Should().BeNull();
+        (await MeetingRepository.GetById(MeetingId))!.Members.Should().NotContain(m => m.Id == existingId);
+
+        var admin = await UserRepository.GetByUserName("admin");
+        (await MeetingMemberAccessService.ApproveRequest(MeetingId, access.Id, admin!.Id))
+            .Should().Be(ProcessMeetingMemberAccessResult.Success);
+        (await MeetingRepository.GetById(MeetingId))!.Members.Should().Contain(m => m.Id == existingId);
+        (await MeetingMemberAccessService.LoginApprovedMember(MeetingId, token)).Should().NotBeNullOrWhiteSpace();
+    }
+
+    [Test]
+    public async Task TestNewMemberNameWhitespaceIsCleaned()
+    {
+        await CreateTestMeeting();
+        var (result, token) = await MeetingMemberAccessService.CreateRequest(MeetingId, 0, "  New\t Commission   Member  ");
+        result.Should().Be(CreateMeetingMemberAccessResult.Success);
+        var access = await MeetingMemberAccessRepository.GetByTokenHash(AccessTokenService.HashToken(token!));
+        access!.Member!.UserName.Should().Be("New Commission Member");
+    }
+
     [Test]
     public async Task TestCreateRequestForExistingMember()
     {

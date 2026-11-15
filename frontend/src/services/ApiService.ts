@@ -5,6 +5,7 @@ import { CriteriaGroup } from "../models/CriteriaGroup";
 import { MemberMark } from "../models/MemberMark";
 import { BASENAME } from "../App";
 import { Member } from "../models/Member";
+import { MemberCandidate } from "../models/MemberCandidate";
 import { TrustedMemberAccessStatus } from "../models/TrustedMemberAccessStatus";
 
 import {
@@ -297,6 +298,16 @@ export const createMeetingAccessRequest = async (
         `meetings/${meetingId}/access-requests`,
         credentials,
     );
+
+export const findMeetingMemberCandidates = (
+    meetingId: number,
+    searchName: string,
+    offset = 0,
+    signal?: AbortSignal,
+) => axiosService.get<{ members: MemberCandidate[]; hasMore: boolean }>(
+    `meetings/${meetingId}/member-candidates`,
+    { params: { searchName, offset, limit: 10 }, signal },
+);
 
 export const getMeetingAccessStatus = async (
     meetingId: number,

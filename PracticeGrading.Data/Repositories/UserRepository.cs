@@ -28,6 +28,65 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
     }
 
     /// <summary>
+    /// Creates a member only if no member has the same normalized name.
+    /// Concurrent requests for the same name are serialized in PostgreSQL.
+    /// </summary>
+    /// <param name="name">Member name.</param>
+    /// <returns>The created identifier, or null when a matching member exists.</returns>
+    public async Task<int?> CreateMemberIfNameAvailable(string name)
+    {
+        var normalizedName = MemberNames.Normalize(name);
+
+        await using var transaction = context.Database.IsRelational()
+            ? await context.Database.BeginTransactionAsync()
+            : null;
+
+        if (transaction is not null)
+        {
+            await context.Database.ExecuteSqlInterpolatedAsync(
+                $"SELECT pg_advisory_xact_lock(hashtextextended({normalizedName}, 0))");
+        }
+
+        var candidates = await this.FindMembersByName(name)
+            .Select(user => user.UserName)
+            .ToArrayAsync();
+
+        if (candidates.Any(candidate => MemberNames.Normalize(candidate) == normalizedName))
+        {
+            return null;
+        }
+
+        var memberId = await this.Create(new User
+        {
+            UserName = MemberNames.Clean(name),
+            RoleId = 2,
+        });
+
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync();
+        }
+
+        return memberId;
+    }
+
+    /// <summary>
+    /// Searches all commission members by name words, including members of other meetings.
+    /// </summary>
+    /// <param name="name">Full or partial name.</param>
+    /// <param name="offset">Number of matching members to skip.</param>
+    /// <param name="limit">Maximum number of matching members to return.</param>
+    /// <returns>Matching members in a stable order.</returns>
+    public async Task<User[]> FindMemberCandidates(string name, int offset, int limit) =>
+        await this.FindMembersByName(name)
+            .AsNoTracking()
+            .OrderBy(user => user.UserName)
+            .ThenBy(user => user.Id)
+            .Skip(offset)
+            .Take(limit)
+            .ToArrayAsync();
+
+    /// <summary>
     /// Gets user by username.
     /// </summary>
     /// <param name="userName">Username.</param>
@@ -134,5 +193,17 @@ public class UserRepository(AppDbContext context, MeetingRepository meetingRepos
     {
         context.Users.Remove(user);
         await context.SaveChangesAsync();
+    }
+
+    private IQueryable<User> FindMembersByName(string name)
+    {
+        var query = context.Users.Where(user => user.RoleId == 2);
+
+        foreach (var word in MemberNames.Normalize(name).Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            query = query.Where(user => user.UserName.ToLower().Contains(word));
+        }
+
+        return query;
     }
 }
