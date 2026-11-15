@@ -20,6 +20,8 @@ public static class MembersEndpoints
     /// <param name="app">The endpoint route builder to map routes to.</param>
     public static void MapMemberEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapPost("/members/merge/preview", PreviewMerge).RequireAuthorization("RequireAdminRole");
+        app.MapPost("/members/merge", MergeMembers).RequireAuthorization("RequireAdminRole");
         app.MapGet("/members", SearchMembers).RequireAuthorization("RequireAdminRole");
         app.MapPost("/members", AddNewMember).RequireAuthorization("RequireAdminRole");
         app.MapPut("/members", UpdateMember).RequireAuthorization("RequireAdminRole");
@@ -36,6 +38,39 @@ public static class MembersEndpoints
             "/members/{memberId:int}/trusted-access",
             GetTrustedAccessStatus)
             .RequireAuthorization("RequireAdminRole");
+    }
+
+    private static async Task<IResult> PreviewMerge(MemberMergeService service, int[] memberIds)
+    {
+        try
+        {
+            var preview = await service.Preview(memberIds);
+            return Results.Ok(new { preview.Data, preview.Version });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.BadRequest(new { Error = ex.Message });
+        }
+    }
+
+    private static async Task<IResult> MergeMembers(MemberMergeService service, MemberMergeRequest request)
+    {
+        try
+        {
+            return Results.Ok(new { Id = await service.Merge(request) });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Results.BadRequest(new { Error = ex.Message });
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            return Results.Conflict(new { Error = "Данные изменились. Обновите предварительный просмотр." });
+        }
+        catch (System.Data.Common.DbException)
+        {
+            return Results.Conflict(new { Error = "Не удалось завершить объединение. Обновите предварительный просмотр и повторите попытку." });
+        }
     }
 
     private static async Task<IResult> SearchMembers(UserService service, string searchName, int offset = 0, int limit = 0)

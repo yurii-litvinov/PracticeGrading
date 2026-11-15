@@ -388,3 +388,11 @@ export const revokeMeetingAccess = async (
     await axiosService.post(
         `meetings/${meetingId}/access-requests/${accessId}/revoke`,
     );
+
+export const previewMemberMerge = (memberIds: number[]) =>
+    axiosService.post<import('../components/MemberMergePanel').MergePreview>('members/merge/preview', memberIds);
+
+export const mergeMembers = (request: {
+    memberIds: number[]; targetId: number; profile: Member; trustedAccessId: number | null;
+    markChoices: Record<number, number>; version: string;
+}) => axiosService.post<{ id: number }>('members/merge', request);
