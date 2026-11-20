@@ -34,4 +34,9 @@ public enum CreateMeetingMemberAccessResult
     /// Neither an existing member nor a valid new member name was specified.
     /// </summary>
     InvalidMemberName,
+
+    /// <summary>
+    /// A member with the same normalized name must be selected instead of recreated.
+    /// </summary>
+    MemberAlreadyExists,
 }

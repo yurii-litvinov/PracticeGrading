@@ -4,6 +4,7 @@ import { Member } from '../models/Member';
 import { useEffect } from 'react';
 
 interface MemberSearchListProps {
+  selectedMemberIds?: number[];
   value: string;
   onChange: (value: string) => void;
 
@@ -20,6 +21,7 @@ interface MemberSearchListProps {
 }
 
 export function MemberSearchList({
+  selectedMemberIds,
   value,
   onChange,
 
@@ -79,6 +81,7 @@ export function MemberSearchList({
       </div>
 
       <MemberList
+        selectedMemberIds={selectedMemberIds}
         members={members}
         isLoading={isLoading}
         hasMore={hasMore}

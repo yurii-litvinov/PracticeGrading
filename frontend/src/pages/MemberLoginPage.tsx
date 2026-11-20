@@ -8,6 +8,7 @@ import {
     loginApprovedMeetingMember,
     setAuthHeader,
     loginTrustedMember,
+    findMeetingMemberCandidates,
 } from "../services/ApiService";
 import {
     getMeetingAccessToken,
@@ -16,6 +17,7 @@ import {
 } from "../services/MeetingAccessStorage";
 import { MeetingMemberAccessStatus } from "../models/MeetingMemberAccess";
 import { Member } from "../models/Member";
+import { MemberCandidate } from "../models/MemberCandidate";
 import {
     ReadOnlyMeetingPanel,
 } from '../components/ReadOnlyMeetingPanel';
@@ -35,6 +37,23 @@ export function MemberLoginPage() {
     const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
     const [customName, setCustomName] = useState("");
+
+    const [memberSearch, setMemberSearch] = useState<{
+        meetingId: number;
+        query: string;
+        members: MemberCandidate[];
+        hasMore: boolean;
+        loading: boolean;
+        error: boolean;
+    } | null>(null);
+    const [searchOffset, setSearchOffset] = useState(0);
+    const [searchAttempt, setSearchAttempt] = useState(0);
+    const trimmedName = customName.trim();
+    const isCurrentSearch = memberSearch?.query === trimmedName &&
+        memberSearch.meetingId === meetingId;
+    const canCreateMember = !selectedMember && trimmedName.length >= 2 &&
+        isCurrentSearch && !memberSearch.loading && !memberSearch.error &&
+        memberSearch.members.length === 0 && !memberSearch.hasMore;
 
     const [accessToken, setAccessToken] = useState<string | null>(null);
 
@@ -57,6 +76,59 @@ export function MemberLoginPage() {
     } | null>(null);
 
     useEffect(() => {
+        if (!isTrustedLoginChecked || selectedMember || trimmedName.length < 2 ||
+            !Number.isInteger(meetingId) || meetingId <= 0) {
+            return;
+        }
+
+        const controller = new AbortController();
+        setMemberSearch(previous => ({
+            meetingId,
+            query: trimmedName,
+            members: searchOffset > 0 && previous?.query === trimmedName
+                ? previous.members : [],
+            hasMore: false,
+            loading: true,
+            error: false,
+        }));
+
+        const timeoutId = window.setTimeout(async () => {
+            try {
+                const response = await findMeetingMemberCandidates(
+                    meetingId, trimmedName, searchOffset, controller.signal,
+                );
+                if (controller.signal.aborted) return;
+                setMemberSearch(previous => ({
+                    meetingId,
+                    query: trimmedName,
+                    members: searchOffset > 0 && previous?.query === trimmedName
+                        ? [...previous.members, ...response.data.members]
+                        : response.data.members,
+                    hasMore: response.data.hasMore,
+                    loading: false,
+                    error: false,
+                }));
+            } catch {
+                if (controller.signal.aborted) return;
+                setMemberSearch(previous => ({
+                    meetingId,
+                    query: trimmedName,
+                    members: searchOffset > 0 && previous?.query === trimmedName
+                        ? previous.members : [],
+                    hasMore: searchOffset > 0,
+                    loading: false,
+                    error: true,
+                }));
+            }
+        }, 300);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+            controller.abort();
+        };
+    }, [isTrustedLoginChecked, meetingId, selectedMember, trimmedName, searchOffset, searchAttempt]);
+
+    useEffect(() => {
         if (!id || Number.isNaN(meetingId)) {
             return;
         }
@@ -72,10 +144,6 @@ export function MemberLoginPage() {
                 }
 
                 setMembers(response.data);
-
-                if (response.data.length > 0) {
-                    setSelectedMember(response.data[0]);
-                }
             } catch (error) {
                 console.error(error);
 
@@ -282,10 +350,10 @@ export function MemberLoginPage() {
     const handleLogin = async (event: FormEvent) => {
         event.preventDefault();
 
-        const trimmedName = customName.trim();
+        if (isSubmitting) return;
 
-        if (!selectedMember && !trimmedName) {
-            setErrorMessage("Выберите себя из списка или введите ФИО");
+        if (!selectedMember && !canCreateMember) {
+            setErrorMessage("Дождитесь поиска и выберите существующего участника");
             return;
         }
 
@@ -316,7 +384,15 @@ export function MemberLoginPage() {
         } catch (error) {
             console.error(error);
 
-            setErrorMessage("Не удалось отправить запрос на участие");
+            if (axios.isAxiosError(error) && error.response?.status === 409 &&
+                error.response.data?.code === 'member_already_exists') {
+                setMemberSearch(null);
+                setSearchOffset(0);
+                setSearchAttempt(value => value + 1);
+                setErrorMessage("Участник с таким ФИО уже существует. Выберите себя в результатах поиска.");
+            } else {
+                setErrorMessage("Не удалось отправить запрос на участие");
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -326,6 +402,10 @@ export function MemberLoginPage() {
         event: React.ChangeEvent<HTMLSelectElement>,
     ) => {
         const selectedId = Number(event.target.value);
+        setErrorMessage(null);
+        setCustomName("");
+        setSearchOffset(0);
+        setMemberSearch(null);
 
         if (selectedId === 0) {
             setSelectedMember(null);
@@ -343,6 +423,8 @@ export function MemberLoginPage() {
     const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setCustomName(event.target.value);
         setSelectedMember(null);
+        setSearchOffset(0);
+        setErrorMessage(null);
     };
 
     if (!isTrustedLoginChecked) {
@@ -423,11 +505,17 @@ export function MemberLoginPage() {
                         <h6 className="mb-3">Выберите себя из списка</h6>
 
                         <select
+                            aria-label="Участник комиссии заседания"
                             className="form-select mb-3"
                             value={selectedMember?.id ?? 0}
                             onChange={handleSelectChange}
+                            disabled={isSubmitting}
                         >
                             <option value={0}>Выберите участника</option>
+
+                            {selectedMember && !members.some(member => member.id === selectedMember.id) && (
+                                <option value={selectedMember.id}>{selectedMember.name}</option>
+                            )}
 
                             {members.map((member) => (
                                 <option key={member.id} value={member.id}>
@@ -437,25 +525,83 @@ export function MemberLoginPage() {
                         </select>
 
                         <h6 className="mb-3">
-                            Или введите своё ФИО, если Вас нет в списке
+                            Если Вас нет в комиссии, найдите себя по ФИО
                         </h6>
 
                         <input
                             data-testid="member-name-input"
+                            aria-label="Поиск участника по ФИО"
                             type="text"
-                            className="form-control mb-4"
+                            className="form-control mb-3"
                             placeholder="Введите ФИО"
                             value={customName}
                             onChange={handleInputChange}
+                            maxLength={200}
+                            disabled={isSubmitting}
                         />
+
+                        {!selectedMember && trimmedName.length > 0 && trimmedName.length < 2 && (
+                            <p className="text-muted">Введите не менее двух символов для поиска.</p>
+                        )}
+
+                        {!selectedMember && trimmedName.length >= 2 && (
+                            <div className="mb-3" aria-live="polite">
+                                {(!isCurrentSearch || memberSearch.loading) && (
+                                    <p role="status">Поиск участников...</p>
+                                )}
+                                {isCurrentSearch && memberSearch.error && (
+                                    <div className="alert alert-warning">
+                                        Не удалось выполнить поиск.
+                                        <button type="button" className="btn btn-link"
+                                            onClick={() => setSearchAttempt(value => value + 1)}>
+                                            Повторить поиск
+                                        </button>
+                                    </div>
+                                )}
+                                {isCurrentSearch && memberSearch.members.length > 0 && (
+                                    <>
+                                        <p>Выберите себя среди найденных участников:</p>
+                                        <div className="list-group" aria-label="Найденные участники">
+                                            {memberSearch.members.map(member => (
+                                                <button type="button" className="list-group-item list-group-item-action"
+                                                    key={member.id} disabled={isSubmitting || memberSearch.loading}
+                                                    onClick={() => {
+                                                        setSelectedMember(member);
+                                                        setCustomName(member.name);
+                                                        setErrorMessage(null);
+                                                    }}>
+                                                    {member.name}
+                                                    <small className="text-muted ms-2">ID: {member.id}</small>
+                                                </button>
+                                            ))}
+                                        </div>
+                                        {memberSearch.hasMore && (
+                                            <button type="button" className="btn btn-link"
+                                                disabled={memberSearch.loading}
+                                                onClick={() => setSearchOffset(memberSearch.members.length)}>
+                                                Показать ещё
+                                            </button>
+                                        )}
+                                    </>
+                                )}
+                                {canCreateMember && (
+                                    <p>Участник не найден. Будет создан новый участник с ФИО «{trimmedName}».</p>
+                                )}
+                            </div>
+                        )}
+
+                        {selectedMember && (
+                            <p className="text-muted">Заявка от имени: {selectedMember.name}.</p>
+                        )}
 
                         <button
                             data-testid="member-access-submit"
                             type="submit"
                             className="btn btn-primary w-100"
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || (!selectedMember && !canCreateMember)}
                         >
-                            {isSubmitting ? "Отправка..." : "Отправить запрос"}
+                            {isSubmitting ? "Отправка..." : canCreateMember
+                                ? "Создать участника и отправить запрос" : "Отправить запрос"}
                         </button>
                     </form>
                 </div>

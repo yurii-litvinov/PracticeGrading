@@ -1,0 +1,75 @@
+name: practicegrading-e2e
+services:
+  postgres:
+    image: postgres:17.5-bookworm
+    environment:
+      POSTGRES_DB: practicegrading_e2e
+      POSTGRES_PASSWORD: e2e-only-password
+    tmpfs:
+      - /var/lib/postgresql/data
+    volumes:
+      - ../../PracticeGrading.Data/init_database.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U postgres -d practicegrading_e2e']
+      interval: 2s
+      timeout: 5s
+      retries: 30
+  api:
+    build:
+      context: ../..
+      dockerfile: PracticeGrading.API/Dockerfile
+      network: host
+    environment:
+      HOST: frontend
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__Default: Server=postgres;Database=practicegrading_e2e;Username=postgres;Password=e2e-only-password
+    depends_on:
+      postgres:
+        condition: service_healthy
+  frontend:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      network: host
+    command: [npm, run, dev, --, --config, e2e/vite.config.ts]
+    volumes:
+      - ./vite.config.ts:/app/e2e/vite.config.ts:ro
+    environment:
+      VITE_API_URL: http://api:8080
+    depends_on:
+      - api
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://frontend:3000/practice-grading/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+  tests:
+    image: practicegrading-e2e-runner
+    build:
+      context: ../..
+      dockerfile: frontend/e2e/Dockerfile
+      network: host
+    init: true
+    shm_size: 1gb
+    ports:
+      - '127.0.0.1:8088:8088'
+    environment:
+      E2E_BASE_URL: http://frontend:3000
+      E2E_API_URL: http://api:8080
+      PGHOST: postgres
+      PGDATABASE: practicegrading_e2e
+      PGUSER: postgres
+      PGPASSWORD: e2e-only-password
+    volumes:
+      - ../tests-live:/app/tests-live:ro
+      - ../playwright.live.config.ts:/app/playwright.live.config.ts:ro
+      - ../../PracticeGrading.Data/init_database.sql:/fixtures/init.sql:ro
+      - ../../deployment/member-merge/seed-demo.sql:/fixtures/seed.sql:ro
+    depends_on:
+      frontend:
+        condition: service_healthy
+  ui:
+    extends:
+      service: tests
+    profiles: [ui]
+    command: [npm, run, 'test:live:ui']

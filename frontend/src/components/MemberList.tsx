@@ -2,6 +2,7 @@ import { Member } from '../models/Member';
 import { useState } from 'react';
 
 interface MemberListProps {
+    selectedMemberIds?: number[];
     members: Member[];
     isLoading?: boolean;
     hasMore?: boolean;
@@ -24,6 +25,7 @@ interface MemberListProps {
 }
 
 export function MemberList({
+    selectedMemberIds,
     members,
     isLoading = false,
     hasMore = false,
@@ -277,6 +279,7 @@ export function MemberList({
                                                     member.name
                                                 }
                                             </h6>
+                                            {selectedMemberIds && <small className="ms-2">ID {member.id}{selectedMemberIds.includes(member.id!) ? " · выбран" : ""}</small>}
                                             {member.hasActiveTrustedAccess && (
                                             <i
                                                 className="bi bi-shield-fill-check text-success ms-2"

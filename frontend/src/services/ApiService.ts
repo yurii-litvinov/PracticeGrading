@@ -5,6 +5,7 @@ import { CriteriaGroup } from "../models/CriteriaGroup";
 import { MemberMark } from "../models/MemberMark";
 import { BASENAME } from "../App";
 import { Member } from "../models/Member";
+import { MemberCandidate } from "../models/MemberCandidate";
 import { TrustedMemberAccessStatus } from "../models/TrustedMemberAccessStatus";
 
 import {
@@ -298,6 +299,16 @@ export const createMeetingAccessRequest = async (
         credentials,
     );
 
+export const findMeetingMemberCandidates = (
+    meetingId: number,
+    searchName: string,
+    offset = 0,
+    signal?: AbortSignal,
+) => axiosService.get<{ members: MemberCandidate[]; hasMore: boolean }>(
+    `meetings/${meetingId}/member-candidates`,
+    { params: { searchName, offset, limit: 10 }, signal },
+);
+
 export const getMeetingAccessStatus = async (
     meetingId: number,
     accessToken: string,
@@ -377,3 +388,11 @@ export const revokeMeetingAccess = async (
     await axiosService.post(
         `meetings/${meetingId}/access-requests/${accessId}/revoke`,
     );
+
+export const previewMemberMerge = (memberIds: number[]) =>
+    axiosService.post<import('../components/MemberMergePanel').MergePreview>('members/merge/preview', memberIds);
+
+export const mergeMembers = (request: {
+    memberIds: number[]; targetId: number; profile: Member; trustedAccessId: number | null;
+    markChoices: Record<number, number>; version: string;
+}) => axiosService.post<{ id: number }>('members/merge', request);

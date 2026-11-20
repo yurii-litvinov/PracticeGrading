@@ -88,6 +88,7 @@ public static class Extensions
     public static void AddAppServices(this IServiceCollection services)
     {
         services.AddScoped<UserService>();
+        services.AddScoped<MemberMergeService>();
         services.AddScoped<UserRepository>();
         services.AddScoped<MeetingService>();
         services.AddScoped<MeetingRepository>();

@@ -32,6 +32,11 @@ public static class MeetingMemberAccessEndpoints
             CreateAccessRequest);
 
         app.MapGet(
+            "/meetings/{meetingId:int}/member-candidates",
+            FindMemberCandidates)
+            .AllowAnonymous();
+
+        app.MapGet(
             "/meetings/{meetingId:int}/read-only",
             GetReadOnlyMeeting);
 
@@ -101,9 +106,40 @@ public static class MeetingMemberAccessEndpoints
                 Results.BadRequest(
                     "An existing member or a new member name must be specified."),
 
+            CreateMeetingMemberAccessResult.MemberAlreadyExists =>
+                Results.Conflict(new
+                {
+                    Code = "member_already_exists",
+                    Message = "Select an existing member with this name.",
+                }),
+
             _ => Results.StatusCode(
                 StatusCodes.Status500InternalServerError),
         };
+    }
+
+    private static async Task<IResult> FindMemberCandidates(
+        int meetingId,
+        string searchName,
+        MeetingMemberAccessService accessService,
+        int offset = 0,
+        int limit = 10)
+    {
+        if (string.IsNullOrWhiteSpace(searchName) || searchName.Trim().Length < 2 ||
+            searchName.Length > 200 || offset < 0 || limit < 1 || limit > 20)
+        {
+            return Results.BadRequest("Specify a name of 2 to 200 characters and a valid result page.");
+        }
+
+        var members = await accessService.FindMemberCandidates(meetingId, searchName, offset, limit + 1);
+
+        return members is null
+            ? Results.NotFound("Meeting was not found.")
+            : Results.Ok(new
+            {
+                Members = members.Take(limit),
+                HasMore = members.Length > limit,
+            });
     }
 
     /// <summary>

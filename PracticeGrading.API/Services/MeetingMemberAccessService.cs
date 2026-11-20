@@ -86,19 +86,21 @@ public class MeetingMemberAccessService(
         }
         else
         {
-            if (string.IsNullOrWhiteSpace(userName))
+            if (string.IsNullOrWhiteSpace(userName) || userName.Trim().Length < 2 || userName.Length > 200)
             {
                 return (
                     CreateMeetingMemberAccessResult.InvalidMemberName,
                     null);
             }
 
-            resolvedMemberId = await userRepository.Create(
-                new User
-                {
-                    UserName = userName.Trim(),
-                    RoleId = (int)RolesEnum.Member,
-                });
+            var newMemberId = await userRepository.CreateMemberIfNameAvailable(userName);
+
+            if (newMemberId is null)
+            {
+                return (CreateMeetingMemberAccessResult.MemberAlreadyExists, null);
+            }
+
+            resolvedMemberId = newMemberId.Value;
         }
 
         var token = accessTokenService.GenerateToken();
@@ -117,6 +119,30 @@ public class MeetingMemberAccessService(
         return (
             CreateMeetingMemberAccessResult.Success,
             token);
+    }
+
+    /// <summary>
+    /// Searches for existing members to use when requesting meeting access.
+    /// </summary>
+    /// <param name="meetingId">Meeting identifier.</param>
+    /// <param name="name">Full or partial member name.</param>
+    /// <param name="offset">Number of results to skip.</param>
+    /// <param name="limit">Maximum result count.</param>
+    /// <returns>Matching identities, or null if the meeting does not exist.</returns>
+    public async Task<MemberCandidateDto[]?> FindMemberCandidates(
+        int meetingId,
+        string name,
+        int offset,
+        int limit)
+    {
+        if (await meetingRepository.GetById(meetingId) is null)
+        {
+            return null;
+        }
+
+        var members = await userRepository.FindMemberCandidates(name, offset, limit);
+
+        return members.Select(member => new MemberCandidateDto(member.Id, member.UserName)).ToArray();
     }
 
     /// <summary>
